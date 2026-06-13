@@ -2,18 +2,18 @@
 nixPkgs = [
   "nodejs_22",
   "npm-10_x",
-  "php83",
-  "php83Packages.composer",
-  "php83Extensions.zip",
-  "php83Extensions.gd",
-  "php83Extensions.xml",
-  "php83Extensions.dom",
-  "php83Extensions.fileinfo",
-  "php83Extensions.mbstring",
-  "php83Extensions.sqlite3",
-  "php83Extensions.pdo_sqlite",
-  "php83Extensions.pgsql",
-  "php83Extensions.pdo_pgsql",
+  "php85",
+  "php85Packages.composer",
+  "php85Extensions.zip",
+  "php85Extensions.gd",
+  "php85Extensions.xml",
+  "php85Extensions.dom",
+  "php85Extensions.fileinfo",
+  "php85Extensions.mbstring",
+  "php85Extensions.sqlite3",
+  "php85Extensions.pdo_sqlite",
+  "php85Extensions.pgsql",
+  "php85Extensions.pdo_pgsql",
   "nginx"
 ]
 
@@ -23,4 +23,4 @@ NIXPACKS_PHP_ROOT_DIR = "/app/public"
 NIXPACKS_PHP_INI_FILE = "php.ini"
 
 [phases.build]
-cmds = ["...", "cp php.ini /etc/php83/conf.d/99-custom.ini 2>/dev/null || true", "php artisan optimize", "php artisan storage:link"]
+cmds = ["...", "cp php.ini /etc/php85/conf.d/99-custom.ini 2>/dev/null || true", "php artisan optimize", "php artisan storage:link"]
