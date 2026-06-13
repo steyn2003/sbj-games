@@ -1,32 +1,72 @@
 import { Head, Link } from '@inertiajs/react';
-import { Play } from 'lucide-react';
+import { ChevronRight, Eye, Timer, Users } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { Button } from '@/components/ui/button';
-import { dashboard, home } from '@/routes';
+import { dashboard, home, pimPamPet, wieInDeGroep } from '@/routes';
+
+interface GameLink {
+    title: string;
+    description: string;
+    href: string;
+    icon: LucideIcon;
+}
+
+const games: GameLink[] = [
+    {
+        title: 'Undercover',
+        description: 'Vind de geheime bedrieger. Iedereen krijgt een woord, behalve de Undercover.',
+        href: home().url,
+        icon: Eye,
+    },
+    {
+        title: 'Pim Pam Pet',
+        description: 'Categorie + letter. Noem op tijd een passend woord en geef door.',
+        href: pimPamPet().url,
+        icon: Timer,
+    },
+    {
+        title: 'Wie in de groep…?',
+        description: 'Stem op wie de stelling het beste past. De winnaar drinkt!',
+        href: wieInDeGroep().url,
+        icon: Users,
+    },
+];
 
 export default function Dashboard() {
     return (
         <>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col items-center justify-center p-4">
-                <div className="w-full max-w-md overflow-hidden rounded-2xl border border-sidebar-border/70 bg-gradient-to-b from-slate-900 to-indigo-950 p-8 text-center text-slate-100 shadow-xl dark:border-sidebar-border">
-                    <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-2xl bg-amber-400/15 ring-1 ring-amber-400/30">
-                        <AppLogoIcon className="size-14" />
+            <div className="flex h-full flex-1 flex-col items-center p-4">
+                <div className="w-full max-w-md">
+                    <div className="mb-6 flex flex-col items-center text-center">
+                        <div className="mb-3 flex size-16 items-center justify-center rounded-2xl bg-amber-400/15 ring-1 ring-amber-400/30">
+                            <AppLogoIcon className="size-11" />
+                        </div>
+                        <span className="text-xs font-bold tracking-widest text-amber-500 uppercase dark:text-amber-300">
+                            Pim Pam Pet
+                        </span>
+                        <h1 className="mt-1 text-3xl font-black">Kies een spel</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Pass-the-phone spellen voor de hele groep.</p>
                     </div>
-                    <span className="text-xs font-bold tracking-widest text-amber-300 uppercase">Pim Pam Pet</span>
-                    <h1 className="mt-1 text-3xl font-black text-white">Klaar om te spelen?</h1>
-                    <p className="mx-auto mt-2 max-w-xs text-sm text-slate-400">
-                        Undercover — iedereen krijgt een geheim woord, behalve de Undercover. Ontmasker ze!
-                    </p>
 
-                    <Button
-                        asChild
-                        className="mt-6 h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white hover:from-amber-400 hover:to-orange-400"
-                    >
-                        <Link href={home()}>
-                            <Play className="size-5" /> Speel Undercover
-                        </Link>
-                    </Button>
+                    <div className="space-y-3">
+                        {games.map((game) => (
+                            <Link
+                                key={game.title}
+                                href={game.href}
+                                className="flex items-center gap-4 rounded-2xl border border-sidebar-border/70 bg-card p-4 shadow-sm transition hover:border-amber-400/50 hover:shadow-md active:scale-[0.99] dark:border-sidebar-border"
+                            >
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-400/15 text-amber-600 ring-1 ring-amber-400/30 dark:text-amber-300">
+                                    <game.icon className="size-6" />
+                                </span>
+                                <span className="flex-1">
+                                    <span className="block text-base font-bold">{game.title}</span>
+                                    <span className="block text-sm text-muted-foreground">{game.description}</span>
+                                </span>
+                                <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
         </>

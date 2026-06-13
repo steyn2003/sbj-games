@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Beer, LayoutGrid } from 'lucide-react';
+import { Beer, LayoutGrid, Timer, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,7 +13,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, home } from '@/routes';
+import { dashboard, home, pimPamPet, wieInDeGroep } from '@/routes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -26,6 +26,16 @@ const mainNavItems: NavItem[] = [
         title: 'Undercover',
         href: home(),
         icon: Beer,
+    },
+    {
+        title: 'Pim Pam Pet',
+        href: pimPamPet(),
+        icon: Timer,
+    },
+    {
+        title: 'Wie in de groep…?',
+        href: wieInDeGroep(),
+        icon: Users,
     },
 ];
 
