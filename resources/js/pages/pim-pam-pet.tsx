@@ -66,6 +66,14 @@ export default function PimPamPet() {
                 <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-amber-500/25 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-orange-600/20 blur-3xl" />
                 <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                    <div className="mb-2">
+                        <Link
+                            href={dashboard()}
+                            className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
+                        >
+                            <ArrowLeft className="size-4" /> Dashboard
+                        </Link>
+                    </div>
                     {phase === 'setup' && (
                         <SetupScreen
                             seconds={seconds}
@@ -100,15 +108,6 @@ function SetupScreen({
 }) {
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-2">
-                <Link
-                    href={dashboard()}
-                    className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
-                >
-                    <ArrowLeft className="size-4" /> Dashboard
-                </Link>
-            </div>
-
             <header className="mb-6 text-center">
                 <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-300 uppercase ring-1 ring-amber-400/30">
                     <Beer className="size-3.5" /> Pim Pam Pet
