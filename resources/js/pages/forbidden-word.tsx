@@ -1,0 +1,657 @@
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { ArrowLeft, ArrowRight, Ban, Check, Minus, Play, Plus, RotateCcw, Timer, Trophy, Users, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { MAX_PLAYERS, MIN_PLAYERS, pickCard, ROUNDS_OPTIONS, TURN_SECONDS_OPTIONS } from '@/lib/forbidden-word';
+import type { ForbiddenCard } from '@/lib/forbidden-word';
+import { usePersistedGame } from '@/lib/use-persisted-game';
+import { cn } from '@/lib/utils';
+import { dashboard } from '@/routes';
+
+type Phase = 'play' | 'turnover' | 'gameover';
+
+interface GameState {
+    /** Identifies one game session on the client, across persistence calls. */
+    localId: number;
+    phase: Phase;
+    names: string[];
+    scores: number[];
+    seconds: number;
+    totalRounds: number;
+    round: number;
+    currentPlayer: number;
+    /** Points the current (or just-finished) player earned this turn. */
+    turnScore: number;
+    currentCard: ForbiddenCard;
+}
+
+interface SavedGame {
+    id: number;
+    state: GameState;
+}
+
+interface HistoryEntry {
+    id: number;
+    state: GameState;
+    finished_at: string | null;
+}
+
+interface PageProps {
+    currentGame: SavedGame | null;
+    history: HistoryEntry[];
+    [key: string]: unknown;
+}
+
+function defaultNames(count: number): string[] {
+    return Array.from({ length: count }, (_, i) => `Speler ${i + 1}`);
+}
+
+export default function ForbiddenWord() {
+    const { currentGame, history } = usePage<PageProps>().props;
+
+    const [game, setGame] = useState<GameState | null>(null);
+
+    usePersistedGame('forbidden-word', game, {
+        serverId: currentGame?.id ?? null,
+        localId: currentGame?.state.localId ?? 0,
+    });
+
+    const resetToSetup = () => {
+        setGame(null);
+        router.reload({ only: ['currentGame', 'history'] });
+    };
+
+    return (
+        <>
+            <Head title="Verboden Woord" />
+            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-950 text-slate-100">
+                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-violet-600/25 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-amber-500/20 blur-3xl" />
+                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                    {game === null ? (
+                        <SetupScreen
+                            resumable={currentGame}
+                            history={history}
+                            onResume={(state) => setGame(state)}
+                            onStart={setGame}
+                        />
+                    ) : game.phase === 'play' ? (
+                        <PlayScreen key={`${game.round}-${game.currentPlayer}`} game={game} setGame={setGame} onReset={resetToSetup} />
+                    ) : game.phase === 'turnover' ? (
+                        <TurnoverScreen game={game} setGame={setGame} />
+                    ) : (
+                        <GameOverScreen game={game} setGame={setGame} onReset={resetToSetup} />
+                    )}
+                </main>
+            </div>
+        </>
+    );
+}
+
+function startGame(names: string[], seconds: number, totalRounds: number): GameState {
+    return {
+        localId: Date.now(),
+        phase: 'play',
+        names: names.map((name) => name.trim()),
+        scores: names.map(() => 0),
+        seconds,
+        totalRounds,
+        round: 1,
+        currentPlayer: 0,
+        turnScore: 0,
+        currentCard: pickCard(),
+    };
+}
+
+function SetupScreen({
+    resumable,
+    history,
+    onResume,
+    onStart,
+}: {
+    resumable: SavedGame | null;
+    history: HistoryEntry[];
+    onResume: (state: GameState) => void;
+    onStart: (game: GameState) => void;
+}) {
+    const [names, setNames] = useState<string[]>(() => defaultNames(4));
+    const [seconds, setSeconds] = useState(60);
+    const [rounds, setRounds] = useState(2);
+
+    const error = names.some((name) => name.trim() === '') ? 'Elke speler heeft een naam nodig.' : null;
+
+    const setPlayerCount = (count: number) => {
+        const next = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, count));
+
+        setNames((current) => {
+            if (next <= current.length) {
+                return current.slice(0, next);
+            }
+
+            return [...current, ...defaultNames(next).slice(current.length)];
+        });
+    };
+
+    const updateName = (index: number, value: string) => {
+        setNames((current) => current.map((name, i) => (i === index ? value : name)));
+    };
+
+    const start = () => {
+        if (error) {
+            return;
+        }
+
+        onStart(startGame(names, seconds, rounds));
+    };
+
+    return (
+        <div className="flex flex-1 flex-col">
+            <div className="mb-2">
+                <Link
+                    href={dashboard()}
+                    className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
+                >
+                    <ArrowLeft className="size-4" /> Dashboard
+                </Link>
+            </div>
+
+            <header className="mb-6 text-center">
+                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-violet-400/15 px-3 py-1 text-xs font-bold tracking-widest text-violet-300 uppercase ring-1 ring-violet-400/30">
+                    <Ban className="size-3.5" /> Pim Pam Pet
+                </span>
+                <h1 className="bg-gradient-to-br from-white via-violet-200 to-amber-200 bg-clip-text text-4xl font-black tracking-tight text-transparent">
+                    Verboden Woord
+                </h1>
+                <p className="mt-2 text-sm text-slate-400">
+                    Laat de groep het woord raden — maar gebruik nooit de verboden woorden. Hoeveel haal je in jouw
+                    beurt?
+                </p>
+            </header>
+
+            {resumable && (
+                <button
+                    type="button"
+                    onClick={() => onResume(resumable.state)}
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-3 text-left ring-1 ring-emerald-400/40 transition active:scale-[0.99]"
+                >
+                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/30">
+                        <Play className="size-5 text-emerald-200" />
+                    </span>
+                    <span className="flex-1">
+                        <span className="block text-sm font-bold text-white">Ga verder</span>
+                        <span className="block text-xs text-emerald-200/80">Ronde {resumable.state.round ?? 1}</span>
+                    </span>
+                    <ArrowRight className="size-5 text-emerald-200" />
+                </button>
+            )}
+
+            <section className="mb-5 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 backdrop-blur-sm">
+                <Stepper
+                    label="Spelers"
+                    icon={<Users className="size-4" />}
+                    value={names.length}
+                    min={MIN_PLAYERS}
+                    max={MAX_PLAYERS}
+                    onChange={setPlayerCount}
+                />
+            </section>
+
+            <section className="mb-4 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
+                    <Timer className="size-4" /> Tijd per beurt
+                </h2>
+                <div className="grid grid-cols-3 gap-3">
+                    {TURN_SECONDS_OPTIONS.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            onClick={() => setSeconds(option)}
+                            className={cn(
+                                'rounded-xl py-3 text-base font-bold ring-1 transition',
+                                seconds === option
+                                    ? 'bg-violet-500 text-white ring-violet-300'
+                                    : 'bg-white/5 text-white ring-white/10 hover:bg-white/10',
+                            )}
+                        >
+                            {option}s
+                        </button>
+                    ))}
+                </div>
+            </section>
+
+            <section className="mb-5 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
+                    <RotateCcw className="size-4" /> Beurten per speler
+                </h2>
+                <div className="grid grid-cols-3 gap-3">
+                    {ROUNDS_OPTIONS.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            onClick={() => setRounds(option)}
+                            className={cn(
+                                'rounded-xl py-3 text-base font-bold ring-1 transition',
+                                rounds === option
+                                    ? 'bg-violet-500 text-white ring-violet-300'
+                                    : 'bg-white/5 text-white ring-white/10 hover:bg-white/10',
+                            )}
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>
+            </section>
+
+            <section className="mb-5 space-y-2">
+                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Namen</h2>
+                {names.map((name, index) => (
+                    <input
+                        key={index}
+                        value={name}
+                        onChange={(event) => updateName(index, event.target.value)}
+                        maxLength={20}
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/40 focus:outline-none"
+                        placeholder={`Speler ${index + 1}`}
+                    />
+                ))}
+            </section>
+
+            {history.length > 0 && <HistoryList history={history} />}
+
+            <div className="mt-auto pt-2">
+                {error && <p className="mb-3 text-center text-sm text-rose-400">{error}</p>}
+                <Button
+                    onClick={start}
+                    disabled={Boolean(error)}
+                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-lg font-bold text-white shadow-lg shadow-violet-900/40 hover:from-violet-400 hover:to-fuchsia-400"
+                >
+                    Start spel
+                    <ArrowRight className="size-5" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function HistoryList({ history }: { history: HistoryEntry[] }) {
+    const entries = history.filter((entry) => entry.state?.names && entry.state.scores);
+
+    if (entries.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="mb-5">
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Recente potjes</h2>
+            <div className="space-y-2">
+                {entries.map((entry) => {
+                    const winner = winnerOf(entry.state.names, entry.state.scores);
+
+                    return (
+                        <div
+                            key={entry.id}
+                            className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm ring-1 ring-white/10"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Trophy className="size-4 text-amber-300" />
+                                <span className="font-medium text-white">{winner.names.join(' & ')}</span>
+                            </span>
+                            <span className="text-xs text-slate-500">
+                                {winner.score} pt · {formatDate(entry.finished_at)}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
+function winnerOf(names: string[], scores: number[]): { names: string[]; score: number } {
+    const max = scores.length > 0 ? Math.max(...scores) : 0;
+
+    return {
+        names: names.filter((_, index) => scores[index] === max),
+        score: max,
+    };
+}
+
+function formatDate(value: string | null): string {
+    if (!value) {
+        return '';
+    }
+
+    return new Date(value).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+}
+
+function Stepper({
+    label,
+    icon,
+    value,
+    min,
+    max,
+    onChange,
+}: {
+    label: string;
+    icon: React.ReactNode;
+    value: number;
+    min: number;
+    max: number;
+    onChange: (value: number) => void;
+}) {
+    return (
+        <div className="flex items-center justify-between py-1">
+            <span className="flex items-center gap-2 text-sm font-medium">
+                {icon} {label}
+            </span>
+            <div className="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick={() => onChange(value - 1)}
+                    disabled={value <= min}
+                    className="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-30"
+                >
+                    <Minus className="size-4" />
+                </button>
+                <span className="w-6 text-center text-lg font-bold tabular-nums">{value}</span>
+                <button
+                    type="button"
+                    onClick={() => onChange(value + 1)}
+                    disabled={value >= max}
+                    className="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-30"
+                >
+                    <Plus className="size-4" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function PlayScreen({
+    game,
+    setGame,
+    onReset,
+}: {
+    game: GameState;
+    setGame: (game: GameState) => void;
+    onReset: () => void;
+}) {
+    const [started, setStarted] = useState(false);
+    const [secondsLeft, setSecondsLeft] = useState(game.seconds);
+    const [turnScore, setTurnScore] = useState(0);
+    const [card, setCard] = useState<ForbiddenCard>(game.currentCard);
+
+    const player = game.names[game.currentPlayer];
+
+    // Keep the latest turn result available to the (stale-closure-prone) timer.
+    const endTurnRef = useRef<() => void>(() => {});
+
+    useEffect(() => {
+        endTurnRef.current = () => {
+            const scores = game.scores.map((score, index) =>
+                index === game.currentPlayer ? score + turnScore : score,
+            );
+
+            setGame({ ...game, scores, turnScore, phase: 'turnover' });
+        };
+    });
+
+    useEffect(() => {
+        if (!started) {
+            return;
+        }
+
+        const id = window.setInterval(() => {
+            setSecondsLeft((value) => {
+                if (value <= 1) {
+                    window.clearInterval(id);
+                    endTurnRef.current();
+
+                    return 0;
+                }
+
+                return value - 1;
+            });
+        }, 1000);
+
+        return () => window.clearInterval(id);
+    }, [started]);
+
+    const nextCard = () => setCard((current) => pickCard(current));
+
+    const correct = () => {
+        setTurnScore((value) => value + 1);
+        nextCard();
+    };
+
+    const foul = () => {
+        setTurnScore((value) => value - 1);
+        nextCard();
+    };
+
+    if (!started) {
+        return (
+            <div className="flex flex-1 flex-col">
+                <div className="mb-4 flex items-center justify-between">
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-slate-300 uppercase">
+                        Ronde {game.round} / {game.totalRounds}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={onReset}
+                        className="flex items-center gap-1 text-xs text-slate-400 transition hover:text-slate-200"
+                    >
+                        <RotateCcw className="size-3.5" /> Nieuw spel
+                    </button>
+                </div>
+
+                <div className="flex flex-1 flex-col items-center justify-center text-center">
+                    <p className="text-sm text-slate-400">Aan de beurt</p>
+                    <h1 className="mt-2 text-4xl font-black text-white">{player}</h1>
+                    <p className="mt-4 max-w-xs text-sm text-slate-400">
+                        Houd de telefoon zo dat alleen jij hem ziet. Laat de groep het woord raden zonder de verboden
+                        woorden te zeggen.
+                    </p>
+                </div>
+
+                <div className="mt-auto pt-4">
+                    <Button
+                        onClick={() => setStarted(true)}
+                        className="h-16 w-full rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-xl font-bold text-white hover:from-violet-400 hover:to-fuchsia-400"
+                    >
+                        Start beurt ({game.seconds}s)
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const urgent = secondsLeft <= 10;
+
+    return (
+        <div className="flex flex-1 flex-col">
+            <div className="mb-4 flex items-center justify-between">
+                <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">{player}</span>
+                <span
+                    className={cn(
+                        'flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums ring-1',
+                        urgent ? 'bg-rose-500/20 text-rose-300 ring-rose-400/50' : 'bg-white/5 text-white ring-white/10',
+                    )}
+                >
+                    <Timer className="size-4" /> {secondsLeft}s
+                </span>
+                <span className="rounded-full bg-violet-500/20 px-3 py-1 text-sm font-bold tabular-nums text-violet-200">
+                    {turnScore} pt
+                </span>
+            </div>
+
+            <div className="flex flex-1 flex-col items-center justify-center">
+                <div className="w-full rounded-3xl bg-white p-6 text-center shadow-2xl">
+                    <p className="text-xs font-semibold tracking-widest text-violet-500 uppercase">Jouw woord</p>
+                    <p className="mt-2 mb-5 text-4xl font-black break-words text-slate-900">{card.word}</p>
+                    <div className="space-y-1.5 border-t border-slate-200 pt-4">
+                        <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-bold tracking-wide text-rose-500 uppercase">
+                            <Ban className="size-3.5" /> Verboden
+                        </p>
+                        {card.forbidden.map((word) => (
+                            <p key={word} className="text-lg font-semibold text-slate-700">
+                                {word}
+                            </p>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-auto grid grid-cols-2 gap-3 pt-4">
+                <Button
+                    onClick={foul}
+                    className="h-16 rounded-2xl bg-rose-500/90 text-lg font-bold text-white hover:bg-rose-500"
+                >
+                    <X className="size-5" /> Fout
+                </Button>
+                <Button
+                    onClick={correct}
+                    className="h-16 rounded-2xl bg-emerald-500 text-lg font-bold text-white hover:bg-emerald-400"
+                >
+                    <Check className="size-5" /> Goed
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function TurnoverScreen({ game, setGame }: { game: GameState; setGame: (game: GameState) => void }) {
+    const player = game.names[game.currentPlayer];
+
+    const advance = () => {
+        let nextPlayer = game.currentPlayer + 1;
+        let nextRound = game.round;
+
+        if (nextPlayer >= game.names.length) {
+            nextPlayer = 0;
+            nextRound = game.round + 1;
+        }
+
+        if (nextRound > game.totalRounds) {
+            setGame({ ...game, phase: 'gameover' });
+
+            return;
+        }
+
+        setGame({
+            ...game,
+            phase: 'play',
+            currentPlayer: nextPlayer,
+            round: nextRound,
+            turnScore: 0,
+            currentCard: pickCard(game.currentCard),
+        });
+    };
+
+    const ranked = game.names
+        .map((name, index) => ({ name, score: game.scores[index] }))
+        .sort((a, b) => b.score - a.score);
+
+    return (
+        <div className="flex flex-1 flex-col">
+            <div className="mt-6 mb-6 text-center">
+                <span className="text-5xl">⏱️</span>
+                <h1 className="mt-3 text-2xl font-black text-white">Tijd voorbij!</h1>
+                <p className="mt-2 text-sm text-slate-400">
+                    <span className="font-semibold text-white">{player}</span> haalde{' '}
+                    <span className="font-bold text-violet-300">{game.turnScore}</span>{' '}
+                    {Math.abs(game.turnScore) === 1 ? 'punt' : 'punten'} deze beurt.
+                </p>
+            </div>
+
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Tussenstand</h2>
+            <div className="space-y-2">
+                {ranked.map((entry) => (
+                    <div
+                        key={entry.name}
+                        className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/10"
+                    >
+                        <span className="text-base font-medium text-white">{entry.name}</span>
+                        <span className="text-sm font-bold tabular-nums text-violet-300">{entry.score} pt</span>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-auto pt-6">
+                <Button
+                    onClick={advance}
+                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-lg font-bold text-white hover:from-violet-400 hover:to-fuchsia-400"
+                >
+                    Volgende speler
+                    <ArrowRight className="size-5" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function GameOverScreen({
+    game,
+    setGame,
+    onReset,
+}: {
+    game: GameState;
+    setGame: (game: GameState) => void;
+    onReset: () => void;
+}) {
+    const ranked = game.names
+        .map((name, index) => ({ name, score: game.scores[index] }))
+        .sort((a, b) => b.score - a.score);
+
+    const topScore = ranked.length > 0 ? ranked[0].score : 0;
+
+    const playAgain = () => {
+        setGame(startGame(game.names, game.seconds, game.totalRounds));
+    };
+
+    return (
+        <div className="flex flex-1 flex-col">
+            <div className="mt-6 mb-6 text-center">
+                <Trophy className="mx-auto mb-3 size-12 text-amber-400" />
+                <h1 className="text-3xl font-black text-white">
+                    {ranked.filter((entry) => entry.score === topScore).map((entry) => entry.name).join(' & ')} wint!
+                </h1>
+                <p className="mt-2 text-sm text-slate-400">{topScore} punten</p>
+            </div>
+
+            <div className="space-y-2">
+                {ranked.map((entry, index) => (
+                    <div
+                        key={entry.name}
+                        className={cn(
+                            'flex items-center justify-between rounded-xl px-4 py-3 ring-1',
+                            entry.score === topScore
+                                ? 'bg-amber-500/15 ring-amber-400/40'
+                                : 'bg-white/5 ring-white/10',
+                        )}
+                    >
+                        <span className="flex items-center gap-3 text-base font-medium text-white">
+                            <span className="w-5 text-center text-sm font-bold text-slate-400 tabular-nums">
+                                {index + 1}
+                            </span>
+                            {entry.name}
+                        </span>
+                        <span className="text-sm font-bold tabular-nums text-amber-300">{entry.score} pt</span>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-auto space-y-3 pt-6">
+                <Button
+                    onClick={playAgain}
+                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-lg font-bold text-white hover:from-violet-400 hover:to-fuchsia-400"
+                >
+                    <RotateCcw className="size-5" /> Opnieuw — zelfde spelers
+                </Button>
+                <Button onClick={onReset} variant="ghost" className="h-12 w-full rounded-2xl text-slate-300">
+                    Nieuw spel
+                </Button>
+            </div>
+        </div>
+    );
+}

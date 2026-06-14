@@ -28,19 +28,29 @@ test('a user can start a new game', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->postJson(route('games.store'), ['state' => sampleState()])
+        ->postJson(route('games.store'), ['type' => Game::TYPE_UNDERCOVER, 'state' => sampleState()])
         ->assertOk()
         ->assertJsonStructure(['id']);
 
     expect($user->games()->where('status', Game::STATUS_IN_PROGRESS)->count())->toBe(1);
 });
 
-test('starting a new game replaces any unfinished game', function () {
+test('starting a new game requires a known type', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('games.store'), ['type' => 'bogus', 'state' => sampleState()])
+        ->assertSessionHasErrors('type');
+
+    expect($user->games()->count())->toBe(0);
+});
+
+test('starting a new game replaces any unfinished game of the same type', function () {
     $user = User::factory()->create();
     Game::factory()->for($user)->create();
 
     $this->actingAs($user)
-        ->postJson(route('games.store'), ['state' => sampleState()])
+        ->postJson(route('games.store'), ['type' => Game::TYPE_UNDERCOVER, 'state' => sampleState()])
         ->assertOk();
 
     expect($user->games()->where('status', Game::STATUS_IN_PROGRESS)->count())->toBe(1);

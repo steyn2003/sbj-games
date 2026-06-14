@@ -14,6 +14,8 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
             case name === 'undercover':
+            case name === 'spy-location':
+            case name === 'forbidden-word':
             case name === 'pim-pam-pet':
             case name === 'wie-in-de-groep':
                 return null;

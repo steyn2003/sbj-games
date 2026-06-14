@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Eye, Timer, Users } from 'lucide-react';
+import { Ban, ChevronRight, Eye, Timer, Users, VenetianMask } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { dashboard, home, pimPamPet, wieInDeGroep } from '@/routes';
+import { dashboard, forbiddenWord, home, pimPamPet, spyLocation, wieInDeGroep } from '@/routes';
 
 interface GameLink {
     title: string;
@@ -17,6 +17,18 @@ const games: GameLink[] = [
         description: 'Vind de geheime bedrieger. Iedereen krijgt een woord, behalve de Undercover.',
         href: home().url,
         icon: Eye,
+    },
+    {
+        title: 'Spion',
+        description: 'Iedereen kent de geheime locatie — behalve de Spion. Ontmasker hem of bluf je naar de winst.',
+        href: spyLocation().url,
+        icon: VenetianMask,
+    },
+    {
+        title: 'Verboden Woord',
+        description: 'Laat de groep het woord raden zonder de verboden woorden te zeggen.',
+        href: forbiddenWord().url,
+        icon: Ban,
     },
     {
         title: 'Pim Pam Pet',

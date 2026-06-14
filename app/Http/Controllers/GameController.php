@@ -5,54 +5,53 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class GameController extends Controller
 {
     /**
-     * Show the game, resuming any unfinished game and listing recent history.
+     * Show the Undercover game, resuming any unfinished game and listing history.
      */
     public function index(Request $request): Response
     {
-        $user = $request->user();
-
-        $currentGame = $user->games()
-            ->where('status', Game::STATUS_IN_PROGRESS)
-            ->latest()
-            ->first();
-
-        $history = $user->games()
-            ->where('status', Game::STATUS_FINISHED)
-            ->latest('finished_at')
-            ->take(10)
-            ->get();
-
-        return Inertia::render('undercover', [
-            'currentGame' => $currentGame
-                ? ['id' => $currentGame->id, 'state' => $currentGame->state]
-                : null,
-            'history' => $history->map(fn (Game $game): array => [
-                'id' => $game->id,
-                'state' => $game->state,
-                'finished_at' => $game->finished_at?->toIso8601String(),
-            ])->all(),
-        ]);
+        return $this->renderGame($request, Game::TYPE_UNDERCOVER, 'undercover');
     }
 
     /**
-     * Start (persist) a new game for the user. Any unfinished game is dropped
-     * so each player keeps a single resumable game at a time.
+     * Show the Spy Location game.
+     */
+    public function spyLocation(Request $request): Response
+    {
+        return $this->renderGame($request, Game::TYPE_SPY_LOCATION, 'spy-location');
+    }
+
+    /**
+     * Show the Forbidden Word game.
+     */
+    public function forbiddenWord(Request $request): Response
+    {
+        return $this->renderGame($request, Game::TYPE_FORBIDDEN_WORD, 'forbidden-word');
+    }
+
+    /**
+     * Start (persist) a new game for the user. Any unfinished game of the same
+     * type is dropped so each player keeps a single resumable game per game.
      */
     public function store(Request $request): JsonResponse
     {
-        $data = $this->validateGame($request);
+        $data = $this->validateGame($request, withType: true);
 
         $request->user()->games()
+            ->where('type', $data['type'])
             ->where('status', Game::STATUS_IN_PROGRESS)
             ->delete();
 
-        $game = $request->user()->games()->create($this->attributesFor($data['state']));
+        $game = $request->user()->games()->create([
+            'type' => $data['type'],
+            ...$this->attributesFor($data['state']),
+        ]);
 
         return response()->json(['id' => $game->id]);
     }
@@ -72,16 +71,55 @@ class GameController extends Controller
     }
 
     /**
+     * Render a game page with its resumable game and recent history, scoped to
+     * the given game type.
+     */
+    private function renderGame(Request $request, string $type, string $page): Response
+    {
+        $user = $request->user();
+
+        $currentGame = $user->games()
+            ->where('type', $type)
+            ->where('status', Game::STATUS_IN_PROGRESS)
+            ->latest()
+            ->first();
+
+        $history = $user->games()
+            ->where('type', $type)
+            ->where('status', Game::STATUS_FINISHED)
+            ->latest('finished_at')
+            ->take(10)
+            ->get();
+
+        return Inertia::render($page, [
+            'currentGame' => $currentGame
+                ? ['id' => $currentGame->id, 'state' => $currentGame->state]
+                : null,
+            'history' => $history->map(fn (Game $game): array => [
+                'id' => $game->id,
+                'state' => $game->state,
+                'finished_at' => $game->finished_at?->toIso8601String(),
+            ])->all(),
+        ]);
+    }
+
+    /**
      * Validate an incoming game state payload.
      *
-     * @return array{state: array<string, mixed>}
+     * @return array{type: string, state: array<string, mixed>}
      */
-    private function validateGame(Request $request): array
+    private function validateGame(Request $request, bool $withType = false): array
     {
-        return $request->validate([
+        $rules = [
             'state' => ['required', 'array'],
             'state.phase' => ['required', 'string'],
-        ]);
+        ];
+
+        if ($withType) {
+            $rules['type'] = ['required', Rule::in(Game::TYPES)];
+        }
+
+        return $request->validate($rules);
     }
 
     /**

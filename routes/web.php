@@ -8,6 +8,9 @@ Route::middleware('auth')->group(function () {
     Route::post('games', [GameController::class, 'store'])->name('games.store');
     Route::put('games/{game}', [GameController::class, 'update'])->name('games.update');
 
+    Route::get('spy-location', [GameController::class, 'spyLocation'])->name('spy-location');
+    Route::get('forbidden-word', [GameController::class, 'forbiddenWord'])->name('forbidden-word');
+
     Route::inertia('pim-pam-pet', 'pim-pam-pet')->name('pim-pam-pet');
     Route::inertia('wie-in-de-groep', 'wie-in-de-groep')->name('wie-in-de-groep');
 });

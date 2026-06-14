@@ -20,6 +20,7 @@ class GameFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'type' => Game::TYPE_UNDERCOVER,
             'status' => Game::STATUS_IN_PROGRESS,
             'finished_at' => null,
             'state' => [
@@ -47,6 +48,47 @@ class GameFactory extends Factory
             'status' => Game::STATUS_FINISHED,
             'finished_at' => now(),
             'state' => [...$attributes['state'], 'phase' => 'gameover', 'winner' => 'civilians'],
+        ]);
+    }
+
+    /**
+     * Indicate that the game is a Spy Location game.
+     */
+    public function spyLocation(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => Game::TYPE_SPY_LOCATION,
+            'state' => [
+                'localId' => fake()->numberBetween(1, 999999),
+                'phase' => 'reveal',
+                'players' => [],
+                'location' => 'Vliegtuig',
+                'revealIndex' => 0,
+                'votedId' => null,
+                'winner' => null,
+                'spyGuessedRight' => false,
+            ],
+        ]);
+    }
+
+    /**
+     * Indicate that the game is a Forbidden Word game.
+     */
+    public function forbiddenWord(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => Game::TYPE_FORBIDDEN_WORD,
+            'state' => [
+                'localId' => fake()->numberBetween(1, 999999),
+                'phase' => 'play',
+                'names' => ['Speler 1', 'Speler 2'],
+                'scores' => [0, 0],
+                'seconds' => 60,
+                'totalRounds' => 2,
+                'round' => 1,
+                'currentPlayer' => 0,
+                'turnScore' => 0,
+            ],
         ]);
     }
 }
