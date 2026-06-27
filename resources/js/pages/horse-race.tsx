@@ -619,49 +619,73 @@ function DealerScreen({ code }: { code: string }) {
         );
     }
 
-    // Racing / finished: the dealer just flips cards.
+    // Racing / finished: tap the big card to flip the next one.
+    const canFlip = state.phase === 'racing';
+    const drawnSuit = state.drawn ? suitInfo(state.drawn) : null;
+
     return (
         <div className="flex flex-1 flex-col">
-            <header className="mb-5 text-center">
+            <header className="mb-2 text-center">
                 <h1 className="text-2xl font-black">Dealer</h1>
-                <p className="text-sm text-slate-400">Kijk naar het bord — draai de volgende kaart.</p>
+                <p className="text-sm text-slate-400">{canFlip ? 'Tik op de kaart om te draaien.' : 'De race is gereden.'}</p>
             </header>
 
-            {state.drawn && (
-                <div className="mb-5 flex flex-col items-center">
-                    <motion.div
-                        key={`${state.drawn}-${state.deck.length}`}
-                        initial={{ rotateY: 90, scale: 0.8 }}
-                        animate={{ rotateY: 0, scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 240, damping: 18 }}
-                        className="flex h-28 w-20 items-center justify-center rounded-2xl bg-white shadow-lg"
-                    >
-                        <span className={cn('text-5xl', suitInfo(state.drawn).color)}>{suitInfo(state.drawn).symbol}</span>
-                    </motion.div>
-                    {state.lastEvent && <p className="mt-3 text-center text-sm font-semibold text-amber-300">{state.lastEvent}</p>}
+            <div className="flex flex-1 flex-col items-center justify-center">
+                <div className="relative h-80 w-56" style={{ perspective: 1200 }}>
+                    <AnimatePresence initial={false}>
+                        <motion.div
+                            key={state.drawn ? state.deck.length : 'cover'}
+                            onClick={canFlip ? () => sync(flip(state)) : undefined}
+                            initial={{ rotateY: -180, opacity: 0 }}
+                            animate={{ rotateY: 0, opacity: 1 }}
+                            exit={{ rotateY: 180, opacity: 0 }}
+                            transition={{ duration: 0.7, ease: 'easeInOut' }}
+                            style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
+                            className={cn(
+                                'absolute inset-0 flex flex-col items-center justify-center rounded-3xl shadow-2xl select-none',
+                                drawnSuit ? 'bg-white' : 'bg-gradient-to-br from-emerald-500 to-emerald-700 ring-4 ring-emerald-300/20 ring-inset',
+                                canFlip && 'cursor-pointer',
+                            )}
+                        >
+                            {drawnSuit ? (
+                                <>
+                                    <span className={cn('absolute top-3 left-4 text-2xl font-bold', drawnSuit.color)}>{drawnSuit.symbol}</span>
+                                    <span className={cn('text-[7rem] leading-none', drawnSuit.color)}>{drawnSuit.symbol}</span>
+                                    <span className={cn('absolute right-4 bottom-3 rotate-180 text-2xl font-bold', drawnSuit.color)}>{drawnSuit.symbol}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-7xl">🐎</span>
+                                    <span className="mt-3 text-sm font-semibold text-emerald-50/90">Tik om te draaien</span>
+                                </>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
-            )}
 
-            <div className="grid grid-cols-2 gap-2">
-                {SUITS.map((s) => (
-                    <div key={s.key} className="flex items-center justify-between rounded-xl bg-slate-900/60 px-4 py-2">
-                        <span className={cn('text-xl', s.color)}>{s.symbol}</span>
-                        <span className="text-sm font-bold text-slate-300">{state.positions[s.key]}/{state.trackLength}</span>
-                    </div>
-                ))}
+                <div className="mt-4 h-6">
+                    {state.lastEvent && <p className="text-center text-sm font-semibold text-amber-300">{state.lastEvent}</p>}
+                </div>
+
+                <div className="grid w-full grid-cols-4 gap-2">
+                    {SUITS.map((s) => (
+                        <div key={s.key} className="flex flex-col items-center rounded-xl bg-slate-900/60 py-2">
+                            <span className={cn('text-lg', s.color)}>{s.symbol}</span>
+                            <span className="text-xs font-bold text-slate-300">
+                                {state.positions[s.key]}/{state.trackLength}
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <div className="mt-auto pt-6">
-                {state.phase === 'racing' ? (
-                    <Button onClick={() => sync(flip(state))} className="h-16 w-full bg-emerald-500 text-lg font-black text-slate-950 hover:bg-emerald-400">
-                        Draai kaart
-                    </Button>
-                ) : (
+            {state.phase === 'finished' && (
+                <div className="mt-auto pt-4">
                     <Button onClick={() => sync(bettingState([]))} className="h-14 w-full bg-amber-400 text-base font-bold text-slate-950 hover:bg-amber-300">
                         <RotateCcw className="size-4" /> Nieuw potje
                     </Button>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }
