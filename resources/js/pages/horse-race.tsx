@@ -298,61 +298,35 @@ function BoardScreen({ code }: { code: string }) {
     );
 }
 
-/** Height of one step on the vertical track, in pixels. */
+/** Length of one step on the track, in pixels. */
 const ROW_HEIGHT = 64;
 
-/**
- * The shared race track, running bottom (start) to top (finish). Horses spring
- * up their lane and the camera follows the leader so longer tracks scroll.
- */
-function Track({ state }: { state: RaceState }) {
-    const { trackLength } = state;
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [containerH, setContainerH] = useState(0);
+/** True on tablet/desktop, where the race reads better running left-to-right. */
+function useHorizontal(): boolean {
+    const [horizontal, setHorizontal] = useState(false);
 
-    useLayoutEffect(() => {
-        const el = containerRef.current;
+    useEffect(() => {
+        const query = window.matchMedia('(min-width: 768px)');
+        const update = () => setHorizontal(query.matches);
+        update();
+        query.addEventListener('change', update);
 
-        if (!el) {
-            return;
-        }
-
-        const measure = () => setContainerH(el.clientHeight);
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(el);
-
-        return () => observer.disconnect();
+        return () => query.removeEventListener('change', update);
     }, []);
 
-    const contentHeight = (trackLength + 1) * ROW_HEIGHT;
-    const leadPos = Math.max(...SUITS.map((s) => state.positions[s.key]));
-    // Keep the leader ~62% down the viewport; clamp so we never scroll past the ends.
-    const leadOffset = (trackLength - leadPos) * ROW_HEIGHT + ROW_HEIGHT / 2;
-    const minY = Math.min(0, containerH - contentHeight);
-    const cameraY = containerH === 0 ? 0 : Math.max(minY, Math.min(0, containerH * 0.62 - leadOffset));
+    return horizontal;
+}
+
+/**
+ * The shared race track. Vertical (start at the bottom) on phones, horizontal
+ * (start at the left) on bigger screens. The camera follows the leader so
+ * longer tracks scroll into view.
+ */
+function Track({ state }: { state: RaceState }) {
+    const horizontal = useHorizontal();
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-2 grid grid-cols-4 gap-2">
-                {SUITS.map((suit) => {
-                    const isWinner = state.winner === suit.key;
-
-                    return (
-                        <div
-                            key={suit.key}
-                            className={cn(
-                                'flex items-center justify-center gap-1 rounded-xl border py-1.5',
-                                isWinner ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/50',
-                            )}
-                        >
-                            <span className={cn('text-xl leading-none', suit.color)}>{suit.symbol}</span>
-                            {isWinner && <Trophy className="size-4 text-amber-400" />}
-                        </div>
-                    );
-                })}
-            </div>
-
             <AnimatePresence>
                 {state.lastEvent && (
                     <motion.div
@@ -367,54 +341,28 @@ function Track({ state }: { state: RaceState }) {
                 )}
             </AnimatePresence>
 
-            <div ref={containerRef} className="relative flex-1 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40">
-                <motion.div
-                    className="absolute inset-x-0 top-0"
-                    style={{ height: contentHeight }}
-                    animate={{ y: cameraY }}
-                    transition={{ type: 'spring', stiffness: 120, damping: 24 }}
-                >
-                    {Array.from({ length: trackLength + 1 }, (_, idx) => {
-                        const step = trackLength - idx;
-                        const backfire = state.backfires.find((b) => b.row === step);
+            <div className={cn('flex flex-1 gap-2', horizontal ? 'flex-row' : 'flex-col')}>
+                <div className={cn(horizontal ? 'flex flex-col justify-around' : 'grid grid-cols-4 gap-2')}>
+                    {SUITS.map((suit) => {
+                        const isWinner = state.winner === suit.key;
 
                         return (
-                            <div key={step} className="grid grid-cols-4 border-b border-slate-800/50" style={{ height: ROW_HEIGHT }}>
-                                {step === trackLength ? (
-                                    <div className="col-span-4 flex items-center justify-center gap-2 bg-amber-400/5 text-sm font-bold tracking-widest text-slate-500">
-                                        <Flag className="size-4" /> FINISH
-                                    </div>
-                                ) : backfire ? (
-                                    <div className={cn('col-span-4 flex items-center justify-center', backfire.revealed && 'bg-amber-400/10')}>
-                                        <span className={cn('text-2xl', backfire.revealed ? suitInfo(backfire.suit).color : 'text-slate-600')}>
-                                            {backfire.revealed ? suitInfo(backfire.suit).symbol : '🂠'}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    SUITS.map((s) => <div key={s.key} className="border-r border-slate-800/30 last:border-r-0" />)
+                            <div
+                                key={suit.key}
+                                className={cn(
+                                    'flex items-center justify-center gap-1 rounded-xl border px-2 py-1.5',
+                                    horizontal && 'flex-1',
+                                    isWinner ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/50',
                                 )}
+                            >
+                                <span className={cn('text-xl leading-none', suit.color)}>{suit.symbol}</span>
+                                {isWinner && <Trophy className="size-4 text-amber-400" />}
                             </div>
                         );
                     })}
+                </div>
 
-                    {SUITS.map((suit, i) => (
-                        <motion.div
-                            key={suit.key}
-                            className="absolute top-0 flex items-center justify-center"
-                            style={{ left: `${i * 25}%`, width: '25%', height: ROW_HEIGHT }}
-                            animate={{ y: (trackLength - state.positions[suit.key]) * ROW_HEIGHT }}
-                            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-                        >
-                            <motion.span
-                                className="text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                                animate={state.winner === suit.key ? { scale: [1, 1.3, 1] } : { scale: 1 }}
-                                transition={{ repeat: state.winner === suit.key ? Infinity : 0, duration: 0.8 }}
-                            >
-                                🐎
-                            </motion.span>
-                        </motion.div>
-                    ))}
-                </motion.div>
+                <TrackField state={state} horizontal={horizontal} />
             </div>
 
             {state.phase === 'finished' && state.winner && (
@@ -440,6 +388,113 @@ function Track({ state }: { state: RaceState }) {
                     </ul>
                 </motion.div>
             )}
+        </div>
+    );
+}
+
+/**
+ * The camera viewport with the lanes, backfires and horses. `horizontal` swaps
+ * the travel axis (left→right vs bottom→top); everything else is symmetric.
+ */
+function TrackField({ state, horizontal }: { state: RaceState; horizontal: boolean }) {
+    const { trackLength } = state;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [size, setSize] = useState(0);
+
+    useLayoutEffect(() => {
+        const el = containerRef.current;
+
+        if (!el) {
+            return;
+        }
+
+        const measure = () => setSize(horizontal ? el.clientWidth : el.clientHeight);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+
+        return () => observer.disconnect();
+    }, [horizontal]);
+
+    const contentMain = (trackLength + 1) * ROW_HEIGHT;
+    const leadPos = Math.max(...SUITS.map((s) => state.positions[s.key]));
+    // Distance of the leader along the travel axis from the origin (finish-side
+    // for vertical, start-side for horizontal), then keep it ~62% into view.
+    const leaderCoord = (horizontal ? leadPos : trackLength - leadPos) * ROW_HEIGHT + ROW_HEIGHT / 2;
+    const minOffset = Math.min(0, size - contentMain);
+    const offset = size === 0 ? 0 : Math.max(minOffset, Math.min(0, size * 0.62 - leaderCoord));
+
+    /** Position of one horse along the travel axis. */
+    const horsePos = (pos: number): number => (horizontal ? pos : trackLength - pos) * ROW_HEIGHT;
+
+    return (
+        <div ref={containerRef} className="relative flex-1 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40">
+            <motion.div
+                className="absolute"
+                style={horizontal ? { top: 0, bottom: 0, left: 0, width: contentMain } : { left: 0, right: 0, top: 0, height: contentMain }}
+                animate={horizontal ? { x: offset } : { y: offset }}
+                transition={{ type: 'spring', stiffness: 120, damping: 24 }}
+            >
+                {[1, 2, 3].map((n) => (
+                    <div
+                        key={n}
+                        className="absolute bg-slate-800/40"
+                        style={horizontal ? { left: 0, right: 0, top: `${n * 25}%`, height: 1 } : { top: 0, bottom: 0, left: `${n * 25}%`, width: 1 }}
+                    />
+                ))}
+
+                {Array.from({ length: trackLength + 1 }, (_, idx) => {
+                    const step = horizontal ? idx : trackLength - idx;
+                    const backfire = state.backfires.find((b) => b.row === step);
+                    const isFinish = step === trackLength;
+
+                    return (
+                        <div
+                            key={step}
+                            className={cn(
+                                'absolute flex items-center justify-center',
+                                horizontal ? 'top-0 bottom-0 border-r border-slate-800/50' : 'right-0 left-0 border-b border-slate-800/50',
+                                isFinish && 'bg-amber-400/5',
+                                backfire?.revealed && 'bg-amber-400/10',
+                            )}
+                            style={horizontal ? { left: idx * ROW_HEIGHT, width: ROW_HEIGHT } : { top: idx * ROW_HEIGHT, height: ROW_HEIGHT }}
+                        >
+                            {isFinish ? (
+                                <span className="flex items-center gap-1 text-xs font-bold tracking-widest text-slate-500">
+                                    <Flag className="size-4" />
+                                    {!horizontal && 'FINISH'}
+                                </span>
+                            ) : backfire ? (
+                                <span className={cn('text-2xl', backfire.revealed ? suitInfo(backfire.suit).color : 'text-slate-600')}>
+                                    {backfire.revealed ? suitInfo(backfire.suit).symbol : '🂠'}
+                                </span>
+                            ) : null}
+                        </div>
+                    );
+                })}
+
+                {SUITS.map((suit, i) => (
+                    <motion.div
+                        key={suit.key}
+                        className="absolute flex items-center justify-center"
+                        style={
+                            horizontal
+                                ? { top: `${i * 25}%`, height: '25%', left: 0, width: ROW_HEIGHT }
+                                : { left: `${i * 25}%`, width: '25%', top: 0, height: ROW_HEIGHT }
+                        }
+                        animate={horizontal ? { x: horsePos(state.positions[suit.key]) } : { y: horsePos(state.positions[suit.key]) }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+                    >
+                        <motion.span
+                            className="text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                            animate={state.winner === suit.key ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+                            transition={{ repeat: state.winner === suit.key ? Infinity : 0, duration: 0.8 }}
+                        >
+                            🐎
+                        </motion.span>
+                    </motion.div>
+                ))}
+            </motion.div>
         </div>
     );
 }
