@@ -25,7 +25,29 @@ class RaceController extends Controller
     }
 
     /**
-     * Create a fresh race room and return its join code. The board calls this.
+     * Recent, unfinished races the board can join. The dealer (leading phone)
+     * starts a race; it then shows up here for the board to pick.
+     */
+    public function list(): JsonResponse
+    {
+        $races = Race::where('created_at', '>=', now()->subHours(2))
+            ->latest()
+            ->take(30)
+            ->get()
+            ->filter(fn (Race $race): bool => ($race->state['phase'] ?? 'lobby') !== 'finished')
+            ->take(12)
+            ->map(fn (Race $race): array => [
+                'code' => $race->code,
+                'phase' => $race->state['phase'] ?? 'lobby',
+                'players' => count($race->state['bets'] ?? []),
+            ])
+            ->values();
+
+        return response()->json(['races' => $races]);
+    }
+
+    /**
+     * Create a fresh race room and return its join code. The dealer calls this.
      */
     public function store(): JsonResponse
     {

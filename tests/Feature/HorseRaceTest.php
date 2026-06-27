@@ -32,6 +32,18 @@ test('the dealer can read and write the shared state by code', function () {
         ->assertJsonPath('state.positions.hearts', 3);
 });
 
+test('a started race shows up in the list for the board to join, finished ones do not', function () {
+    $open = $this->postJson('/races')->json('code');
+
+    $done = $this->postJson('/races')->json('code');
+    $this->putJson("/races/{$done}", ['state' => ['phase' => 'finished']]);
+
+    $codes = collect($this->getJson('/races')->json('races'))->pluck('code');
+
+    expect($codes)->toContain($open);
+    expect($codes)->not->toContain($done);
+});
+
 test('an unknown race code returns not found', function () {
     $this->getJson('/races/NOPE')->assertNotFound();
 });

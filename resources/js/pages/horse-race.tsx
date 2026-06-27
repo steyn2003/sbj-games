@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Beer, Flag, Minus, Plus, RotateCcw, Trophy, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { show, store, update } from '@/actions/App/Http/Controllers/RaceController';
+import { list, show, store, update } from '@/actions/App/Http/Controllers/RaceController';
 import { Button } from '@/components/ui/button';
 import { flip, outcomes, startRace, SUITS, suitInfo, TRACK_LENGTH } from '@/lib/horse-race';
 import type { Bet, RaceState, Suit } from '@/lib/horse-race';
@@ -85,12 +85,20 @@ export default function HorseRace() {
     );
 }
 
+interface OpenRace {
+    code: string;
+    phase: string;
+    players: number;
+}
+
 function ChooseScreen({ onBoard, onDealer }: { onBoard: (code: string) => void; onDealer: (code: string) => void }) {
-    const [joinCode, setJoinCode] = useState('');
+    const [view, setView] = useState<'pick' | 'join'>('pick');
+    const [races, setRaces] = useState<OpenRace[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
 
-    const createBoard = async () => {
+    // The dealer (leading phone) starts the race and runs it.
+    const startRace = async () => {
         setBusy(true);
         setError(null);
 
@@ -110,35 +118,78 @@ function ChooseScreen({ onBoard, onDealer }: { onBoard: (code: string) => void; 
             }
 
             const data: { code: string } = await response.json();
-            onBoard(data.code);
+            onDealer(data.code);
         } catch {
             setError('Kon geen race starten. Probeer opnieuw.');
             setBusy(false);
         }
     };
 
-    const joinAsDealer = async () => {
-        const clean = joinCode.trim().toUpperCase();
-
-        if (clean.length < 3) {
-            setError('Vul de code van het bord in.');
-
+    // The board (render phone) joins a race the dealer started. The list keeps
+    // refreshing so a freshly started race shows up on its own.
+    useEffect(() => {
+        if (view !== 'join') {
             return;
         }
 
-        setBusy(true);
-        setError(null);
-        const response = await fetch(show(clean).url, { headers: { Accept: 'application/json' } });
+        let active = true;
+        const refresh = async () => {
+            try {
+                const response = await fetch(list().url, { headers: { Accept: 'application/json' } });
+                const data: { races: OpenRace[] } = await response.json();
 
-        if (!response.ok) {
-            setError('Geen race met die code.');
-            setBusy(false);
+                if (active) {
+                    setRaces(data.races);
+                }
+            } catch {
+                // Leave the last list up; the next tick retries.
+            }
+        };
+        refresh();
+        const id = window.setInterval(refresh, 2000);
 
-            return;
-        }
+        return () => {
+            active = false;
+            window.clearInterval(id);
+        };
+    }, [view]);
 
-        onDealer(clean);
-    };
+    if (view === 'join') {
+        return (
+            <div className="flex flex-1 flex-col">
+                <button onClick={() => setView('pick')} className="mb-4 inline-flex items-center gap-1 self-start text-sm text-slate-400 hover:text-slate-200">
+                    <ArrowLeft className="size-4" /> Terug
+                </button>
+                <header className="mb-5 text-center">
+                    <h1 className="text-2xl font-black">Kies een race</h1>
+                    <p className="mt-1 text-sm text-slate-400">Tik op de race die de dealer net startte.</p>
+                </header>
+
+                {races.length === 0 ? (
+                    <div className="mt-10 text-center text-slate-400">
+                        <div className="mb-3 animate-pulse text-5xl">🐎</div>
+                        Wachten tot de dealer een race start…
+                    </div>
+                ) : (
+                    <ul className="space-y-2">
+                        {races.map((race) => (
+                            <li key={race.code}>
+                                <button
+                                    onClick={() => onBoard(race.code)}
+                                    className="flex w-full items-center justify-between rounded-2xl border border-slate-700 bg-slate-900/60 p-4 transition hover:border-emerald-400/60 active:scale-[0.99]"
+                                >
+                                    <span className="text-xl font-black tracking-[0.3em] text-amber-300">{race.code}</span>
+                                    <span className="text-sm text-slate-400">
+                                        {race.players} {race.players === 1 ? 'inzet' : 'inzetten'}
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-1 flex-col">
@@ -147,34 +198,27 @@ function ChooseScreen({ onBoard, onDealer }: { onBoard: (code: string) => void; 
                     🐎 Paardenrace
                 </span>
                 <h1 className="text-3xl font-black">Twee telefoons</h1>
-                <p className="mt-1 text-sm text-slate-400">Eén telefoon is het bord, de ander deelt de kaarten.</p>
+                <p className="mt-1 text-sm text-slate-400">De dealer start de race, het bord doet mee.</p>
             </header>
 
             <button
-                onClick={createBoard}
+                onClick={startRace}
                 disabled={busy}
                 className="mb-3 flex flex-col items-start gap-1 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 text-left transition hover:border-emerald-400/60 active:scale-[0.99] disabled:opacity-50"
             >
-                <span className="text-2xl">📺</span>
-                <span className="text-lg font-bold">Ik ben het bord</span>
-                <span className="text-sm text-slate-400">Toon de baan op deze telefoon. Geef de code aan de dealer.</span>
+                <span className="text-2xl">🃏</span>
+                <span className="text-lg font-bold">Ik ben de dealer</span>
+                <span className="text-sm text-slate-400">Start de race, plaats de weddenschappen en draai de kaarten.</span>
             </button>
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
-                <div className="mb-1 text-2xl">🃏</div>
-                <div className="text-lg font-bold">Ik ben de dealer</div>
-                <p className="mb-3 text-sm text-slate-400">Plaats de weddenschappen en draai de kaarten.</p>
-                <input
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="CODE"
-                    maxLength={8}
-                    className="mb-3 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-center text-2xl font-black tracking-[0.3em] uppercase placeholder:text-slate-600 focus:border-amber-400 focus:outline-none"
-                />
-                <Button onClick={joinAsDealer} disabled={busy} className="w-full bg-amber-400 text-slate-950 hover:bg-amber-300">
-                    Word dealer
-                </Button>
-            </div>
+            <button
+                onClick={() => setView('join')}
+                className="flex flex-col items-start gap-1 rounded-2xl border border-slate-700 bg-slate-900/60 p-5 text-left transition hover:border-emerald-400/60 active:scale-[0.99]"
+            >
+                <span className="text-2xl">📺</span>
+                <span className="text-lg font-bold">Ik ben het bord</span>
+                <span className="text-sm text-slate-400">Toon de baan. Kies de race die de dealer startte.</span>
+            </button>
 
             {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
         </div>
@@ -224,7 +268,7 @@ function BoardScreen({ code }: { code: string }) {
     return (
         <div className="flex flex-1 flex-col">
             <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm text-slate-400">Geef deze code aan de dealer</span>
+                <span className="text-sm text-slate-400">Race</span>
                 <span className="rounded-lg bg-slate-800 px-3 py-1 text-xl font-black tracking-[0.3em] text-amber-300">{code}</span>
             </div>
 
