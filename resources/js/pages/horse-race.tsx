@@ -1,9 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Beer, Flag, Minus, Plus, RotateCcw, Trophy, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { list, show, store, update } from '@/actions/App/Http/Controllers/RaceController';
 import { Button } from '@/components/ui/button';
-import { flip, outcomes, startRace, SUITS, suitInfo, TRACK_LENGTH } from '@/lib/horse-race';
+import { DEFAULT_STEPS, flip, outcomes, startRace, STEP_OPTIONS, SUITS, suitInfo } from '@/lib/horse-race';
 import type { Bet, RaceState, Suit } from '@/lib/horse-race';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -30,9 +31,10 @@ async function pushState(code: string, state: RaceState): Promise<void> {
 }
 
 /** A blank board waiting for the dealer to place bets and start. */
-function bettingState(bets: Bet[]): RaceState {
+function bettingState(bets: Bet[], trackLength: number = DEFAULT_STEPS): RaceState {
     return {
         phase: 'betting',
+        trackLength,
         positions: { hearts: 0, spades: 0, clubs: 0, diamonds: 0 },
         backfires: [],
         bets,
@@ -296,60 +298,132 @@ function BoardScreen({ code }: { code: string }) {
     );
 }
 
-/** The shared race track: four lanes with the horses and revealed backfires. */
+/** Height of one step on the vertical track, in pixels. */
+const ROW_HEIGHT = 64;
+
+/**
+ * The shared race track, running bottom (start) to top (finish). Horses spring
+ * up their lane and the camera follows the leader so longer tracks scroll.
+ */
 function Track({ state }: { state: RaceState }) {
+    const { trackLength } = state;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [containerH, setContainerH] = useState(0);
+
+    useLayoutEffect(() => {
+        const el = containerRef.current;
+
+        if (!el) {
+            return;
+        }
+
+        const measure = () => setContainerH(el.clientHeight);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+
+        return () => observer.disconnect();
+    }, []);
+
+    const contentHeight = (trackLength + 1) * ROW_HEIGHT;
+    const leadPos = Math.max(...SUITS.map((s) => state.positions[s.key]));
+    // Keep the leader ~62% down the viewport; clamp so we never scroll past the ends.
+    const leadOffset = (trackLength - leadPos) * ROW_HEIGHT + ROW_HEIGHT / 2;
+    const minY = Math.min(0, containerH - contentHeight);
+    const cameraY = containerH === 0 ? 0 : Math.max(minY, Math.min(0, containerH * 0.62 - leadOffset));
+
     return (
         <div className="flex flex-1 flex-col">
-            {state.lastEvent && (
-                <div className="mb-3 rounded-xl bg-amber-400/15 px-4 py-2 text-center text-sm font-semibold text-amber-200 ring-1 ring-amber-400/30">
-                    {state.lastEvent}
-                </div>
-            )}
-
-            <div className="space-y-3">
+            <div className="mb-2 grid grid-cols-4 gap-2">
                 {SUITS.map((suit) => {
-                    const pos = state.positions[suit.key];
                     const isWinner = state.winner === suit.key;
 
                     return (
-                        <div key={suit.key} className={cn('rounded-2xl border p-2', isWinner ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/50')}>
-                            <div className="mb-1 flex items-center gap-2 px-1">
-                                <span className={cn('text-2xl leading-none', suit.color)}>{suit.symbol}</span>
-                                <span className="text-sm font-semibold text-slate-300">{suit.label}</span>
-                                {isWinner && <Trophy className="ml-auto size-4 text-amber-400" />}
-                            </div>
-                            <div className="grid grid-cols-[repeat(8,1fr)] gap-1">
-                                {Array.from({ length: TRACK_LENGTH + 1 }, (_, step) => {
-                                    const backfire = state.backfires.find((b) => b.row === step);
-
-                                    return (
-                                        <div
-                                            key={step}
-                                            className={cn(
-                                                'flex aspect-square items-center justify-center rounded-md text-lg',
-                                                step === TRACK_LENGTH ? 'bg-slate-700/40' : 'bg-slate-800/40',
-                                            )}
-                                        >
-                                            {pos === step ? (
-                                                <span className="text-xl">🐎</span>
-                                            ) : step === TRACK_LENGTH ? (
-                                                <Flag className="size-4 text-slate-500" />
-                                            ) : backfire ? (
-                                                <span className={cn(backfire.revealed ? suitInfo(backfire.suit).color : 'text-slate-600')}>
-                                                    {backfire.revealed ? suitInfo(backfire.suit).symbol : '🂠'}
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                        <div
+                            key={suit.key}
+                            className={cn(
+                                'flex items-center justify-center gap-1 rounded-xl border py-1.5',
+                                isWinner ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/50',
+                            )}
+                        >
+                            <span className={cn('text-xl leading-none', suit.color)}>{suit.symbol}</span>
+                            {isWinner && <Trophy className="size-4 text-amber-400" />}
                         </div>
                     );
                 })}
             </div>
 
+            <AnimatePresence>
+                {state.lastEvent && (
+                    <motion.div
+                        key={state.lastEvent}
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="mb-2 rounded-xl bg-amber-400/15 px-4 py-2 text-center text-sm font-semibold text-amber-200 ring-1 ring-amber-400/30"
+                    >
+                        {state.lastEvent}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <div ref={containerRef} className="relative flex-1 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40">
+                <motion.div
+                    className="absolute inset-x-0 top-0"
+                    style={{ height: contentHeight }}
+                    animate={{ y: cameraY }}
+                    transition={{ type: 'spring', stiffness: 120, damping: 24 }}
+                >
+                    {Array.from({ length: trackLength + 1 }, (_, idx) => {
+                        const step = trackLength - idx;
+                        const backfire = state.backfires.find((b) => b.row === step);
+
+                        return (
+                            <div key={step} className="grid grid-cols-4 border-b border-slate-800/50" style={{ height: ROW_HEIGHT }}>
+                                {step === trackLength ? (
+                                    <div className="col-span-4 flex items-center justify-center gap-2 bg-amber-400/5 text-sm font-bold tracking-widest text-slate-500">
+                                        <Flag className="size-4" /> FINISH
+                                    </div>
+                                ) : backfire ? (
+                                    <div className={cn('col-span-4 flex items-center justify-center', backfire.revealed && 'bg-amber-400/10')}>
+                                        <span className={cn('text-2xl', backfire.revealed ? suitInfo(backfire.suit).color : 'text-slate-600')}>
+                                            {backfire.revealed ? suitInfo(backfire.suit).symbol : '🂠'}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    SUITS.map((s) => <div key={s.key} className="border-r border-slate-800/30 last:border-r-0" />)
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {SUITS.map((suit, i) => (
+                        <motion.div
+                            key={suit.key}
+                            className="absolute top-0 flex items-center justify-center"
+                            style={{ left: `${i * 25}%`, width: '25%', height: ROW_HEIGHT }}
+                            animate={{ y: (trackLength - state.positions[suit.key]) * ROW_HEIGHT }}
+                            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+                        >
+                            <motion.span
+                                className="text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                                animate={state.winner === suit.key ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+                                transition={{ repeat: state.winner === suit.key ? Infinity : 0, duration: 0.8 }}
+                            >
+                                🐎
+                            </motion.span>
+                        </motion.div>
+                    ))}
+                </motion.div>
+            </div>
+
             {state.phase === 'finished' && state.winner && (
-                <div className="mt-5 rounded-2xl bg-amber-400/15 p-5 text-center ring-1 ring-amber-400/30">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+                    className="mt-4 rounded-2xl bg-amber-400/15 p-5 text-center ring-1 ring-amber-400/30"
+                >
                     <div className="mb-1 text-4xl">🏆</div>
                     <div className={cn('text-xl font-black', suitInfo(state.winner).color)}>
                         {suitInfo(state.winner).symbol} {suitInfo(state.winner).label} wint!
@@ -364,7 +438,7 @@ function Track({ state }: { state: RaceState }) {
                             </li>
                         ))}
                     </ul>
-                </div>
+                </motion.div>
             )}
         </div>
     );
@@ -383,6 +457,7 @@ function DealerScreen({ code }: { code: string }) {
     const [player, setPlayer] = useState('');
     const [suit, setSuit] = useState<Suit>('hearts');
     const [sips, setSips] = useState(2);
+    const [steps, setSteps] = useState(DEFAULT_STEPS);
 
     const addBet = () => {
         const name = player.trim();
@@ -458,9 +533,27 @@ function DealerScreen({ code }: { code: string }) {
                     </ul>
                 )}
 
+                <div className="mt-6">
+                    <p className="mb-2 text-sm font-semibold text-slate-300">Aantal stappen</p>
+                    <div className="grid grid-cols-5 gap-2">
+                        {STEP_OPTIONS.map((option) => (
+                            <button
+                                key={option}
+                                onClick={() => setSteps(option)}
+                                className={cn(
+                                    'rounded-xl border py-2 text-sm font-bold transition',
+                                    steps === option ? 'border-amber-400 bg-amber-400/10 text-amber-300' : 'border-slate-700 bg-slate-950 text-slate-300',
+                                )}
+                            >
+                                {option}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="mt-auto pt-6">
                     <Button
-                        onClick={() => sync(startRace(state.bets))}
+                        onClick={() => sync(startRace(state.bets, steps))}
                         disabled={state.bets.length === 0}
                         className="h-14 w-full bg-emerald-500 text-base font-bold text-slate-950 hover:bg-emerald-400 disabled:opacity-40"
                     >
@@ -481,9 +574,15 @@ function DealerScreen({ code }: { code: string }) {
 
             {state.drawn && (
                 <div className="mb-5 flex flex-col items-center">
-                    <div className="flex h-28 w-20 items-center justify-center rounded-2xl bg-white shadow-lg">
+                    <motion.div
+                        key={`${state.drawn}-${state.deck.length}`}
+                        initial={{ rotateY: 90, scale: 0.8 }}
+                        animate={{ rotateY: 0, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 240, damping: 18 }}
+                        className="flex h-28 w-20 items-center justify-center rounded-2xl bg-white shadow-lg"
+                    >
                         <span className={cn('text-5xl', suitInfo(state.drawn).color)}>{suitInfo(state.drawn).symbol}</span>
-                    </div>
+                    </motion.div>
                     {state.lastEvent && <p className="mt-3 text-center text-sm font-semibold text-amber-300">{state.lastEvent}</p>}
                 </div>
             )}
@@ -492,7 +591,7 @@ function DealerScreen({ code }: { code: string }) {
                 {SUITS.map((s) => (
                     <div key={s.key} className="flex items-center justify-between rounded-xl bg-slate-900/60 px-4 py-2">
                         <span className={cn('text-xl', s.color)}>{s.symbol}</span>
-                        <span className="text-sm font-bold text-slate-300">{state.positions[s.key]}/{TRACK_LENGTH}</span>
+                        <span className="text-sm font-bold text-slate-300">{state.positions[s.key]}/{state.trackLength}</span>
                     </div>
                 ))}
             </div>

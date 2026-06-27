@@ -26,10 +26,21 @@ export function suitInfo(key: Suit): SuitInfo {
     return SUITS.find((s) => s.key === key)!;
 }
 
-/** Steps a horse must take to win. Backfires sit on the even rows in between. */
-export const TRACK_LENGTH = 7;
+/** Track lengths the dealer can pick. Backfires sit on the even rows between. */
+export const STEP_OPTIONS = [6, 8, 10, 12, 16];
 
-const BACKFIRE_ROWS = [2, 4, 6];
+export const DEFAULT_STEPS = 8;
+
+/** A backfire card on every second step, never on the start or finish line. */
+function backfireRows(trackLength: number): number[] {
+    const rows: number[] = [];
+
+    for (let row = 2; row < trackLength; row += 2) {
+        rows.push(row);
+    }
+
+    return rows;
+}
 
 export interface Bet {
     id: number;
@@ -46,6 +57,8 @@ export interface Backfire {
 
 export interface RaceState {
     phase: 'lobby' | 'betting' | 'racing' | 'finished';
+    /** Steps to the finish line, chosen by the dealer. */
+    trackLength: number;
     positions: Record<Suit, number>;
     backfires: Backfire[];
     bets: Bet[];
@@ -79,11 +92,12 @@ function randomSuit(): Suit {
 }
 
 /** A fresh race ready for the first flip, keeping the bets already placed. */
-export function startRace(bets: Bet[]): RaceState {
+export function startRace(bets: Bet[], trackLength: number): RaceState {
     return {
         phase: 'racing',
+        trackLength,
         positions: { hearts: 0, spades: 0, clubs: 0, diamonds: 0 },
-        backfires: BACKFIRE_ROWS.map((row) => ({ row, suit: randomSuit(), revealed: false })),
+        backfires: backfireRows(trackLength).map((row) => ({ row, suit: randomSuit(), revealed: false })),
         bets,
         deck: buildDeck(),
         drawn: null,
@@ -106,7 +120,7 @@ export function flip(state: RaceState): RaceState {
     const drawn = deck.pop()!;
 
     const positions = { ...state.positions };
-    positions[drawn] = Math.min(TRACK_LENGTH, positions[drawn] + 1);
+    positions[drawn] = Math.min(state.trackLength, positions[drawn] + 1);
 
     let lastEvent: string | null = null;
     const backfires = state.backfires.map((b) => ({ ...b }));
@@ -120,7 +134,7 @@ export function flip(state: RaceState): RaceState {
         }
     }
 
-    const winner = SUIT_KEYS.find((s) => positions[s] >= TRACK_LENGTH) ?? null;
+    const winner = SUIT_KEYS.find((s) => positions[s] >= state.trackLength) ?? null;
 
     return {
         ...state,
