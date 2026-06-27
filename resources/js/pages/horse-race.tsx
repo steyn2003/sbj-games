@@ -276,7 +276,7 @@ function BoardScreen({ code }: { code: string }) {
                 <div className="mt-10 text-center text-slate-400">
                     <div className="mb-3 animate-pulse text-5xl">🐎</div>
                     Wachten op de dealer…
-                    {state && state.bets.length > 0 && (
+                    {state && state.bets && state.bets.length > 0 && (
                         <ul className="mx-auto mt-6 max-w-xs space-y-1 text-left text-sm">
                             {state.bets.map((bet) => (
                                 <li key={bet.id} className="flex items-center justify-between rounded-lg bg-slate-900/60 px-3 py-1.5">
