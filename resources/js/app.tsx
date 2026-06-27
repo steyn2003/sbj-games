@@ -18,6 +18,7 @@ createInertiaApp({
             case name === 'forbidden-word':
             case name === 'pim-pam-pet':
             case name === 'wie-in-de-groep':
+            case name === 'horse-race':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

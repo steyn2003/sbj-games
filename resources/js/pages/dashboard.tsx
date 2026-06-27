@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
-import { Ban, ChevronRight, Eye, Timer, Users, VenetianMask } from 'lucide-react';
+import { Ban, ChevronRight, Eye, Rabbit, Timer, Users, VenetianMask } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { dashboard, forbiddenWord, home, pimPamPet, spyLocation, wieInDeGroep } from '@/routes';
+import { dashboard, forbiddenWord, home, horseRace, pimPamPet, spyLocation, wieInDeGroep } from '@/routes';
 
 interface GameLink {
     title: string;
@@ -41,6 +41,12 @@ const games: GameLink[] = [
         description: 'Stem op wie de stelling het beste past. De winnaar drinkt!',
         href: wieInDeGroep().url,
         icon: Users,
+    },
+    {
+        title: 'Paardenrace',
+        description: 'Twee telefoons: één toont de baan, de ander deelt de kaarten. Zet in op een kleur en race!',
+        href: horseRace().url,
+        icon: Rabbit,
     },
 ];
 
