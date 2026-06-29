@@ -1,7 +1,6 @@
 import { router } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegistrationController';
-import Heading from '@/components/heading';
 import PasskeyItem from '@/components/passkey-item';
 import PasskeyRegistration from '@/components/passkey-register';
 import type { Passkey } from '@/types/auth';
@@ -14,12 +13,14 @@ export type Props = {
 const EmptyState = () => {
     return (
         <div className="p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                <KeyRound className="h-7 w-7 text-muted-foreground" />
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-white ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10">
+                <KeyRound className="size-7 text-slate-500 dark:text-slate-400" />
             </div>
-            <p className="font-medium">No passkeys yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-                Add a passkey to sign in without a password
+            <p className="font-semibold text-slate-900 dark:text-white">
+                Nog geen toegangssleutels
+            </p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Voeg een toegangssleutel toe om zonder wachtwoord in te loggen.
             </p>
         </div>
     );
@@ -44,14 +45,18 @@ export default function ManagePasskeys(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Passkeys"
-                description="Manage your passkeys for passwordless sign-in"
-            />
+        <section className="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Toegangssleutels
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Beheer je toegangssleutels om zonder wachtwoord in te
+                    loggen.
+                </p>
+            </div>
 
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className="overflow-hidden rounded-xl ring-1 ring-slate-200 dark:ring-white/10">
                 {passkeys.length > 0 ? (
                     passkeys.map((passkey) => (
                         <PasskeyItem
@@ -66,6 +71,6 @@ export default function ManagePasskeys(props: Props) {
             </div>
 
             <PasskeyRegistration onSuccess={handleRegisterSuccess} />
-        </div>
+        </section>
     );
 }

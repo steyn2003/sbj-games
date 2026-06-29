@@ -95,9 +95,9 @@ export default function Undercover() {
     return (
         <>
             <Head title="Undercover" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-950 text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-600/30 blur-3xl" />
-                <div className="pointer-events-none absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-amber-500/20 blur-3xl" />
+            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-300/40 blur-3xl dark:bg-indigo-600/30" />
+                <div className="pointer-events-none absolute -right-24 -bottom-40 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
                 <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
                     {game === null ? (
                         <SetupScreen
@@ -107,7 +107,11 @@ export default function Undercover() {
                             onStart={setGame}
                         />
                     ) : (
-                        <PlayScreen game={game} setGame={setGame} onReset={resetToSetup} />
+                        <PlayScreen
+                            game={game}
+                            setGame={setGame}
+                            onReset={resetToSetup}
+                        />
                     )}
                 </main>
             </div>
@@ -136,7 +140,8 @@ function SetupScreen({
     );
 
     const error = validateSettings(settings);
-    const civilianCount = names.length - undercoverCount - (includeMrWhite ? 1 : 0);
+    const civilianCount =
+        names.length - undercoverCount - (includeMrWhite ? 1 : 0);
 
     const setPlayerCount = (count: number) => {
         const next = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, count));
@@ -151,7 +156,9 @@ function SetupScreen({
     };
 
     const updateName = (index: number, value: string) => {
-        setNames((current) => current.map((name, i) => (i === index ? value : name)));
+        setNames((current) =>
+            current.map((name, i) => (i === index ? value : name)),
+        );
     };
 
     const start = () => {
@@ -181,20 +188,21 @@ function SetupScreen({
             <div className="mb-2">
                 <Link
                     href={dashboard()}
-                    className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
+                    className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                     <ArrowLeft className="size-4" /> Dashboard
                 </Link>
             </div>
             <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-300 uppercase ring-1 ring-amber-400/30">
+                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-600 uppercase ring-1 ring-amber-400/30 dark:text-amber-300">
                     <Beer className="size-3.5" /> Pim Pam Pet
                 </span>
-                <h1 className="bg-gradient-to-br from-white via-amber-100 to-amber-300 bg-clip-text text-5xl font-black tracking-tight text-transparent">
+                <h1 className="bg-gradient-to-br from-slate-900 via-amber-700 to-amber-500 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-amber-100 dark:to-amber-300">
                     Undercover
                 </h1>
-                <p className="mt-2 text-sm text-slate-400">
-                    Iedereen krijgt een geheim woord — behalve de Undercover. Ontmasker ze.
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    Iedereen krijgt een geheim woord — behalve de Undercover.
+                    Ontmasker ze.
                 </p>
             </header>
 
@@ -202,23 +210,26 @@ function SetupScreen({
                 <button
                     type="button"
                     onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-3 text-left ring-1 ring-emerald-400/40 transition active:scale-[0.99]"
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-left ring-1 ring-emerald-400/40 transition active:scale-[0.99] dark:from-emerald-500/20 dark:to-teal-500/20"
                 >
                     <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/30">
                         <Play className="size-5 text-emerald-200" />
                     </span>
                     <span className="flex-1">
-                        <span className="block text-sm font-bold text-white">Ga verder</span>
+                        <span className="block text-sm font-bold text-white">
+                            Ga verder
+                        </span>
                         <span className="block text-xs text-emerald-200/80">
                             Ronde {resumable.state.round ?? 1} ·{' '}
-                            {alivePlayers(resumable.state.players ?? []).length} spelers over
+                            {alivePlayers(resumable.state.players ?? []).length}{' '}
+                            spelers over
                         </span>
                     </span>
                     <ArrowRight className="size-5 text-emerald-200" />
                 </button>
             )}
 
-            <section className="mb-5 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 backdrop-blur-sm">
+            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur-sm dark:bg-white/5 dark:shadow-none dark:ring-white/10">
                 <Stepper
                     label="Spelers"
                     icon={<Users className="size-4" />}
@@ -238,7 +249,7 @@ function SetupScreen({
                 <button
                     type="button"
                     onClick={() => setIncludeMrWhite((value) => !value)}
-                    className="mt-2 flex w-full items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-left transition hover:bg-white/10"
+                    className="mt-2 flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left transition hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10"
                 >
                     <span className="flex items-center gap-2 text-sm font-medium">
                         <Skull className="size-4" /> Mr. White meespelen
@@ -246,7 +257,9 @@ function SetupScreen({
                     <span
                         className={cn(
                             'relative h-6 w-11 rounded-full transition',
-                            includeMrWhite ? 'bg-emerald-500' : 'bg-slate-600',
+                            includeMrWhite
+                                ? 'bg-emerald-500'
+                                : 'bg-slate-300 dark:bg-slate-600',
                         )}
                     >
                         <span
@@ -257,21 +270,26 @@ function SetupScreen({
                         />
                     </span>
                 </button>
-                <p className="mt-3 text-center text-xs text-slate-400">
-                    {civilianCount} Burger{civilianCount === 1 ? '' : 's'} · {undercoverCount} Undercover
+                <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {civilianCount} Burger{civilianCount === 1 ? '' : 's'} ·{' '}
+                    {undercoverCount} Undercover
                     {includeMrWhite ? ' · 1 Mr. White' : ''}
                 </p>
             </section>
 
             <section className="mb-5 space-y-2">
-                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Namen</h2>
+                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                    Namen
+                </h2>
                 {names.map((name, index) => (
                     <input
                         key={index}
                         value={name}
-                        onChange={(event) => updateName(index, event.target.value)}
+                        onChange={(event) =>
+                            updateName(index, event.target.value)
+                        }
                         maxLength={20}
-                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-slate-500 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                         placeholder={`Speler ${index + 1}`}
                     />
                 ))}
@@ -280,7 +298,11 @@ function SetupScreen({
             {history.length > 0 && <HistoryList history={history} />}
 
             <div className="mt-auto pt-2">
-                {error && <p className="mb-3 text-center text-sm text-rose-400">{error}</p>}
+                {error && (
+                    <p className="mb-3 text-center text-sm text-rose-600 dark:text-rose-400">
+                        {error}
+                    </p>
+                )}
                 <Button
                     onClick={start}
                     disabled={Boolean(error)}
@@ -296,7 +318,9 @@ function SetupScreen({
 
 function HistoryList({ history }: { history: HistoryEntry[] }) {
     // Only show entries with a complete result, guarding against partial saves.
-    const entries = history.filter((entry) => entry.state?.pair && entry.state.winner);
+    const entries = history.filter(
+        (entry) => entry.state?.pair && entry.state.winner,
+    );
 
     if (entries.length === 0) {
         return null;
@@ -304,7 +328,9 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
 
     return (
         <section className="mb-5">
-            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Recente potjes</h2>
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                Recente potjes
+            </h2>
             <div className="space-y-2">
                 {entries.map((entry) => {
                     const civiliansWon = entry.state.winner === 'civilians';
@@ -317,24 +343,27 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
                     return (
                         <div
                             key={entry.id}
-                            className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm ring-1 ring-white/10"
+                            className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
                         >
                             <span className="flex items-center gap-2">
                                 <span
                                     className={cn(
                                         'rounded-full px-2 py-0.5 text-xs font-bold',
                                         civiliansWon && !entry.state.mrWhiteWon
-                                            ? 'bg-emerald-500/20 text-emerald-300'
-                                            : 'bg-rose-500/20 text-rose-300',
+                                            ? 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                                            : 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
                                     )}
                                 >
                                     {result}
                                 </span>
-                                <span className="text-slate-400">
-                                    {entry.state.pair.civilian} / {entry.state.pair.undercover}
+                                <span className="text-slate-500 dark:text-slate-400">
+                                    {entry.state.pair.civilian} /{' '}
+                                    {entry.state.pair.undercover}
                                 </span>
                             </span>
-                            <span className="text-xs text-slate-500">{formatDate(entry.finished_at)}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                                {formatDate(entry.finished_at)}
+                            </span>
                         </div>
                     );
                 })}
@@ -348,7 +377,10 @@ function formatDate(value: string | null): string {
         return '';
     }
 
-    return new Date(value).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+    return new Date(value).toLocaleDateString('nl-NL', {
+        day: 'numeric',
+        month: 'short',
+    });
 }
 
 function Stepper({
@@ -372,11 +404,19 @@ function Stepper({
                 {icon} {label}
             </span>
             <div className="flex items-center gap-3">
-                <StepperButton onClick={() => onChange(value - 1)} disabled={value <= min}>
+                <StepperButton
+                    onClick={() => onChange(value - 1)}
+                    disabled={value <= min}
+                >
                     <Minus className="size-4" />
                 </StepperButton>
-                <span className="w-6 text-center text-lg font-bold tabular-nums">{value}</span>
-                <StepperButton onClick={() => onChange(value + 1)} disabled={value >= max}>
+                <span className="w-6 text-center text-lg font-bold tabular-nums">
+                    {value}
+                </span>
+                <StepperButton
+                    onClick={() => onChange(value + 1)}
+                    disabled={value >= max}
+                >
                     <Plus className="size-4" />
                 </StepperButton>
             </div>
@@ -398,7 +438,7 @@ function StepperButton({
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-30"
+            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
         >
             {children}
         </button>
@@ -418,19 +458,37 @@ function PlayScreen({
         case 'reveal':
             return <RevealScreen game={game} setGame={setGame} />;
         case 'discuss':
-            return <DiscussScreen game={game} setGame={setGame} onReset={onReset} />;
+            return (
+                <DiscussScreen
+                    game={game}
+                    setGame={setGame}
+                    onReset={onReset}
+                />
+            );
         case 'vote':
             return <VoteScreen game={game} setGame={setGame} />;
         case 'mrwhite':
             return <MrWhiteScreen game={game} setGame={setGame} />;
         case 'gameover':
-            return <GameOverScreen game={game} setGame={setGame} onReset={onReset} />;
+            return (
+                <GameOverScreen
+                    game={game}
+                    setGame={setGame}
+                    onReset={onReset}
+                />
+            );
         default:
             return null;
     }
 }
 
-function RevealScreen({ game, setGame }: { game: GameState; setGame: (game: GameState) => void }) {
+function RevealScreen({
+    game,
+    setGame,
+}: {
+    game: GameState;
+    setGame: (game: GameState) => void;
+}) {
     const [revealed, setRevealed] = useState(false);
     const player = game.players[game.revealIndex];
     const isLast = game.revealIndex === game.players.length - 1;
@@ -439,7 +497,11 @@ function RevealScreen({ game, setGame }: { game: GameState; setGame: (game: Game
         setRevealed(false);
 
         if (isLast) {
-            setGame({ ...game, phase: 'discuss', starterId: pickStarterId(game.players) });
+            setGame({
+                ...game,
+                phase: 'discuss',
+                starterId: pickStarterId(game.players),
+            });
         } else {
             setGame({ ...game, revealIndex: game.revealIndex + 1 });
         }
@@ -447,7 +509,7 @@ function RevealScreen({ game, setGame }: { game: GameState; setGame: (game: Game
 
     return (
         <div className="flex flex-1 flex-col">
-            <p className="mb-2 text-center text-sm text-slate-400">
+            <p className="mb-2 text-center text-sm text-slate-500 dark:text-slate-400">
                 Kaart {game.revealIndex + 1} van {game.players.length}
             </p>
 
@@ -458,23 +520,34 @@ function RevealScreen({ game, setGame }: { game: GameState; setGame: (game: Game
                         onClick={() => setRevealed(true)}
                         className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-center shadow-2xl ring-1 ring-white/20 transition active:scale-[0.98]"
                     >
-                        <span className="text-2xl font-bold text-white">{player.name}</span>
+                        <span className="text-2xl font-bold text-white">
+                            {player.name}
+                        </span>
                         <span className="flex items-center gap-2 rounded-full bg-black/20 px-4 py-2 text-sm text-white/90">
                             <Eye className="size-4" /> Tik om je woord te zien
                         </span>
-                        <span className="text-xs text-white/70">Zorg dat niemand meekijkt</span>
+                        <span className="text-xs text-white/70">
+                            Zorg dat niemand meekijkt
+                        </span>
                     </button>
                 ) : (
                     <div className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-2xl">
-                        <span className="text-sm font-medium text-slate-500">{player.name}, jouw woord is</span>
+                        <span className="text-sm font-medium text-slate-500">
+                            {player.name}, jouw woord is
+                        </span>
                         {player.word ? (
-                            <span className="text-4xl font-black break-words text-slate-900">{player.word}</span>
+                            <span className="text-4xl font-black break-words text-slate-900">
+                                {player.word}
+                            </span>
                         ) : (
                             <div className="flex flex-col items-center gap-2">
                                 <Skull className="size-10 text-slate-800" />
-                                <span className="text-3xl font-black text-slate-900">Mr. White</span>
+                                <span className="text-3xl font-black text-slate-900">
+                                    Mr. White
+                                </span>
                                 <span className="text-sm text-slate-500">
-                                    Jij hebt geen woord. Doe alsof en raad het woord van de anderen!
+                                    Jij hebt geen woord. Doe alsof en raad het
+                                    woord van de anderen!
                                 </span>
                             </div>
                         )}
@@ -489,10 +562,14 @@ function RevealScreen({ game, setGame }: { game: GameState; setGame: (game: Game
                         className="h-14 w-full rounded-2xl bg-indigo-500 text-lg font-bold hover:bg-indigo-400"
                     >
                         <EyeOff className="size-5" />
-                        {isLast ? 'Klaar — begin de ronde' : 'Verberg & geef door'}
+                        {isLast
+                            ? 'Klaar — begin de ronde'
+                            : 'Verberg & geef door'}
                     </Button>
                 ) : (
-                    <p className="text-center text-sm text-slate-500">Geef de telefoon aan {player.name}</p>
+                    <p className="text-center text-sm text-slate-400 dark:text-slate-500">
+                        Geef de telefoon aan {player.name}
+                    </p>
                 )}
             </div>
         </div>
@@ -516,18 +593,26 @@ function DiscussScreen({
             <Header round={game.round} onReset={onReset} />
 
             <div className="flex flex-1 flex-col">
-                <h2 className="mb-1 text-2xl font-bold text-white">Beschrijf je woord</h2>
-                <p className="mb-4 text-sm text-slate-400">
-                    Om de beurt zegt elke speler <span className="font-semibold text-slate-200">één woord</span> dat naar
-                    het geheime woord hint — zonder het te zeggen. Stem daarna iemand weg.
+                <h2 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">
+                    Beschrijf je woord
+                </h2>
+                <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    Om de beurt zegt elke speler{' '}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        één woord
+                    </span>{' '}
+                    dat naar het geheime woord hint — zonder het te zeggen. Stem
+                    daarna iemand weg.
                 </p>
 
                 {starter && (
                     <div className="mb-4 flex items-center gap-3 rounded-2xl bg-indigo-500/15 px-4 py-3 ring-1 ring-indigo-400/40">
-                        <Megaphone className="size-5 shrink-0 text-indigo-300" />
-                        <p className="text-sm text-slate-200">
-                            <span className="font-bold text-white">{starter.name}</span> begint deze ronde, daarna
-                            verder op volgorde.
+                        <Megaphone className="size-5 shrink-0 text-indigo-600 dark:text-indigo-300" />
+                        <p className="text-sm text-slate-800 dark:text-slate-200">
+                            <span className="font-bold text-slate-900 dark:text-white">
+                                {starter.name}
+                            </span>{' '}
+                            begint deze ronde, daarna verder op volgorde.
                         </p>
                     </div>
                 )}
@@ -538,20 +623,26 @@ function DiscussScreen({
                             key={player.id}
                             className={cn(
                                 'flex items-center gap-3 rounded-xl px-4 py-3 ring-1',
-                                index === 0 ? 'bg-indigo-500/20 ring-indigo-400/50' : 'bg-white/5 ring-white/10',
+                                index === 0
+                                    ? 'bg-indigo-500/15 ring-indigo-400/50 dark:bg-indigo-500/20'
+                                    : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
                             )}
                         >
                             <span
                                 className={cn(
                                     'flex size-7 items-center justify-center rounded-full text-xs font-bold',
-                                    index === 0 ? 'bg-indigo-400 text-slate-900' : 'bg-indigo-500/30 text-indigo-200',
+                                    index === 0
+                                        ? 'bg-indigo-400 text-slate-900'
+                                        : 'bg-indigo-500/30 text-indigo-700 dark:text-indigo-200',
                                 )}
                             >
                                 {index + 1}
                             </span>
-                            <span className="text-base font-medium text-white">{player.name}</span>
+                            <span className="text-base font-medium text-slate-900 dark:text-white">
+                                {player.name}
+                            </span>
                             {index === 0 && (
-                                <span className="ml-auto text-xs font-semibold tracking-wide text-indigo-300 uppercase">
+                                <span className="ml-auto text-xs font-semibold tracking-wide text-indigo-600 uppercase dark:text-indigo-300">
                                     Begint
                                 </span>
                             )}
@@ -572,7 +663,13 @@ function DiscussScreen({
     );
 }
 
-function VoteScreen({ game, setGame }: { game: GameState; setGame: (game: GameState) => void }) {
+function VoteScreen({
+    game,
+    setGame,
+}: {
+    game: GameState;
+    setGame: (game: GameState) => void;
+}) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const alive = alivePlayers(game.players);
 
@@ -589,7 +686,11 @@ function VoteScreen({ game, setGame }: { game: GameState; setGame: (game: GameSt
 
         if (target.role === 'mrwhite') {
             // Mr. White gets a chance to steal the win by guessing the word.
-            setGame({ ...game, phase: 'mrwhite', lastEliminatedId: selectedId });
+            setGame({
+                ...game,
+                phase: 'mrwhite',
+                lastEliminatedId: selectedId,
+            });
 
             return;
         }
@@ -601,8 +702,12 @@ function VoteScreen({ game, setGame }: { game: GameState; setGame: (game: GameSt
         <div className="flex flex-1 flex-col">
             <Header round={game.round} />
 
-            <h2 className="mb-1 text-2xl font-bold text-white">Stem iemand weg</h2>
-            <p className="mb-5 text-sm text-slate-400">Tik op de speler die je verdenkt van Undercover.</p>
+            <h2 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">
+                Stem iemand weg
+            </h2>
+            <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
+                Tik op de speler die je verdenkt van Undercover.
+            </p>
 
             <div className="grid grid-cols-2 gap-3">
                 {alive.map((player) => (
@@ -614,7 +719,7 @@ function VoteScreen({ game, setGame }: { game: GameState; setGame: (game: GameSt
                             'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition',
                             selectedId === player.id
                                 ? 'bg-rose-500 text-white ring-rose-300'
-                                : 'bg-white/5 text-white ring-white/10 hover:bg-white/10',
+                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                         )}
                     >
                         {player.name}
@@ -636,7 +741,11 @@ function VoteScreen({ game, setGame }: { game: GameState; setGame: (game: GameSt
 }
 
 /** Eliminates a player, then advances to the result or the next round. */
-function resolveElimination(game: GameState, setGame: (game: GameState) => void, targetId: number) {
+function resolveElimination(
+    game: GameState,
+    setGame: (game: GameState) => void,
+    targetId: number,
+) {
     const players = game.players.map((player) =>
         player.id === targetId ? { ...player, eliminated: true } : player,
     );
@@ -644,7 +753,13 @@ function resolveElimination(game: GameState, setGame: (game: GameState) => void,
     const winner = determineWinner(players);
 
     if (winner) {
-        setGame({ ...game, players, winner, phase: 'gameover', lastEliminatedId: targetId });
+        setGame({
+            ...game,
+            players,
+            winner,
+            phase: 'gameover',
+            lastEliminatedId: targetId,
+        });
 
         return;
     }
@@ -659,9 +774,17 @@ function resolveElimination(game: GameState, setGame: (game: GameState) => void,
     });
 }
 
-function MrWhiteScreen({ game, setGame }: { game: GameState; setGame: (game: GameState) => void }) {
+function MrWhiteScreen({
+    game,
+    setGame,
+}: {
+    game: GameState;
+    setGame: (game: GameState) => void;
+}) {
     const [guess, setGuess] = useState('');
-    const mrWhite = game.players.find((player) => player.id === game.lastEliminatedId);
+    const mrWhite = game.players.find(
+        (player) => player.id === game.lastEliminatedId,
+    );
 
     const submitGuess = () => {
         if (guess.trim() === '') {
@@ -670,10 +793,18 @@ function MrWhiteScreen({ game, setGame }: { game: GameState; setGame: (game: Gam
 
         if (isMrWhiteGuessCorrect(guess, game.civilianWord)) {
             const players = game.players.map((player) =>
-                player.id === game.lastEliminatedId ? { ...player, eliminated: true } : player,
+                player.id === game.lastEliminatedId
+                    ? { ...player, eliminated: true }
+                    : player,
             );
 
-            setGame({ ...game, players, phase: 'gameover', winner: 'undercover', mrWhiteWon: true });
+            setGame({
+                ...game,
+                players,
+                phase: 'gameover',
+                winner: 'undercover',
+                mrWhiteWon: true,
+            });
 
             return;
         }
@@ -684,17 +815,20 @@ function MrWhiteScreen({ game, setGame }: { game: GameState; setGame: (game: Gam
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <Skull className="mb-4 size-12 text-slate-300" />
-                <h2 className="text-2xl font-bold text-white">{mrWhite?.name} was Mr. White!</h2>
-                <p className="mt-2 mb-6 text-sm text-slate-400">
-                    Laatste kans: raad het geheime woord van de Burgers om alsnog te winnen.
+                <Skull className="mb-4 size-12 text-slate-600 dark:text-slate-300" />
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {mrWhite?.name} was Mr. White!
+                </h2>
+                <p className="mt-2 mb-6 text-sm text-slate-500 dark:text-slate-400">
+                    Laatste kans: raad het geheime woord van de Burgers om
+                    alsnog te winnen.
                 </p>
 
                 <input
                     value={guess}
                     onChange={(event) => setGuess(event.target.value)}
                     autoFocus
-                    className="w-full max-w-xs rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-center text-xl font-semibold text-white placeholder:text-slate-500 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none"
+                    className="w-full max-w-xs rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-xl font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                     placeholder="Jouw gok"
                 />
             </div>
@@ -732,8 +866,12 @@ function GameOverScreen({
     const playAgain = () => {
         const { players, civilianWord, pair } = dealRoles({
             names: game.players.map((player) => player.name),
-            undercoverCount: game.players.filter((player) => player.role === 'undercover').length,
-            includeMrWhite: game.players.some((player) => player.role === 'mrwhite'),
+            undercoverCount: game.players.filter(
+                (player) => player.role === 'undercover',
+            ).length,
+            includeMrWhite: game.players.some(
+                (player) => player.role === 'mrwhite',
+            ),
         });
 
         setGame({
@@ -754,11 +892,26 @@ function GameOverScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="mt-6 mb-6 text-center">
-                <Trophy className={cn('mx-auto mb-3 size-12', civiliansWon ? 'text-emerald-400' : 'text-rose-400')} />
-                <h1 className="text-3xl font-black text-white">{title}</h1>
-                <p className="mt-2 text-sm text-slate-400">
-                    De woorden waren <span className="font-semibold text-slate-200">{game.pair.civilian}</span> /{' '}
-                    <span className="font-semibold text-slate-200">{game.pair.undercover}</span>
+                <Trophy
+                    className={cn(
+                        'mx-auto mb-3 size-12',
+                        civiliansWon
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400',
+                    )}
+                />
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+                    {title}
+                </h1>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    De woorden waren{' '}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {game.pair.civilian}
+                    </span>{' '}
+                    /{' '}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {game.pair.undercover}
+                    </span>
                 </p>
             </div>
 
@@ -768,19 +921,26 @@ function GameOverScreen({
                         key={player.id}
                         className={cn(
                             'flex items-center justify-between rounded-xl px-4 py-3 ring-1',
-                            player.eliminated ? 'bg-white/5 ring-white/5 opacity-60' : 'bg-white/5 ring-white/10',
+                            player.eliminated
+                                ? 'bg-white opacity-60 ring-slate-200 dark:bg-white/5 dark:ring-white/5'
+                                : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
                         )}
                     >
-                        <span className="flex items-center gap-2 text-base font-medium text-white">
+                        <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
                             {player.name}
-                            {player.eliminated && <Skull className="size-4 text-slate-500" />}
+                            {player.eliminated && (
+                                <Skull className="size-4 text-slate-400 dark:text-slate-500" />
+                            )}
                         </span>
                         <span
                             className={cn(
                                 'rounded-full px-3 py-1 text-xs font-bold',
-                                player.role === 'civilian' && 'bg-emerald-500/20 text-emerald-300',
-                                player.role === 'undercover' && 'bg-rose-500/20 text-rose-300',
-                                player.role === 'mrwhite' && 'bg-slate-400/20 text-slate-200',
+                                player.role === 'civilian' &&
+                                    'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+                                player.role === 'undercover' &&
+                                    'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+                                player.role === 'mrwhite' &&
+                                    'bg-slate-400/20 text-slate-700 dark:text-slate-200',
                             )}
                         >
                             {ROLE_LABEL[player.role]}
@@ -797,7 +957,11 @@ function GameOverScreen({
                 >
                     <RotateCcw className="size-5" /> Opnieuw — zelfde spelers
                 </Button>
-                <Button onClick={onReset} variant="ghost" className="h-12 w-full rounded-2xl text-slate-300">
+                <Button
+                    onClick={onReset}
+                    variant="ghost"
+                    className="h-12 w-full rounded-2xl text-slate-600 dark:text-slate-300"
+                >
                     Nieuw spel
                 </Button>
             </div>
@@ -808,14 +972,14 @@ function GameOverScreen({
 function Header({ round, onReset }: { round: number; onReset?: () => void }) {
     return (
         <div className="mb-5 flex items-center justify-between">
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-slate-300 uppercase">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
                 Ronde {round}
             </span>
             {onReset && (
                 <button
                     type="button"
                     onClick={onReset}
-                    className="flex items-center gap-1 text-xs text-slate-400 transition hover:text-slate-200"
+                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                     <RotateCcw className="size-3.5" /> Nieuw spel
                 </button>

@@ -1,7 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
 import ManagePasskeys from '@/components/manage-passkeys';
@@ -17,22 +16,34 @@ type Props = {
 } & ManagePasskeysProps &
     ManageTwoFactorProps;
 
+const darkPasswordInput =
+    'h-auto rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-11 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
+
+const darkLabel = 'text-sm font-medium text-slate-800 dark:text-slate-200';
+
+const darkPrimaryButton =
+    'h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 text-base font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400';
+
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title="Beveiligingsinstellingen" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <h1 className="sr-only">Beveiligingsinstellingen</h1>
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
-                />
+            <section className="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+                <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                        Wachtwoord wijzigen
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Gebruik een lang, willekeurig wachtwoord om je account
+                        veilig te houden.
+                    </p>
+                </div>
 
                 <Form
                     {...SecurityController.update.form()}
@@ -59,53 +70,68 @@ export default function Security(props: Props) {
                     {({ errors, processing }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="current_password">
-                                    Current password
+                                <Label
+                                    htmlFor="current_password"
+                                    className={darkLabel}
+                                >
+                                    Huidig wachtwoord
                                 </Label>
 
                                 <PasswordInput
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
+                                    className={darkPasswordInput}
                                     autoComplete="current-password"
-                                    placeholder="Current password"
+                                    placeholder="Huidig wachtwoord"
                                 />
 
-                                <InputError message={errors.current_password} />
+                                <InputError
+                                    className="text-rose-600 dark:text-rose-400"
+                                    message={errors.current_password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
+                                <Label htmlFor="password" className={darkLabel}>
+                                    Nieuw wachtwoord
+                                </Label>
 
                                 <PasswordInput
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
+                                    className={darkPasswordInput}
                                     autoComplete="new-password"
-                                    placeholder="New password"
+                                    placeholder="Nieuw wachtwoord"
                                     passwordrules={props.passwordRules}
                                 />
 
-                                <InputError message={errors.password} />
+                                <InputError
+                                    className="text-rose-600 dark:text-rose-400"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
+                                <Label
+                                    htmlFor="password_confirmation"
+                                    className={darkLabel}
+                                >
+                                    Bevestig wachtwoord
                                 </Label>
 
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
+                                    className={darkPasswordInput}
                                     autoComplete="new-password"
-                                    placeholder="Confirm password"
+                                    placeholder="Bevestig wachtwoord"
                                     passwordrules={props.passwordRules}
                                 />
 
                                 <InputError
+                                    className="text-rose-600 dark:text-rose-400"
                                     message={errors.password_confirmation}
                                 />
                             </div>
@@ -113,15 +139,16 @@ export default function Security(props: Props) {
                             <div className="flex items-center gap-4">
                                 <Button
                                     disabled={processing}
+                                    className={darkPrimaryButton}
                                     data-test="update-password-button"
                                 >
-                                    Save
+                                    Opslaan
                                 </Button>
                             </div>
                         </>
                     )}
                 </Form>
-            </div>
+            </section>
 
             <ManageTwoFactor
                 canManageTwoFactor={props.canManageTwoFactor}
@@ -140,7 +167,7 @@ export default function Security(props: Props) {
 Security.layout = {
     breadcrumbs: [
         {
-            title: 'Security settings',
+            title: 'Beveiligingsinstellingen',
             href: edit(),
         },
     ],

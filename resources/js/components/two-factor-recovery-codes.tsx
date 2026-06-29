@@ -53,22 +53,23 @@ export default function TwoFactorRecoveryCodes({
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
 
     return (
-        <Card>
+        <Card className="w-full border-slate-200 bg-white text-slate-900 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:shadow-none">
             <CardHeader>
-                <CardTitle className="flex gap-3">
+                <CardTitle className="flex gap-3 text-slate-900 dark:text-white">
                     <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA recovery codes
+                    2FA-herstelcodes
                 </CardTitle>
-                <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
+                <CardDescription className="text-slate-500 dark:text-slate-400">
+                    Met herstelcodes krijg je weer toegang als je je
+                    2FA-apparaat kwijtraakt. Bewaar ze in een veilige
+                    wachtwoordmanager.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
                     <Button
                         onClick={toggleCodesVisibility}
-                        className="w-fit"
+                        className="w-fit rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400"
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
                     >
@@ -76,7 +77,7 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} recovery codes
+                        {codesAreVisible ? 'Verberg' : 'Toon'} herstelcodes
                     </Button>
 
                     {canRegenerateCodes && (
@@ -89,10 +90,11 @@ export default function TwoFactorRecoveryCodes({
                                 <Button
                                     variant="secondary"
                                     type="submit"
+                                    className="rounded-2xl bg-slate-100 font-semibold text-slate-800 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> Regenerate codes
+                                    <RefreshCw /> Codes opnieuw genereren
                                 </Button>
                             )}
                         </Form>
@@ -110,9 +112,9 @@ export default function TwoFactorRecoveryCodes({
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                                    className="grid gap-1 rounded-xl bg-slate-100 p-4 font-mono text-sm text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950/50 dark:text-slate-200 dark:ring-white/10"
                                     role="list"
-                                    aria-label="Recovery codes"
+                                    aria-label="Herstelcodes"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
@@ -127,14 +129,14 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            aria-label="Herstelcodes laden"
                                         >
                                             {Array.from(
                                                 { length: 8 },
                                                 (_, index) => (
                                                     <div
                                                         key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
+                                                        className="h-4 animate-pulse rounded bg-slate-200 dark:bg-white/10"
                                                         aria-hidden="true"
                                                     />
                                                 ),
@@ -143,15 +145,16 @@ export default function TwoFactorRecoveryCodes({
                                     )}
                                 </div>
 
-                                <div className="text-xs text-muted-foreground select-none">
+                                <div className="text-xs text-slate-400 select-none dark:text-slate-500">
                                     <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate codes
-                                        </span>{' '}
-                                        above.
+                                        Elke herstelcode kan één keer worden
+                                        gebruikt om toegang te krijgen tot je
+                                        account en wordt daarna verwijderd. Heb
+                                        je er meer nodig, klik dan hierboven op{' '}
+                                        <span className="font-bold text-slate-600 dark:text-slate-300">
+                                            Codes opnieuw genereren
+                                        </span>
+                                        .
                                     </p>
                                 </div>
                             </>

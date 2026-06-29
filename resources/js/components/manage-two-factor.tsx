@@ -1,7 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,12 @@ export type Props = {
     requiresConfirmation?: boolean;
     twoFactorEnabled?: boolean;
 };
+
+const darkPrimaryButton =
+    'h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 text-base font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400';
+
+const roseButton =
+    'h-12 rounded-2xl bg-rose-500 px-6 text-base font-bold text-white hover:bg-rose-400';
 
 export default function ManageTwoFactor(props: Props) {
     const requiresConfirmation = props.requiresConfirmation ?? false;
@@ -45,18 +50,20 @@ export default function ManageTwoFactor(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
-            />
+        <section className="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Twee-factor-authenticatie
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Beheer je instellingen voor twee-factor-authenticatie.
+                </p>
+            </div>
             {twoFactorEnabled ? (
                 <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Bij het inloggen wordt om een veilige, willekeurige code
+                        gevraagd die je ophaalt uit een TOTP-app op je telefoon.
                     </p>
 
                     <div className="relative inline">
@@ -65,9 +72,10 @@ export default function ManageTwoFactor(props: Props) {
                                 <Button
                                     variant="destructive"
                                     type="submit"
+                                    className={roseButton}
                                     disabled={processing}
                                 >
-                                    Disable 2FA
+                                    2FA uitschakelen
                                 </Button>
                             )}
                         </Form>
@@ -81,18 +89,20 @@ export default function ManageTwoFactor(props: Props) {
                 </div>
             ) : (
                 <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Als je twee-factor-authenticatie inschakelt, wordt bij
+                        het inloggen om een veilige code gevraagd. Deze haal je
+                        op uit een TOTP-app op je telefoon.
                     </p>
 
                     <div>
                         {hasSetupData ? (
-                            <Button onClick={() => setShowSetupModal(true)}>
+                            <Button
+                                className={darkPrimaryButton}
+                                onClick={() => setShowSetupModal(true)}
+                            >
                                 <ShieldCheck />
-                                Continue setup
+                                Verder met instellen
                             </Button>
                         ) : (
                             <Form
@@ -100,8 +110,12 @@ export default function ManageTwoFactor(props: Props) {
                                 onSuccess={() => setShowSetupModal(true)}
                             >
                                 {({ processing }) => (
-                                    <Button type="submit" disabled={processing}>
-                                        Enable 2FA
+                                    <Button
+                                        type="submit"
+                                        className={darkPrimaryButton}
+                                        disabled={processing}
+                                    >
+                                        2FA inschakelen
                                     </Button>
                                 )}
                             </Form>
@@ -121,6 +135,6 @@ export default function ManageTwoFactor(props: Props) {
                 fetchSetupData={fetchSetupData}
                 errors={errors}
             />
-        </div>
+        </section>
     );
 }
