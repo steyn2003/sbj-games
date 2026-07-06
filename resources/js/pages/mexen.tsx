@@ -13,7 +13,7 @@ import {
     Users,
     VenetianMask,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     callForRoll,
@@ -344,10 +344,12 @@ function NormaalTurnScreen({
 }) {
     const [roll, setRoll] = useState<DiePair | null>(null);
     const [throwsUsed, setThrowsUsed] = useState(0);
+    const [rolling, setRolling] = useState(false);
 
     const throwDice = () => {
         setRoll(rollDice());
         setThrowsUsed(throwsUsed + 1);
+        setRolling(true);
     };
 
     if (!roll) {
@@ -387,36 +389,49 @@ function NormaalTurnScreen({
                 <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-300">
                     Speler {player + 1} · worp {throwsUsed} van {throwLimit}
                 </span>
-                <div className="mt-4 flex gap-3">
-                    <Die value={roll[0]} />
-                    <Die value={roll[1]} />
+                <div className="mt-4">
+                    <RollingDice
+                        key={throwsUsed}
+                        roll={roll}
+                        onSettled={() => setRolling(false)}
+                    />
                 </div>
-                {call.isMax ? (
-                    <motion.p
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                            type: 'spring',
-                            stiffness: 220,
-                            damping: 16,
-                        }}
-                        className="mt-4 text-4xl font-black text-amber-500 dark:text-amber-300"
-                    >
-                        MEX! 🍻
-                    </motion.p>
-                ) : (
-                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-                        Dat is{' '}
-                        <span className="text-2xl font-black text-slate-900 dark:text-white">
-                            {call.label}
-                        </span>
-                    </p>
-                )}
-                {call.isMax && (
-                    <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                        De allerhoogste worp — de slokken verdubbelen!
-                    </p>
-                )}
+                <div className="flex min-h-24 flex-col items-center">
+                    {rolling ? (
+                        <p className="mt-4 text-sm text-slate-400 dark:text-slate-500">
+                            De stenen rollen…
+                        </p>
+                    ) : call.isMax ? (
+                        <>
+                            <motion.p
+                                initial={{ scale: 0.6, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{
+                                    type: 'spring',
+                                    stiffness: 220,
+                                    damping: 16,
+                                }}
+                                className="mt-4 text-4xl font-black text-amber-500 dark:text-amber-300"
+                            >
+                                MEX! 🍻
+                            </motion.p>
+                            <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+                                De allerhoogste worp — de slokken verdubbelen!
+                            </p>
+                        </>
+                    ) : (
+                        <motion.p
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-4 text-sm text-slate-500 dark:text-slate-400"
+                        >
+                            Dat is{' '}
+                            <span className="text-2xl font-black text-slate-900 dark:text-white">
+                                {call.label}
+                            </span>
+                        </motion.p>
+                    )}
+                </div>
             </div>
 
             <RolledSoFar rolledSoFar={rolledSoFar} />
@@ -425,6 +440,7 @@ function NormaalTurnScreen({
                 {mayRethrow && (
                     <Button
                         onClick={throwDice}
+                        disabled={rolling}
                         className="h-14 w-full rounded-2xl bg-white text-lg font-bold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-100 active:scale-[0.99] dark:bg-white/10 dark:text-white dark:ring-white/10 dark:hover:bg-white/20"
                     >
                         🎲 Nog een keer rollen
@@ -432,6 +448,7 @@ function NormaalTurnScreen({
                 )}
                 <Button
                     onClick={() => onStand(call, throwsUsed)}
+                    disabled={rolling}
                     className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-lg font-bold text-white transition hover:from-amber-400 hover:to-rose-400 active:scale-[0.99]"
                 >
                     {isLast
@@ -783,6 +800,7 @@ function BlufAnnounceScreen({
     previousCall: Call | null;
     onAnnounce: (roll: DiePair, call: Call) => void;
 }) {
+    const [rolling, setRolling] = useState(true);
     const realCall = callForRoll(roll);
     const options = callsAbove(previousCall?.rank ?? 0);
     const canTellTruth = realCall.rank > (previousCall?.rank ?? 0);
@@ -793,25 +811,49 @@ function BlufAnnounceScreen({
                 <span className="text-xs font-semibold tracking-widest text-rose-600 uppercase dark:text-rose-300">
                     Jouw geheime worp
                 </span>
-                <div className="mt-3 flex gap-3">
-                    <Die value={roll[0]} />
-                    <Die value={roll[1]} />
+                <div className="mt-3">
+                    <RollingDice
+                        roll={roll}
+                        onSettled={() => setRolling(false)}
+                    />
                 </div>
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                    Dat is{' '}
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                        {realCall.label}
-                    </span>
-                    {canTellTruth
-                        ? ' — de waarheid is genoeg.'
-                        : ' — te laag, je moet bluffen.'}
-                </p>
+                {rolling ? (
+                    <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
+                        De stenen rollen…
+                    </p>
+                ) : (
+                    <motion.p
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 text-sm text-slate-500 dark:text-slate-400"
+                    >
+                        Dat is{' '}
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                            {realCall.label}
+                        </span>
+                        {canTellTruth
+                            ? ' — de waarheid is genoeg.'
+                            : ' — te laag, je moet bluffen.'}
+                    </motion.p>
+                )}
             </div>
 
-            <div className="mb-2 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <motion.div
+                animate={{ opacity: rolling ? 0 : 1 }}
+                className={cn(
+                    'mb-2 text-center text-sm font-semibold text-slate-600 dark:text-slate-300',
+                    rolling && 'pointer-events-none',
+                )}
+            >
                 Wat noem je?
-            </div>
-            <div className="grid grid-cols-3 gap-2 overflow-y-auto">
+            </motion.div>
+            <motion.div
+                animate={{ opacity: rolling ? 0 : 1 }}
+                className={cn(
+                    'grid grid-cols-3 gap-2 overflow-y-auto',
+                    rolling && 'pointer-events-none',
+                )}
+            >
                 {options.map((call) => {
                     const isReal = call.code === realCall.code;
 
@@ -839,7 +881,7 @@ function BlufAnnounceScreen({
                         </button>
                     );
                 })}
-            </div>
+            </motion.div>
         </div>
     );
 }
@@ -997,6 +1039,75 @@ function BlufResultScreen({
                     De verliezer begint de volgende ronde.
                 </p>
             </div>
+        </div>
+    );
+}
+
+/** How long the dice tumble before they land on the real roll. */
+const ROLL_MS = 900;
+
+/**
+ * Two dice that tumble with random faces before landing on the real roll.
+ * Remount (via a key) to play the animation again for a new roll.
+ */
+function RollingDice({
+    roll,
+    onSettled,
+}: {
+    roll: DiePair;
+    onSettled?: () => void;
+}) {
+    // Start on random faces so the real roll never flashes early.
+    const [faces, setFaces] = useState<DiePair>(() => rollDice());
+    const [settled, setSettled] = useState(false);
+
+    useEffect(() => {
+        const spin = window.setInterval(() => setFaces(rollDice()), 90);
+        const stop = window.setTimeout(() => {
+            window.clearInterval(spin);
+            setFaces(roll);
+            setSettled(true);
+            onSettled?.();
+        }, ROLL_MS);
+
+        return () => {
+            window.clearInterval(spin);
+            window.clearTimeout(stop);
+        };
+        // Mount-only: a new roll remounts the component via its key.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return (
+        <div className="flex gap-3">
+            {([0, 1] as const).map((index) => (
+                <motion.div
+                    key={index}
+                    animate={
+                        settled
+                            ? {
+                                  rotate: index === 0 ? -720 : 720,
+                                  y: 0,
+                                  scale: 1,
+                              }
+                            : {
+                                  rotate:
+                                      index === 0
+                                          ? [0, -340, -700]
+                                          : [0, 340, 700],
+                                  y: [0, -22, 0, -10, 0],
+                                  scale: [1, 1.15, 1.05],
+                              }
+                    }
+                    transition={
+                        settled
+                            ? { type: 'spring', stiffness: 260, damping: 14 }
+                            : { duration: ROLL_MS / 1000, ease: 'easeOut' }
+                    }
+                >
+                    <Die value={faces[index]} />
+                </motion.div>
+            ))}
         </div>
     );
 }
