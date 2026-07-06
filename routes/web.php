@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
 
     Route::inertia('pim-pam-pet', 'pim-pam-pet')->name('pim-pam-pet');
     Route::inertia('wie-in-de-groep', 'wie-in-de-groep')->name('wie-in-de-groep');
+    Route::inertia('mexen', 'mexen')->name('mexen');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

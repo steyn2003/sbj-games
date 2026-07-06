@@ -3,6 +3,7 @@ import {
     Ban,
     Beer,
     ChevronRight,
+    Dice5,
     Eye,
     Rabbit,
     Settings,
@@ -16,6 +17,7 @@ import {
     forbiddenWord,
     home,
     horseRace,
+    mexen,
     pimPamPet,
     spyLocation,
     wieInDeGroep,
@@ -89,6 +91,14 @@ const games: GameLink[] = [
         href: horseRace().url,
         icon: Rabbit,
         accent: 'emerald',
+    },
+    {
+        title: 'Mexen',
+        description:
+            'Bluffen met twee dobbelstenen. Rol stiekem, noem iets hogers of lieg — wie betrapt wordt, drinkt!',
+        href: mexen().url,
+        icon: Dice5,
+        accent: 'rose',
     },
 ];
 

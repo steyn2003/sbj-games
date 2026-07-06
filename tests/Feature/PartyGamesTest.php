@@ -5,7 +5,7 @@ use Inertia\Testing\AssertableInertia;
 
 test('guests cannot reach the party games', function (string $route) {
     $this->get(route($route))->assertRedirect(route('login'));
-})->with(['pim-pam-pet', 'wie-in-de-groep']);
+})->with(['pim-pam-pet', 'wie-in-de-groep', 'mexen']);
 
 test('an authenticated user can open the party games', function (string $route, string $component) {
     $this->actingAs(User::factory()->create())
@@ -15,4 +15,5 @@ test('an authenticated user can open the party games', function (string $route, 
 })->with([
     ['pim-pam-pet', 'pim-pam-pet'],
     ['wie-in-de-groep', 'wie-in-de-groep'],
+    ['mexen', 'mexen'],
 ]);
