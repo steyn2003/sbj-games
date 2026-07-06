@@ -95,7 +95,7 @@ const games: GameLink[] = [
     {
         title: 'Mexen',
         description:
-            'Bluffen met twee dobbelstenen. Rol stiekem, noem iets hogers of lieg — wie betrapt wordt, drinkt!',
+            'Twee dobbelstenen, twee varianten: rol open en de laagste drinkt, of bluf stiekem en betrap de leugenaar.',
         href: mexen().url,
         icon: Dice5,
         accent: 'rose',
