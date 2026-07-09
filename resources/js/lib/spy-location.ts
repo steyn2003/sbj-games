@@ -142,7 +142,10 @@ function shuffle<T>(items: T[], rng: () => number = Math.random): T[] {
 }
 
 /** Picks a random location, optionally avoiding the previous one. */
-export function pickLocation(avoid?: string, rng: () => number = Math.random): string {
+export function pickLocation(
+    avoid?: string,
+    rng: () => number = Math.random,
+): string {
     let choice = LOCATIONS[Math.floor(rng() * LOCATIONS.length)];
 
     while (choice === avoid) {
@@ -156,12 +159,17 @@ export function pickLocation(avoid?: string, rng: () => number = Math.random): s
  * Picks a random location and secretly assigns the Spy roles. Roles are
  * shuffled so the seating order gives nothing away.
  */
-export function dealSpyLocation(settings: SpySettings, rng: () => number = Math.random): SpyDealResult {
+export function dealSpyLocation(
+    settings: SpySettings,
+    rng: () => number = Math.random,
+): SpyDealResult {
     const location = pickLocation(undefined, rng);
 
     const flags: boolean[] = [
         ...Array<boolean>(settings.spyCount).fill(true),
-        ...Array<boolean>(settings.names.length - settings.spyCount).fill(false),
+        ...Array<boolean>(settings.names.length - settings.spyCount).fill(
+            false,
+        ),
     ];
 
     const shuffled = shuffle(flags, rng);
@@ -180,6 +188,9 @@ export function spies(players: SpyPlayer[]): SpyPlayer[] {
 }
 
 /** Forgiving comparison of a Spy's location guess. */
-export function isLocationGuessCorrect(guess: string, location: string): boolean {
+export function isLocationGuessCorrect(
+    guess: string,
+    location: string,
+): boolean {
     return guess.trim().toLowerCase() === location.trim().toLowerCase();
 }

@@ -1,15 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    ArrowRight,
-    Beer,
-    Minus,
-    Plus,
-    RotateCcw,
-    Users,
-} from 'lucide-react';
+import { ArrowRight, Beer, Minus, Plus, RotateCcw, Users } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import {
+    ActionButton,
+    GameHeader,
+    GameShell,
+    Panel,
+} from '@/components/game-ui';
 import {
     MAX_PLAYERS,
     MIN_PLAYERS,
@@ -17,7 +13,6 @@ import {
     tallyVotes,
 } from '@/lib/most-likely';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
 type Phase = 'setup' | 'vote' | 'reveal';
 
@@ -54,43 +49,36 @@ export default function WieInDeGroep() {
     };
 
     return (
-        <>
-            <Head title="Wie in de groep…?" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-300/40 blur-3xl dark:bg-indigo-600/30" />
-                <div className="pointer-events-none absolute -right-24 -bottom-40 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
-                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    {phase === 'setup' && (
-                        <SetupScreen
-                            names={names}
-                            setNames={setNames}
-                            onStart={() => startQuestion(names)}
-                        />
-                    )}
-                    {phase === 'vote' && (
-                        <VoteScreen
-                            key={voterIndex}
-                            statement={statement}
-                            voter={names[voterIndex]}
-                            voterIndex={voterIndex}
-                            total={names.length}
-                            names={names}
-                            onVote={castVote}
-                            onReset={() => setPhase('setup')}
-                        />
-                    )}
-                    {phase === 'reveal' && (
-                        <RevealScreen
-                            statement={statement}
-                            names={names}
-                            votes={votes}
-                            onNext={() => startQuestion(names)}
-                            onReset={() => setPhase('setup')}
-                        />
-                    )}
-                </main>
-            </div>
-        </>
+        <GameShell title="Wie in de groep…?">
+            {phase === 'setup' && (
+                <SetupScreen
+                    names={names}
+                    setNames={setNames}
+                    onStart={() => startQuestion(names)}
+                />
+            )}
+            {phase === 'vote' && (
+                <VoteScreen
+                    key={voterIndex}
+                    statement={statement}
+                    voter={names[voterIndex]}
+                    voterIndex={voterIndex}
+                    total={names.length}
+                    names={names}
+                    onVote={castVote}
+                    onReset={() => setPhase('setup')}
+                />
+            )}
+            {phase === 'reveal' && (
+                <RevealScreen
+                    statement={statement}
+                    names={names}
+                    votes={votes}
+                    onNext={() => startQuestion(names)}
+                    onReset={() => setPhase('setup')}
+                />
+            )}
+        </GameShell>
     );
 }
 
@@ -127,33 +115,16 @@ function SetupScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-2">
-                <Link
-                    href={dashboard()}
-                    className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                    <ArrowLeft className="size-4" /> Dashboard
-                </Link>
-            </div>
+            <GameHeader
+                kicker="Stemspel"
+                title="Wie in de groep…?"
+                description="Een stelling verschijnt. Geef de telefoon rond — iedereen stemt stiekem op wie het het beste past. Daarna onthullen we de winnaar!"
+            />
 
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-700 uppercase ring-1 ring-amber-400/30 dark:text-amber-300">
-                    <Beer className="size-3.5" /> Pim Pam Pet
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-amber-700 to-amber-500 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-amber-100 dark:to-amber-300">
-                    Wie in de groep…?
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Een stelling verschijnt. Geef de telefoon rond — iedereen
-                    stemt stiekem op wie het het beste past. Daarna onthullen we
-                    de winnaar!
-                </p>
-            </header>
-
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-sm font-medium">
-                        <Users className="size-4" /> Spelers
+                        <Users className="size-4" aria-hidden /> Spelers
                     </span>
                     <div className="flex items-center gap-3">
                         <button
@@ -177,7 +148,7 @@ function SetupScreen({
                         </button>
                     </div>
                 </div>
-            </section>
+            </Panel>
 
             <section className="mb-5 space-y-2">
                 <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
@@ -203,14 +174,14 @@ function SetupScreen({
                         {error}
                     </p>
                 )}
-                <Button
+                <ActionButton
                     onClick={onStart}
                     disabled={Boolean(error)}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400"
+                    className="text-lg"
                 >
                     Start
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -250,16 +221,16 @@ function VoteScreen({
                     <button
                         type="button"
                         onClick={() => setReady(true)}
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-center shadow-2xl ring-1 ring-white/20 transition focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none active:scale-[0.98]"
+                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-amber-500 p-6 text-center shadow-sm ring-1 ring-amber-600/20 transition focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 focus-visible:outline-none active:scale-[0.98] dark:focus-visible:ring-offset-slate-950"
                     >
-                        <span className="text-2xl font-bold text-white">
+                        <span className="text-2xl font-bold text-slate-950">
                             {voter}, jij bent
                         </span>
-                        <span className="flex items-center gap-2 rounded-full bg-black/20 px-4 py-2 text-sm text-white/90">
-                            <Beer className="size-4" /> Tik als je de telefoon
-                            hebt
+                        <span className="flex items-center gap-2 rounded-full bg-slate-950/10 px-4 py-2 text-sm font-medium text-slate-900">
+                            <Beer className="size-4" aria-hidden /> Tik als je
+                            de telefoon hebt
                         </span>
-                        <span className="text-xs text-white/70">
+                        <span className="text-xs text-slate-900/70">
                             Zorg dat niemand meekijkt met je stem
                         </span>
                     </button>
@@ -279,11 +250,11 @@ function VoteScreen({
                 onReset={onReset}
             />
 
-            <div className="mb-5 rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5 p-5 text-center">
                 <p className="text-xl font-bold text-slate-900 dark:text-white">
                     {statement}
                 </p>
-            </div>
+            </Panel>
 
             <p className="mb-3 text-center text-sm text-slate-500 dark:text-slate-400">
                 <span className="font-semibold text-slate-900 dark:text-white">
@@ -301,7 +272,7 @@ function VoteScreen({
                         className={cn(
                             'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none active:scale-[0.98]',
                             selectedId === index
-                                ? 'bg-amber-500 text-white ring-amber-300'
+                                ? 'bg-amber-500 text-slate-950 ring-amber-500'
                                 : 'bg-white text-slate-900 shadow-sm ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10',
                         )}
                     >
@@ -311,14 +282,14 @@ function VoteScreen({
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
+                <ActionButton
                     onClick={() => selectedId !== null && onVote(selectedId)}
                     disabled={selectedId === null}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white hover:from-amber-400 hover:to-orange-400"
+                    className="text-lg"
                 >
                     Stem bevestigen
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -346,15 +317,17 @@ function RevealScreen({
         <div className="flex flex-1 flex-col">
             <Header label="Uitslag" onReset={onReset} />
 
-            <div className="mb-5 rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5 p-5 text-center">
                 <p className="text-xl font-bold text-slate-900 dark:text-white">
                     {statement}
                 </p>
-            </div>
+            </Panel>
 
-            <div className="mb-6 text-center">
-                <Beer className="mx-auto size-12 text-amber-500 dark:text-amber-400" />
-                <h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
+            <div className="mb-6 flex flex-col items-center text-center">
+                <span className="flex size-16 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                    <Beer className="size-8" aria-hidden />
+                </span>
+                <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
                     {winners.length === 1
                         ? `${winners[0]}!`
                         : winners.join(' & ') + '!'}
@@ -379,7 +352,10 @@ function RevealScreen({
                     >
                         <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
                             {entry.count === maxVotes && maxVotes > 0 && (
-                                <Beer className="size-4 text-amber-600 dark:text-amber-300" />
+                                <Beer
+                                    className="size-4 text-amber-600 dark:text-amber-300"
+                                    aria-hidden
+                                />
                             )}
                             {entry.name}
                         </span>
@@ -392,13 +368,10 @@ function RevealScreen({
             </div>
 
             <div className="mt-auto pt-6">
-                <Button
-                    onClick={onNext}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white hover:from-amber-400 hover:to-orange-400"
-                >
+                <ActionButton onClick={onNext} className="text-lg">
                     Volgende vraag
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -416,7 +389,7 @@ function Header({ label, onReset }: { label: string; onReset?: () => void }) {
                     onClick={onReset}
                     className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                 >
-                    <RotateCcw className="size-3.5" /> Nieuw spel
+                    <RotateCcw className="size-3.5" aria-hidden /> Nieuw spel
                 </button>
             )}
         </div>

@@ -1,5 +1,5 @@
-import { WORD_PAIRS  } from './words';
-import type {WordPair} from './words';
+import { WORD_PAIRS } from './words';
+import type { WordPair } from './words';
 
 export type Role = 'civilian' | 'undercover' | 'mrwhite';
 
@@ -55,7 +55,8 @@ export function validateSettings(settings: GameSettings): string | null {
         return 'Je hebt minstens één Undercover nodig.';
     }
 
-    const infiltrators = settings.undercoverCount + (settings.includeMrWhite ? 1 : 0);
+    const infiltrators =
+        settings.undercoverCount + (settings.includeMrWhite ? 1 : 0);
     const civilians = total - infiltrators;
 
     if (civilians <= infiltrators) {
@@ -81,7 +82,10 @@ function shuffle<T>(items: T[], rng: () => number = Math.random): T[] {
  * Picks a random word pair and assigns roles and secret words to each player.
  * Roles are shuffled so the seating order gives nothing away.
  */
-export function dealRoles(settings: GameSettings, rng: () => number = Math.random): DealResult {
+export function dealRoles(
+    settings: GameSettings,
+    rng: () => number = Math.random,
+): DealResult {
     const pair = WORD_PAIRS[Math.floor(rng() * WORD_PAIRS.length)];
 
     // Randomise which side of the pair the Civilians get, for variety.
@@ -108,7 +112,12 @@ export function dealRoles(settings: GameSettings, rng: () => number = Math.rando
             id: index,
             name: name.trim(),
             role,
-            word: role === 'mrwhite' ? null : role === 'undercover' ? undercoverWord : civilianWord,
+            word:
+                role === 'mrwhite'
+                    ? null
+                    : role === 'undercover'
+                      ? undercoverWord
+                      : civilianWord,
             eliminated: false,
         };
     });
@@ -124,7 +133,10 @@ export function alivePlayers(players: Player[]): Player[] {
  * Randomly picks which living player describes their word first this round.
  * Chosen purely at random so the choice leaks nothing about roles.
  */
-export function pickStarterId(players: Player[], rng: () => number = Math.random): number {
+export function pickStarterId(
+    players: Player[],
+    rng: () => number = Math.random,
+): number {
     const alive = alivePlayers(players);
 
     return alive[Math.floor(rng() * alive.length)].id;
@@ -134,7 +146,10 @@ export function pickStarterId(players: Player[], rng: () => number = Math.random
  * Returns the living players in speaking order, beginning with the starter
  * and wrapping around the table.
  */
-export function orderFromStarter(players: Player[], starterId: number | null): Player[] {
+export function orderFromStarter(
+    players: Player[],
+    starterId: number | null,
+): Player[] {
     const alive = alivePlayers(players);
 
     if (starterId === null) {
@@ -163,7 +178,9 @@ export function orderFromStarter(players: Player[], starterId: number | null): P
  */
 export function determineWinner(players: Player[]): Winner | null {
     const alive = alivePlayers(players);
-    const civilians = alive.filter((player) => player.role === 'civilian').length;
+    const civilians = alive.filter(
+        (player) => player.role === 'civilian',
+    ).length;
     const infiltrators = alive.length - civilians;
 
     if (infiltrators === 0) {
@@ -182,7 +199,10 @@ export function normaliseWord(word: string): string {
     return word.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-export function isMrWhiteGuessCorrect(guess: string, civilianWord: string): boolean {
+export function isMrWhiteGuessCorrect(
+    guess: string,
+    civilianWord: string,
+): boolean {
     return normaliseWord(guess) === normaliseWord(civilianWord);
 }
 

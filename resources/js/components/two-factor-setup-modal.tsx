@@ -24,7 +24,7 @@ import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { confirm } from '@/routes/two-factor';
 
 const darkPrimaryButton =
-    'rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400';
+    'rounded-2xl bg-amber-500 font-semibold text-slate-950 hover:bg-amber-400';
 
 function GridScanIcon() {
     return (

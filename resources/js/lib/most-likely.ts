@@ -175,7 +175,9 @@ export interface VoteResult {
  */
 export function tallyVotes(names: string[], votes: number[]): VoteResult {
     const maxVotes = Math.max(0, ...votes);
-    const winners = names.filter((_, index) => votes[index] === maxVotes && maxVotes > 0);
+    const winners = names.filter(
+        (_, index) => votes[index] === maxVotes && maxVotes > 0,
+    );
 
     return { winners, maxVotes };
 }

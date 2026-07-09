@@ -2,7 +2,11 @@ import type { SVGAttributes } from 'react';
 
 export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
     return (
-        <svg {...props} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <svg
+            {...props}
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
+        >
             <defs>
                 <linearGradient id="ppp-beer" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0" stopColor="#fbbf24" />
@@ -16,7 +20,16 @@ export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
                 strokeWidth="36"
                 strokeLinecap="round"
             />
-            <rect x="150" y="200" width="180" height="190" rx="28" fill="url(#ppp-beer)" stroke="#fde68a" strokeWidth="6" />
+            <rect
+                x="150"
+                y="200"
+                width="180"
+                height="190"
+                rx="28"
+                fill="url(#ppp-beer)"
+                stroke="#fde68a"
+                strokeWidth="6"
+            />
             <g fill="#f8fafc">
                 <rect x="150" y="188" width="180" height="40" rx="20" />
                 <circle cx="178" cy="196" r="36" />

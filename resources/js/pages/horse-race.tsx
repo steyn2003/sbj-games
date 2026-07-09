@@ -1,13 +1,15 @@
-import { Head, Link } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     ArrowLeft,
     Beer,
     Flag,
     Minus,
+    Monitor,
     Plus,
+    Rabbit,
     RotateCcw,
     Trophy,
+    WalletCards,
     X,
 } from 'lucide-react';
 import {
@@ -23,7 +25,12 @@ import {
     store,
     update,
 } from '@/actions/App/Http/Controllers/RaceController';
-import { Button } from '@/components/ui/button';
+import {
+    ActionButton,
+    GameHeader,
+    GameShell,
+    Panel,
+} from '@/components/game-ui';
 import {
     DEFAULT_STEPS,
     flip,
@@ -35,7 +42,6 @@ import {
 } from '@/lib/horse-race';
 import type { Bet, RaceState, Suit } from '@/lib/horse-race';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
 function readCookie(name: string): string | null {
     const match = document.cookie.match(
@@ -85,38 +91,22 @@ export default function HorseRace() {
     const [code, setCode] = useState('');
 
     return (
-        <>
-            <Head title="Paardenrace" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-300/40 blur-3xl dark:bg-emerald-600/25" />
-                <div className="pointer-events-none absolute -right-24 -bottom-40 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
-                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    <div className="mb-2">
-                        <Link
-                            href={dashboard()}
-                            className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                        >
-                            <ArrowLeft className="size-4" /> Dashboard
-                        </Link>
-                    </div>
-
-                    {role === 'choose' && (
-                        <ChooseScreen
-                            onBoard={(c) => {
-                                setCode(c);
-                                setRole('board');
-                            }}
-                            onDealer={(c) => {
-                                setCode(c);
-                                setRole('dealer');
-                            }}
-                        />
-                    )}
-                    {role === 'board' && <BoardScreen code={code} />}
-                    {role === 'dealer' && <DealerScreen code={code} />}
-                </main>
-            </div>
-        </>
+        <GameShell title="Paardenrace">
+            {role === 'choose' && (
+                <ChooseScreen
+                    onBoard={(c) => {
+                        setCode(c);
+                        setRole('board');
+                    }}
+                    onDealer={(c) => {
+                        setCode(c);
+                        setRole('dealer');
+                    }}
+                />
+            )}
+            {role === 'board' && <BoardScreen code={code} />}
+            {role === 'dealer' && <DealerScreen code={code} />}
+        </GameShell>
     );
 }
 
@@ -125,6 +115,9 @@ interface OpenRace {
     phase: string;
     players: number;
 }
+
+const optionCardClasses =
+    'flex w-full items-start gap-4 rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] disabled:opacity-50 dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10';
 
 function ChooseScreen({
     onBoard,
@@ -201,21 +194,23 @@ function ChooseScreen({
         return (
             <div className="flex flex-1 flex-col">
                 <button
+                    type="button"
                     onClick={() => setView('pick')}
-                    className="mb-4 inline-flex items-center gap-1 self-start text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                    className="mb-4 inline-flex items-center gap-1.5 self-start text-sm text-slate-500 transition hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-100"
                 >
-                    <ArrowLeft className="size-4" /> Terug
+                    <ArrowLeft className="size-4" aria-hidden /> Terug
                 </button>
-                <header className="mb-5 text-center">
-                    <h1 className="text-2xl font-black">Kies een race</h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Tik op de race die de dealer net startte.
-                    </p>
-                </header>
+                <GameHeader
+                    kicker="Racespel"
+                    title="Kies een race"
+                    description="Tik op de race die de dealer net startte."
+                />
 
                 {races.length === 0 ? (
-                    <div className="mt-10 text-center text-slate-500 dark:text-slate-400">
-                        <div className="mb-3 animate-pulse text-5xl">🐎</div>
+                    <div className="mt-10 flex flex-col items-center text-center text-slate-500 dark:text-slate-400">
+                        <span className="mb-4 flex size-20 animate-pulse items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                            <Rabbit className="size-10" aria-hidden />
+                        </span>
                         Wachten tot de dealer een race start…
                     </div>
                 ) : (
@@ -223,10 +218,11 @@ function ChooseScreen({
                         {races.map((race) => (
                             <li key={race.code}>
                                 <button
+                                    type="button"
                                     onClick={() => onBoard(race.code)}
-                                    className="flex w-full items-center justify-between rounded-2xl border border-slate-300 bg-white p-4 shadow-sm transition hover:border-emerald-400/60 active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900/60 dark:shadow-none"
+                                    className="flex w-full items-center justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10"
                                 >
-                                    <span className="text-xl font-black tracking-[0.3em] text-amber-600 dark:text-amber-300">
+                                    <span className="text-xl font-bold tracking-[0.3em] text-amber-600 dark:text-amber-400">
                                         {race.code}
                                     </span>
                                     <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -246,41 +242,52 @@ function ChooseScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-600 uppercase ring-1 ring-amber-400/30 dark:text-amber-300">
-                    🐎 Paardenrace
-                </span>
-                <h1 className="text-3xl font-black">Twee telefoons</h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    De dealer start de race, het bord doet mee.
-                </p>
-            </header>
+            <GameHeader
+                kicker="Racespel"
+                title="Paardenrace"
+                description="Twee telefoons: de dealer start de race en draait de kaarten, het bord toont de baan."
+            />
 
             <button
+                type="button"
                 onClick={startRace}
                 disabled={busy}
-                className="mb-3 flex flex-col items-start gap-1 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 text-left transition hover:border-emerald-400/60 active:scale-[0.99] disabled:opacity-50"
+                className={cn(optionCardClasses, 'mb-3')}
             >
-                <span className="text-2xl">🃏</span>
-                <span className="text-lg font-bold">Ik ben de dealer</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Start de race, plaats de weddenschappen en draai de kaarten.
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                    <WalletCards className="size-5" aria-hidden />
+                </span>
+                <span>
+                    <span className="block text-lg font-bold">
+                        Ik ben de dealer
+                    </span>
+                    <span className="block text-sm text-slate-500 dark:text-slate-400">
+                        Start de race, plaats de weddenschappen en draai de
+                        kaarten.
+                    </span>
                 </span>
             </button>
 
             <button
+                type="button"
                 onClick={() => setView('join')}
-                className="flex flex-col items-start gap-1 rounded-2xl border border-slate-300 bg-white p-5 text-left shadow-sm transition hover:border-emerald-400/60 active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900/60 dark:shadow-none"
+                className={optionCardClasses}
             >
-                <span className="text-2xl">📺</span>
-                <span className="text-lg font-bold">Ik ben het bord</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Toon de baan. Kies de race die de dealer startte.
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                    <Monitor className="size-5" aria-hidden />
+                </span>
+                <span>
+                    <span className="block text-lg font-bold">
+                        Ik ben het bord
+                    </span>
+                    <span className="block text-sm text-slate-500 dark:text-slate-400">
+                        Toon de baan. Kies de race die de dealer startte.
+                    </span>
                 </span>
             </button>
 
             {error && (
-                <p className="mt-4 text-center text-sm text-red-600 dark:text-red-400">
+                <p className="mt-4 text-center text-sm text-rose-600 dark:text-rose-400">
                     {error}
                 </p>
             )}
@@ -340,7 +347,7 @@ function BoardScreen({ code }: { code: string }) {
                 <span className="text-sm text-slate-500 dark:text-slate-400">
                     Race
                 </span>
-                <span className="rounded-lg bg-slate-200 px-3 py-1 text-xl font-black tracking-[0.3em] text-amber-600 dark:bg-slate-800 dark:text-amber-300">
+                <span className="rounded-lg bg-white px-3 py-1 text-xl font-bold tracking-[0.3em] text-amber-600 ring-1 ring-slate-200 dark:bg-white/5 dark:text-amber-400 dark:ring-white/10">
                     {code}
                 </span>
             </div>
@@ -348,25 +355,30 @@ function BoardScreen({ code }: { code: string }) {
             {(!state ||
                 state.phase === 'lobby' ||
                 state.phase === 'betting') && (
-                <div className="mt-10 text-center text-slate-500 dark:text-slate-400">
-                    <div className="mb-3 animate-pulse text-5xl">🐎</div>
+                <div className="mt-10 flex flex-col items-center text-center text-slate-500 dark:text-slate-400">
+                    <span className="mb-4 flex size-20 animate-pulse items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                        <Rabbit className="size-10" aria-hidden />
+                    </span>
                     Wachten op de dealer…
                     {state && state.bets && state.bets.length > 0 && (
-                        <ul className="mx-auto mt-6 max-w-xs space-y-1 text-left text-sm">
+                        <ul className="mx-auto mt-6 w-full max-w-xs space-y-1 text-left text-sm">
                             {state.bets.map((bet) => (
                                 <li
                                     key={bet.id}
-                                    className="flex items-center justify-between rounded-lg bg-slate-100 px-3 py-1.5 dark:bg-slate-900/60"
+                                    className="flex items-center justify-between rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
                                 >
                                     <span>{bet.player}</span>
                                     <span
                                         className={cn(
-                                            'font-bold',
+                                            'inline-flex items-center gap-1 font-bold',
                                             suitInfo(bet.suit).color,
                                         )}
                                     >
-                                        {suitInfo(bet.suit).symbol} · {bet.sips}{' '}
-                                        🍺
+                                        {suitInfo(bet.suit).symbol} · {bet.sips}
+                                        <Beer
+                                            className="size-3.5"
+                                            aria-hidden
+                                        />
                                     </span>
                                 </li>
                             ))}
@@ -419,7 +431,7 @@ function Track({ state }: { state: RaceState }) {
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="mb-2 rounded-xl bg-amber-400/15 px-4 py-2 text-center text-sm font-semibold text-amber-700 ring-1 ring-amber-400/30 dark:text-amber-200"
+                        className="mb-2 rounded-xl bg-amber-500/10 px-4 py-2 text-center text-sm font-semibold text-amber-700 ring-1 ring-amber-500/30 dark:text-amber-300"
                     >
                         {state.lastEvent}
                     </motion.div>
@@ -446,11 +458,11 @@ function Track({ state }: { state: RaceState }) {
                             <div
                                 key={suit.key}
                                 className={cn(
-                                    'flex items-center justify-center gap-1 rounded-xl border px-2 py-1.5',
+                                    'flex items-center justify-center gap-1 rounded-xl px-2 py-1.5 ring-1',
                                     horizontal && 'flex-1',
                                     isWinner
-                                        ? 'border-amber-400 bg-amber-400/10'
-                                        : 'border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900/50',
+                                        ? 'bg-amber-500/10 ring-amber-500'
+                                        : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
                                 )}
                             >
                                 <span
@@ -462,7 +474,10 @@ function Track({ state }: { state: RaceState }) {
                                     {suit.symbol}
                                 </span>
                                 {isWinner && (
-                                    <Trophy className="size-4 text-amber-400" />
+                                    <Trophy
+                                        className="size-4 text-amber-600 dark:text-amber-400"
+                                        aria-hidden
+                                    />
                                 )}
                             </div>
                         );
@@ -477,12 +492,14 @@ function Track({ state }: { state: RaceState }) {
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-                    className="mt-4 rounded-2xl bg-amber-400/15 p-5 text-center ring-1 ring-amber-400/30"
+                    className="mt-4 rounded-2xl bg-amber-500/10 p-5 text-center ring-1 ring-amber-500/30"
                 >
-                    <div className="mb-1 text-4xl">🏆</div>
+                    <span className="mx-auto mb-2 flex size-14 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                        <Trophy className="size-7" aria-hidden />
+                    </span>
                     <div
                         className={cn(
-                            'text-xl font-black',
+                            'text-xl font-bold',
                             suitInfo(state.winner).color,
                         )}
                     >
@@ -493,21 +510,21 @@ function Track({ state }: { state: RaceState }) {
                         {outcomes(state).map((o) => (
                             <li
                                 key={o.bet.id}
-                                className="flex items-center justify-between rounded-lg bg-slate-100 px-3 py-1.5 dark:bg-slate-900/60"
+                                className="flex items-center justify-between rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
                             >
                                 <span>{o.bet.player}</span>
                                 <span
                                     className={cn(
-                                        'font-bold',
+                                        'inline-flex items-center gap-1 font-bold',
                                         o.won
                                             ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-red-600 dark:text-red-400',
+                                            : 'text-rose-600 dark:text-rose-400',
                                     )}
                                 >
                                     {o.won
                                         ? `deelt ${o.sips} uit`
-                                        : `drinkt ${o.sips}`}{' '}
-                                    🍺
+                                        : `drinkt ${o.sips}`}
+                                    <Beer className="size-4" aria-hidden />
                                 </span>
                             </li>
                         ))}
@@ -569,7 +586,7 @@ function TrackField({
     return (
         <div
             ref={containerRef}
-            className="relative flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900/40"
+            className="relative flex-1 overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
         >
             <motion.div
                 className="absolute"
@@ -584,7 +601,7 @@ function TrackField({
                 {[1, 2, 3].map((n) => (
                     <div
                         key={n}
-                        className="absolute bg-slate-300 dark:bg-slate-800/40"
+                        className="absolute bg-slate-300 dark:bg-white/10"
                         style={
                             horizontal
                                 ? {
@@ -616,10 +633,10 @@ function TrackField({
                             className={cn(
                                 'absolute flex items-center justify-center',
                                 horizontal
-                                    ? 'top-0 bottom-0 border-r border-slate-200 dark:border-slate-800/50'
-                                    : 'right-0 left-0 border-b border-slate-200 dark:border-slate-800/50',
-                                isFinish && 'bg-amber-400/5',
-                                backfire?.revealed && 'bg-amber-400/10',
+                                    ? 'top-0 bottom-0 border-r border-slate-200 dark:border-white/10'
+                                    : 'right-0 left-0 border-b border-slate-200 dark:border-white/10',
+                                isFinish && 'bg-amber-500/5',
+                                backfire?.revealed && 'bg-amber-500/10',
                             )}
                             style={
                                 horizontal
@@ -635,22 +652,25 @@ function TrackField({
                         >
                             {isFinish ? (
                                 <span className="flex items-center gap-1 text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">
-                                    <Flag className="size-4" />
+                                    <Flag className="size-4" aria-hidden />
                                     {!horizontal && 'FINISH'}
                                 </span>
                             ) : backfire ? (
-                                <span
-                                    className={cn(
-                                        'text-2xl',
-                                        backfire.revealed
-                                            ? suitInfo(backfire.suit).color
-                                            : 'text-slate-400 dark:text-slate-600',
-                                    )}
-                                >
-                                    {backfire.revealed
-                                        ? suitInfo(backfire.suit).symbol
-                                        : '🂠'}
-                                </span>
+                                backfire.revealed ? (
+                                    <span
+                                        className={cn(
+                                            'text-2xl',
+                                            suitInfo(backfire.suit).color,
+                                        )}
+                                    >
+                                        {suitInfo(backfire.suit).symbol}
+                                    </span>
+                                ) : (
+                                    <span
+                                        aria-hidden
+                                        className="h-9 w-7 rounded-md bg-slate-300 ring-1 ring-slate-400/50 dark:bg-slate-700 dark:ring-slate-500/50"
+                                    />
+                                )
                             ) : null}
                         </div>
                     );
@@ -687,7 +707,7 @@ function TrackField({
                         }}
                     >
                         <motion.span
-                            className="text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                            className={cn('flex', suit.color)}
                             animate={
                                 state.winner === suit.key
                                     ? { scale: [1, 1.3, 1] }
@@ -699,7 +719,7 @@ function TrackField({
                                 duration: 0.8,
                             }}
                         >
-                            🐎
+                            <Rabbit className="size-8" aria-hidden />
                         </motion.span>
                     </motion.div>
                 ))}
@@ -707,6 +727,9 @@ function TrackField({
         </div>
     );
 }
+
+const stepperButtonClasses =
+    'flex size-10 items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.97] dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10';
 
 function DealerScreen({ code }: { code: string }) {
     const [state, setState] = useState<RaceState>(() => bettingState([]));
@@ -745,33 +768,39 @@ function DealerScreen({ code }: { code: string }) {
         return (
             <div className="flex flex-1 flex-col">
                 <header className="mb-5">
-                    <h1 className="text-2xl font-black">Weddenschappen</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
+                        Dealer
+                    </p>
+                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        Weddenschappen
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         Code{' '}
-                        <span className="font-bold text-amber-600 dark:text-amber-300">
+                        <span className="font-bold text-amber-600 dark:text-amber-400">
                             {code}
                         </span>{' '}
                         · iedereen kiest een paard en zet slokken in.
                     </p>
                 </header>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-none">
+                <Panel>
                     <input
                         value={player}
                         onChange={(e) => setPlayer(e.target.value)}
                         placeholder="Naam"
-                        className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-600"
+                        className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-slate-950 dark:placeholder:text-slate-600"
                     />
                     <div className="mb-3 grid grid-cols-4 gap-2">
                         {SUITS.map((s) => (
                             <button
                                 key={s.key}
+                                type="button"
                                 onClick={() => setSuit(s.key)}
                                 className={cn(
-                                    'flex flex-col items-center gap-0.5 rounded-xl border py-2 transition',
+                                    'flex flex-col items-center gap-0.5 rounded-xl py-2 ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.97]',
                                     suit === s.key
-                                        ? 'border-amber-400 bg-amber-400/10'
-                                        : 'border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950',
+                                        ? 'bg-amber-500/10 ring-amber-500'
+                                        : 'bg-white ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10',
                                 )}
                             >
                                 <span
@@ -789,40 +818,41 @@ function DealerScreen({ code }: { code: string }) {
                         ))}
                     </div>
                     <div className="mb-3 flex items-center justify-center gap-4">
-                        <Button
-                            variant="outline"
-                            size="icon"
+                        <button
+                            type="button"
                             onClick={() => setSips((n) => Math.max(1, n - 1))}
-                            className="border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950"
+                            aria-label="Minder slokken"
+                            className={stepperButtonClasses}
                         >
-                            <Minus className="size-4" />
-                        </Button>
-                        <span className="flex items-center gap-1 text-lg font-bold">
-                            {sips} <Beer className="size-4 text-amber-400" />
+                            <Minus className="size-4" aria-hidden />
+                        </button>
+                        <span className="flex items-center gap-1.5 text-lg font-bold tabular-nums">
+                            {sips}
+                            <Beer
+                                className="size-4 text-amber-600 dark:text-amber-400"
+                                aria-hidden
+                            />
                         </span>
-                        <Button
-                            variant="outline"
-                            size="icon"
+                        <button
+                            type="button"
                             onClick={() => setSips((n) => n + 1)}
-                            className="border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950"
+                            aria-label="Meer slokken"
+                            className={stepperButtonClasses}
                         >
-                            <Plus className="size-4" />
-                        </Button>
+                            <Plus className="size-4" aria-hidden />
+                        </button>
                     </div>
-                    <Button
-                        onClick={addBet}
-                        className="w-full bg-amber-400 text-slate-950 hover:bg-amber-300"
-                    >
-                        <Plus className="size-4" /> Inzet toevoegen
-                    </Button>
-                </div>
+                    <ActionButton onClick={addBet} className="h-12 text-sm">
+                        <Plus className="size-4" aria-hidden /> Inzet toevoegen
+                    </ActionButton>
+                </Panel>
 
                 {state.bets.length > 0 && (
                     <ul className="mt-4 space-y-2">
                         {state.bets.map((bet) => (
                             <li
                                 key={bet.id}
-                                className="flex items-center justify-between rounded-xl bg-slate-100 px-4 py-2 dark:bg-slate-900/60"
+                                className="flex items-center justify-between rounded-xl bg-white px-4 py-2 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
                             >
                                 <span className="font-semibold">
                                     {bet.player}
@@ -830,18 +860,23 @@ function DealerScreen({ code }: { code: string }) {
                                 <span className="flex items-center gap-3">
                                     <span
                                         className={cn(
-                                            'font-bold',
+                                            'inline-flex items-center gap-1 font-bold',
                                             suitInfo(bet.suit).color,
                                         )}
                                     >
-                                        {suitInfo(bet.suit).symbol} · {bet.sips}{' '}
-                                        🍺
+                                        {suitInfo(bet.suit).symbol} · {bet.sips}
+                                        <Beer
+                                            className="size-3.5"
+                                            aria-hidden
+                                        />
                                     </span>
                                     <button
+                                        type="button"
                                         onClick={() => removeBet(bet.id)}
-                                        className="text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+                                        aria-label={`Verwijder inzet van ${bet.player}`}
+                                        className="text-slate-400 transition hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-500 dark:hover:text-rose-400"
                                     >
-                                        <X className="size-4" />
+                                        <X className="size-4" aria-hidden />
                                     </button>
                                 </span>
                             </li>
@@ -857,12 +892,13 @@ function DealerScreen({ code }: { code: string }) {
                         {STEP_OPTIONS.map((option) => (
                             <button
                                 key={option}
+                                type="button"
                                 onClick={() => setSteps(option)}
                                 className={cn(
-                                    'rounded-xl border py-2 text-sm font-bold transition',
+                                    'rounded-xl py-2 text-sm font-bold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.97]',
                                     steps === option
-                                        ? 'border-amber-400 bg-amber-400/10 text-amber-600 dark:text-amber-300'
-                                        : 'border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
+                                        ? 'bg-amber-500 text-slate-950 ring-amber-500'
+                                        : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-white/10',
                                 )}
                             >
                                 {option}
@@ -872,13 +908,13 @@ function DealerScreen({ code }: { code: string }) {
                 </div>
 
                 <div className="mt-auto pt-6">
-                    <Button
+                    <ActionButton
                         onClick={() => sync(startRace(state.bets, steps))}
                         disabled={state.bets.length === 0}
-                        className="h-14 w-full bg-emerald-500 text-base font-bold text-slate-950 hover:bg-emerald-400 disabled:opacity-40"
+                        className="text-lg"
                     >
-                        Start de race 🏇
-                    </Button>
+                        <Rabbit className="size-5" aria-hidden /> Start de race
+                    </ActionButton>
                 </div>
             </div>
         );
@@ -891,7 +927,7 @@ function DealerScreen({ code }: { code: string }) {
     return (
         <div className="flex flex-1 flex-col">
             <header className="mb-2 text-center">
-                <h1 className="text-2xl font-black">Dealer</h1>
+                <h1 className="text-2xl font-bold">Dealer</h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                     {canFlip
                         ? 'Tik op de kaart om te draaien.'
@@ -919,10 +955,10 @@ function DealerScreen({ code }: { code: string }) {
                                 backfaceVisibility: 'hidden',
                             }}
                             className={cn(
-                                'absolute inset-0 flex flex-col items-center justify-center rounded-3xl shadow-2xl select-none',
+                                'absolute inset-0 flex flex-col items-center justify-center rounded-3xl shadow-lg select-none',
                                 drawnSuit
-                                    ? 'bg-white'
-                                    : 'bg-gradient-to-br from-emerald-500 to-emerald-700 ring-4 ring-emerald-300/20 ring-inset',
+                                    ? 'bg-white ring-1 ring-slate-200 dark:ring-white/10'
+                                    : 'bg-amber-500 ring-4 ring-slate-950/10 ring-inset',
                                 canFlip && 'cursor-pointer',
                             )}
                         >
@@ -955,8 +991,11 @@ function DealerScreen({ code }: { code: string }) {
                                 </>
                             ) : (
                                 <>
-                                    <span className="text-7xl">🐎</span>
-                                    <span className="mt-3 text-sm font-semibold text-emerald-50/90">
+                                    <Rabbit
+                                        className="size-20 text-slate-950"
+                                        aria-hidden
+                                    />
+                                    <span className="mt-3 text-sm font-semibold text-slate-950/70">
                                         Tik om te draaien
                                     </span>
                                 </>
@@ -967,7 +1006,7 @@ function DealerScreen({ code }: { code: string }) {
 
                 <div className="mt-4 h-6">
                     {state.lastEvent && (
-                        <p className="text-center text-sm font-semibold text-amber-600 dark:text-amber-300">
+                        <p className="text-center text-sm font-semibold text-amber-600 dark:text-amber-400">
                             {state.lastEvent}
                         </p>
                     )}
@@ -977,12 +1016,12 @@ function DealerScreen({ code }: { code: string }) {
                     {SUITS.map((s) => (
                         <div
                             key={s.key}
-                            className="flex flex-col items-center rounded-xl bg-slate-100 py-2 dark:bg-slate-900/60"
+                            className="flex flex-col items-center rounded-xl bg-white py-2 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
                         >
                             <span className={cn('text-lg', s.color)}>
                                 {s.symbol}
                             </span>
-                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                            <span className="text-xs font-bold text-slate-600 tabular-nums dark:text-slate-300">
                                 {state.positions[s.key]}/{state.trackLength}
                             </span>
                         </div>
@@ -992,12 +1031,9 @@ function DealerScreen({ code }: { code: string }) {
 
             {state.phase === 'finished' && (
                 <div className="mt-auto pt-4">
-                    <Button
-                        onClick={() => sync(bettingState([]))}
-                        className="h-14 w-full bg-amber-400 text-base font-bold text-slate-950 hover:bg-amber-300"
-                    >
-                        <RotateCcw className="size-4" /> Nieuw potje
-                    </Button>
+                    <ActionButton onClick={() => sync(bettingState([]))}>
+                        <RotateCcw className="size-5" aria-hidden /> Nieuw potje
+                    </ActionButton>
                 </div>
             )}
         </div>

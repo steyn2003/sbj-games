@@ -69,7 +69,7 @@ export default function TwoFactorRecoveryCodes({
                 <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
                     <Button
                         onClick={toggleCodesVisibility}
-                        className="w-fit rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400"
+                        className="w-fit rounded-2xl bg-amber-500 font-semibold text-slate-950 hover:bg-amber-400"
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
                     >

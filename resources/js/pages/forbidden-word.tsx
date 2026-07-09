@@ -1,6 +1,5 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
     ArrowRight,
     Ban,
     Check,
@@ -14,7 +13,12 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import {
+    ActionButton,
+    GameHeader,
+    GameShell,
+    Panel,
+} from '@/components/game-ui';
 import {
     MAX_PLAYERS,
     MIN_PLAYERS,
@@ -25,7 +29,6 @@ import {
 import type { ForbiddenCard } from '@/lib/forbidden-word';
 import { usePersistedGame } from '@/lib/use-persisted-game';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
 type Phase = 'play' | 'turnover' | 'gameover';
 
@@ -81,38 +84,31 @@ export default function ForbiddenWord() {
     };
 
     return (
-        <>
-            <Head title="Verboden Woord" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-300/40 blur-3xl dark:bg-indigo-600/30" />
-                <div className="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
-                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    {game === null ? (
-                        <SetupScreen
-                            resumable={currentGame}
-                            history={history}
-                            onResume={(state) => setGame(state)}
-                            onStart={setGame}
-                        />
-                    ) : game.phase === 'play' ? (
-                        <PlayScreen
-                            key={`${game.round}-${game.currentPlayer}`}
-                            game={game}
-                            setGame={setGame}
-                            onReset={resetToSetup}
-                        />
-                    ) : game.phase === 'turnover' ? (
-                        <TurnoverScreen game={game} setGame={setGame} />
-                    ) : (
-                        <GameOverScreen
-                            game={game}
-                            setGame={setGame}
-                            onReset={resetToSetup}
-                        />
-                    )}
-                </main>
-            </div>
-        </>
+        <GameShell title="Verboden Woord">
+            {game === null ? (
+                <SetupScreen
+                    resumable={currentGame}
+                    history={history}
+                    onResume={(state) => setGame(state)}
+                    onStart={setGame}
+                />
+            ) : game.phase === 'play' ? (
+                <PlayScreen
+                    key={`${game.round}-${game.currentPlayer}`}
+                    game={game}
+                    setGame={setGame}
+                    onReset={resetToSetup}
+                />
+            ) : game.phase === 'turnover' ? (
+                <TurnoverScreen game={game} setGame={setGame} />
+            ) : (
+                <GameOverScreen
+                    game={game}
+                    setGame={setGame}
+                    onReset={resetToSetup}
+                />
+            )}
+        </GameShell>
     );
 }
 
@@ -182,63 +178,50 @@ function SetupScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-2">
-                <Link
-                    href={dashboard()}
-                    className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                    <ArrowLeft className="size-4" /> Dashboard
-                </Link>
-            </div>
-
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-400/15 px-3 py-1 text-xs font-bold tracking-widest text-indigo-600 uppercase ring-1 ring-indigo-400/30 dark:text-indigo-300">
-                    <Ban className="size-3.5" /> Pim Pam Pet
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-indigo-700 to-amber-500 bg-clip-text text-4xl font-black tracking-tight text-transparent sm:text-5xl dark:from-white dark:via-indigo-200 dark:to-amber-200">
-                    Verboden Woord
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Laat de groep het woord raden — maar gebruik nooit de
-                    verboden woorden. Hoeveel haal je in jouw beurt?
-                </p>
-            </header>
+            <GameHeader
+                kicker="Raadspel"
+                title="Verboden Woord"
+                description="Laat de groep het woord raden — maar gebruik nooit de verboden woorden. Hoeveel punten haal je in jouw beurt?"
+            />
 
             {resumable && (
                 <button
                     type="button"
                     onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-left ring-1 ring-emerald-400/40 transition active:scale-[0.99] dark:from-emerald-500/20 dark:to-teal-500/20"
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-left ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-emerald-500/15 dark:hover:bg-emerald-500/20"
                 >
-                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/30">
-                        <Play className="size-5 text-emerald-200" />
+                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
+                        <Play className="size-5" aria-hidden />
                     </span>
                     <span className="flex-1">
-                        <span className="block text-sm font-bold text-white">
+                        <span className="block text-sm font-bold text-slate-900 dark:text-white">
                             Ga verder
                         </span>
-                        <span className="block text-xs text-emerald-200/80">
+                        <span className="block text-xs text-emerald-700 dark:text-emerald-300/80">
                             Ronde {resumable.state.round ?? 1}
                         </span>
                     </span>
-                    <ArrowRight className="size-5 text-emerald-200" />
+                    <ArrowRight
+                        className="size-5 text-emerald-600 dark:text-emerald-300"
+                        aria-hidden
+                    />
                 </button>
             )}
 
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur-sm dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <Stepper
                     label="Spelers"
-                    icon={<Users className="size-4" />}
+                    icon={<Users className="size-4" aria-hidden />}
                     value={names.length}
                     min={MIN_PLAYERS}
                     max={MAX_PLAYERS}
                     onChange={setPlayerCount}
                 />
-            </section>
+            </Panel>
 
-            <section className="mb-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-4">
                 <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                    <Timer className="size-4" /> Tijd per beurt
+                    <Timer className="size-4" aria-hidden /> Tijd per beurt
                 </h2>
                 <div className="grid grid-cols-3 gap-3">
                     {TURN_SECONDS_OPTIONS.map((option) => (
@@ -247,21 +230,22 @@ function SetupScreen({
                             type="button"
                             onClick={() => setSeconds(option)}
                             className={cn(
-                                'rounded-xl py-3 text-base font-bold ring-1 transition',
+                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
                                 seconds === option
-                                    ? 'bg-indigo-500 text-white ring-indigo-300'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
+                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                             )}
                         >
                             {option}s
                         </button>
                     ))}
                 </div>
-            </section>
+            </Panel>
 
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                    <RotateCcw className="size-4" /> Beurten per speler
+                    <RotateCcw className="size-4" aria-hidden /> Beurten per
+                    speler
                 </h2>
                 <div className="grid grid-cols-3 gap-3">
                     {ROUNDS_OPTIONS.map((option) => (
@@ -270,17 +254,17 @@ function SetupScreen({
                             type="button"
                             onClick={() => setRounds(option)}
                             className={cn(
-                                'rounded-xl py-3 text-base font-bold ring-1 transition',
+                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
                                 rounds === option
-                                    ? 'bg-indigo-500 text-white ring-indigo-300'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
+                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                             )}
                         >
                             {option}
                         </button>
                     ))}
                 </div>
-            </section>
+            </Panel>
 
             <section className="mb-5 space-y-2">
                 <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
@@ -294,7 +278,7 @@ function SetupScreen({
                             updateName(index, event.target.value)
                         }
                         maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                         placeholder={`Speler ${index + 1}`}
                     />
                 ))}
@@ -308,14 +292,14 @@ function SetupScreen({
                         {error}
                     </p>
                 )}
-                <Button
+                <ActionButton
                     onClick={start}
                     disabled={Boolean(error)}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400"
+                    className="text-lg"
                 >
                     Start spel
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -348,7 +332,10 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
                             className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
                         >
                             <span className="flex items-center gap-2">
-                                <Trophy className="size-4 text-amber-600 dark:text-amber-300" />
+                                <Trophy
+                                    className="size-4 text-amber-600 dark:text-amber-400"
+                                    aria-hidden
+                                />
                                 <span className="font-medium text-slate-900 dark:text-white">
                                     {winner.names.join(' & ')}
                                 </span>
@@ -413,9 +400,9 @@ function Stepper({
                     type="button"
                     onClick={() => onChange(value - 1)}
                     disabled={value <= min}
-                    className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                    className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
                 >
-                    <Minus className="size-4" />
+                    <Minus className="size-4" aria-hidden />
                 </button>
                 <span className="w-6 text-center text-lg font-bold tabular-nums">
                     {value}
@@ -424,9 +411,9 @@ function Stepper({
                     type="button"
                     onClick={() => onChange(value + 1)}
                     disabled={value >= max}
-                    className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                    className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
                 >
-                    <Plus className="size-4" />
+                    <Plus className="size-4" aria-hidden />
                 </button>
             </div>
         </div>
@@ -505,9 +492,10 @@ function PlayScreen({
                     <button
                         type="button"
                         onClick={onReset}
-                        className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                        className="flex items-center gap-1 rounded text-xs text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                        <RotateCcw className="size-3.5" /> Nieuw spel
+                        <RotateCcw className="size-3.5" aria-hidden /> Nieuw
+                        spel
                     </button>
                 </div>
 
@@ -515,7 +503,7 @@ function PlayScreen({
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         Aan de beurt
                     </p>
-                    <h1 className="mt-2 text-4xl font-black text-slate-900 dark:text-white">
+                    <h1 className="mt-2 text-4xl font-bold text-slate-900 dark:text-white">
                         {player}
                     </h1>
                     <p className="mt-4 max-w-xs text-sm text-slate-500 dark:text-slate-400">
@@ -526,12 +514,12 @@ function PlayScreen({
                 </div>
 
                 <div className="mt-auto pt-4">
-                    <Button
+                    <ActionButton
                         onClick={() => setStarted(true)}
-                        className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white hover:from-amber-400 hover:to-orange-400"
+                        className="text-lg"
                     >
                         Start beurt ({game.seconds}s)
-                    </Button>
+                    </ActionButton>
                 </div>
             </div>
         );
@@ -556,51 +544,51 @@ function PlayScreen({
                             : 'bg-white text-slate-900 ring-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10',
                     )}
                 >
-                    <Timer className="size-4" />
+                    <Timer className="size-4" aria-hidden />
                     <span aria-hidden="true">{secondsLeft}s</span>
                     <span className="sr-only">nog {secondsLeft} seconden</span>
                 </span>
-                <span className="rounded-full bg-indigo-500/15 px-3 py-1 text-sm font-bold text-indigo-700 tabular-nums dark:bg-indigo-500/20 dark:text-indigo-200">
+                <span className="rounded-full bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-700 tabular-nums dark:bg-amber-500/20 dark:text-amber-300">
                     {turnScore} pt
                 </span>
                 <button
                     type="button"
                     onClick={onReset}
                     aria-label="Nieuw spel"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 active:scale-[0.97] dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20"
                 >
-                    <RotateCcw className="size-4" />
+                    <RotateCcw className="size-4" aria-hidden />
                 </button>
             </div>
 
             <div className="flex flex-1 flex-col items-center justify-center">
-                <div className="w-full rounded-3xl bg-white p-6 text-center shadow-2xl">
-                    <p className="text-xs font-semibold tracking-widest text-indigo-500 uppercase">
+                <Panel className="w-full p-6 text-center">
+                    <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
                         Jouw woord
                     </p>
-                    <h1 className="mt-2 mb-5 text-4xl font-black break-words text-slate-900">
+                    <h1 className="mt-2 mb-5 text-4xl font-bold break-words text-slate-900 dark:text-white">
                         {card.word}
                     </h1>
-                    <div className="space-y-1.5 border-t border-slate-200 pt-4">
-                        <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-bold tracking-wide text-rose-500 uppercase">
-                            <Ban className="size-3.5" /> Verboden
+                    <div className="space-y-1.5 border-t border-slate-200 pt-4 dark:border-white/10">
+                        <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-bold tracking-wide text-rose-600 uppercase dark:text-rose-400">
+                            <Ban className="size-3.5" aria-hidden /> Verboden
                         </p>
                         {card.forbidden.map((word) => (
                             <p
                                 key={word}
-                                className="text-lg font-semibold text-slate-700"
+                                className="text-lg font-semibold text-slate-700 dark:text-slate-300"
                             >
                                 {word}
                             </p>
                         ))}
                     </div>
-                </div>
+                </Panel>
 
                 <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                     <div
                         className={cn(
                             'h-full rounded-full transition-[width] duration-1000 ease-linear',
-                            urgent ? 'bg-rose-500' : 'bg-indigo-500',
+                            urgent ? 'bg-rose-500' : 'bg-amber-500',
                         )}
                         style={{
                             width: `${(secondsLeft / game.seconds) * 100}%`,
@@ -610,18 +598,19 @@ function PlayScreen({
             </div>
 
             <div className="mt-auto grid grid-cols-2 gap-3 pt-4">
-                <Button
+                <ActionButton
+                    variant="danger"
                     onClick={foul}
-                    className="h-16 rounded-2xl bg-rose-500 text-lg font-bold text-white transition hover:bg-rose-400 active:scale-[0.97]"
+                    className="h-16 text-lg"
                 >
-                    <X className="size-5" /> Fout
-                </Button>
-                <Button
+                    <X className="size-5" aria-hidden /> Fout
+                </ActionButton>
+                <ActionButton
                     onClick={correct}
-                    className="h-16 rounded-2xl bg-emerald-500 text-lg font-bold text-white transition hover:bg-emerald-400 active:scale-[0.97]"
+                    className="h-16 bg-emerald-600 text-lg text-white hover:bg-emerald-500"
                 >
-                    <Check className="size-5" /> Goed
-                </Button>
+                    <Check className="size-5" aria-hidden /> Goed
+                </ActionButton>
             </div>
         </div>
     );
@@ -668,8 +657,10 @@ function TurnoverScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="mt-6 mb-6 text-center">
-                <Timer className="mx-auto size-12 text-indigo-600 dark:text-indigo-300" />
-                <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+                <span className="mx-auto flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <Timer className="size-10" aria-hidden />
+                </span>
+                <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
                     Tijd voorbij!
                 </h1>
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -677,7 +668,7 @@ function TurnoverScreen({
                         {player}
                     </span>{' '}
                     haalde{' '}
-                    <span className="font-bold text-indigo-600 dark:text-indigo-300">
+                    <span className="font-bold text-amber-600 dark:text-amber-400">
                         {game.turnScore}
                     </span>{' '}
                     {Math.abs(game.turnScore) === 1 ? 'punt' : 'punten'} deze
@@ -697,7 +688,7 @@ function TurnoverScreen({
                         <span className="text-base font-medium text-slate-900 dark:text-white">
                             {entry.name}
                         </span>
-                        <span className="text-sm font-bold text-indigo-600 tabular-nums dark:text-indigo-300">
+                        <span className="text-sm font-bold text-amber-600 tabular-nums dark:text-amber-400">
                             {entry.score} pt
                         </span>
                     </div>
@@ -705,13 +696,10 @@ function TurnoverScreen({
             </div>
 
             <div className="mt-auto pt-6">
-                <Button
-                    onClick={advance}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white hover:from-amber-400 hover:to-orange-400"
-                >
+                <ActionButton onClick={advance} className="text-lg">
                     Volgende speler
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -739,8 +727,10 @@ function GameOverScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="mt-6 mb-6 text-center">
-                <Trophy className="mx-auto mb-3 size-12 text-amber-600 dark:text-amber-400" />
-                <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+                <span className="mx-auto mb-3 flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <Trophy className="size-10" aria-hidden />
+                </span>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
                     {ranked
                         .filter((entry) => entry.score === topScore)
                         .map((entry) => entry.name)
@@ -769,7 +759,7 @@ function GameOverScreen({
                             </span>
                             {entry.name}
                         </span>
-                        <span className="text-sm font-bold text-amber-600 tabular-nums dark:text-amber-300">
+                        <span className="text-sm font-bold text-amber-600 tabular-nums dark:text-amber-400">
                             {entry.score} pt
                         </span>
                     </div>
@@ -777,19 +767,17 @@ function GameOverScreen({
             </div>
 
             <div className="mt-auto space-y-3 pt-6">
-                <Button
-                    onClick={playAgain}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white hover:from-amber-400 hover:to-orange-400"
-                >
-                    <RotateCcw className="size-5" /> Opnieuw — zelfde spelers
-                </Button>
-                <Button
+                <ActionButton onClick={playAgain} className="text-lg">
+                    <RotateCcw className="size-5" aria-hidden /> Opnieuw —
+                    zelfde spelers
+                </ActionButton>
+                <ActionButton
+                    variant="neutral"
                     onClick={onReset}
-                    variant="ghost"
-                    className="h-12 w-full rounded-2xl text-slate-600 dark:text-slate-300"
+                    className="h-12"
                 >
                     Nieuw spel
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );

@@ -20,7 +20,7 @@ const darkDialog =
     'border-slate-200 bg-white text-slate-900 ring-1 ring-slate-200 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100 dark:ring-white/10';
 
 const darkPasswordInput =
-    'h-auto rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-11 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
+    'h-auto rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-11 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
 
 const roseButton =
     'rounded-2xl bg-rose-500 px-5 font-bold text-white hover:bg-rose-400';

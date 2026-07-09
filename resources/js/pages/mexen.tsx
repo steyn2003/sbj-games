@@ -1,20 +1,28 @@
-import { Head, Link } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { LucideIcon } from 'lucide-react';
 import {
     ArrowLeft,
     Beer,
     ChevronRight,
     Dice5,
+    Dices,
     Eye,
     Minus,
     Plus,
     RotateCcw,
     ShieldQuestion,
+    Smartphone,
+    Target,
     Users,
     VenetianMask,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import {
+    ActionButton,
+    GameHeader,
+    GameShell,
+    Panel,
+} from '@/components/game-ui';
 import {
     callForRoll,
     callsAbove,
@@ -26,7 +34,6 @@ import {
 } from '@/lib/mexen';
 import type { Call, DiePair } from '@/lib/mexen';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
 type Variant = 'menu' | 'normaal' | 'bluf';
 
@@ -34,37 +41,24 @@ export default function Mexen() {
     const [variant, setVariant] = useState<Variant>('menu');
 
     return (
-        <>
-            <Head title="Mexen" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-rose-300/40 blur-3xl dark:bg-rose-600/25" />
-                <div className="pointer-events-none absolute -right-24 -bottom-40 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
-                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    <div className="mb-2">
-                        {variant === 'menu' ? (
-                            <Link
-                                href={dashboard()}
-                                className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                            >
-                                <ArrowLeft className="size-4" /> Dashboard
-                            </Link>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => setVariant('menu')}
-                                className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                            >
-                                <ArrowLeft className="size-4" /> Kies variant
-                            </button>
-                        )}
-                    </div>
+        <GameShell title="Mexen" back={variant === 'menu'}>
+            {variant !== 'menu' && (
+                <div className="mb-3">
+                    <button
+                        type="button"
+                        onClick={() => setVariant('menu')}
+                        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-100"
+                    >
+                        <ArrowLeft className="size-4" aria-hidden />
+                        Kies variant
+                    </button>
+                </div>
+            )}
 
-                    {variant === 'menu' && <VariantMenu onPick={setVariant} />}
-                    {variant === 'normaal' && <NormaalMexen />}
-                    {variant === 'bluf' && <BlufMexen />}
-                </main>
-            </div>
-        </>
+            {variant === 'menu' && <VariantMenu onPick={setVariant} />}
+            {variant === 'normaal' && <NormaalMexen />}
+            {variant === 'bluf' && <BlufMexen />}
+        </GameShell>
     );
 }
 
@@ -72,32 +66,23 @@ export default function Mexen() {
 function VariantMenu({ onPick }: { onPick: (variant: Variant) => void }) {
     return (
         <div className="flex flex-1 flex-col">
-            <header className="mb-8 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-rose-400/15 px-3 py-1 text-xs font-bold tracking-widest text-rose-600 uppercase ring-1 ring-rose-400/30 dark:text-rose-300">
-                    🎲 Mexen
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-rose-700 to-amber-500 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-rose-100 dark:to-amber-300">
-                    Mexen
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Twee dobbelstenen, twee manieren om te verliezen. Kies je
-                    variant.
-                </p>
-            </header>
+            <GameHeader
+                kicker="Dobbelspel"
+                title="Mexen"
+                description="Twee dobbelstenen, twee manieren om te verliezen. Kies je variant."
+            />
 
             <div className="space-y-3">
                 <VariantCard
                     title="Normaal Mexen"
                     description="Iedereen rolt open, tot drie keer. De laagste worp van de ronde drinkt — elke Mex verdubbelt de slokken."
                     icon={Dice5}
-                    chipClassName="bg-amber-400/15 text-amber-700 ring-amber-400/30 dark:text-amber-200"
                     onClick={() => onPick('normaal')}
                 />
                 <VariantCard
                     title="Bluf Mexen"
                     description="Rol stiekem en noem iets hogers dan de vorige — of lieg erop los. Wie betrapt wordt, drinkt!"
                     icon={VenetianMask}
-                    chipClassName="bg-rose-400/15 text-rose-700 ring-rose-400/30 dark:text-rose-200"
                     onClick={() => onPick('bluf')}
                 />
             </div>
@@ -109,27 +94,22 @@ function VariantCard({
     title,
     description,
     icon: Icon,
-    chipClassName,
     onClick,
 }: {
     title: string;
     description: string;
-    icon: typeof Dice5;
-    chipClassName: string;
+    icon: LucideIcon;
     onClick: () => void;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-rose-400/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/[0.07]"
+            className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-amber-400/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/[0.07]"
         >
             <span
                 aria-hidden
-                className={cn(
-                    'flex size-12 shrink-0 items-center justify-center rounded-xl ring-1',
-                    chipClassName,
-                )}
+                className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
             >
                 <Icon className="size-6" />
             </span>
@@ -152,7 +132,7 @@ function VariantCard({
 function Rule({ n, text }: { n: string; text: string }) {
     return (
         <div className="flex gap-3">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-rose-400/15 text-xs font-black text-rose-600 dark:text-rose-300">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
                 {n}
             </span>
             <p className="text-slate-600 dark:text-slate-300">{text}</p>
@@ -253,20 +233,13 @@ function NormaalSetupScreen({
 }) {
     return (
         <div className="flex flex-1 flex-col">
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-600 uppercase ring-1 ring-amber-400/30 dark:text-amber-300">
-                    🎲 Normaal Mexen
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-amber-700 to-rose-500 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-amber-100 dark:to-rose-300">
-                    Normaal Mexen
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Iedereen rolt open. Wie de laagste worp op tafel legt,
-                    drinkt!
-                </p>
-            </header>
+            <GameHeader
+                kicker="Dobbelspel"
+                title="Normaal Mexen"
+                description="Iedereen rolt open. Wie de laagste worp op tafel legt, drinkt!"
+            />
 
-            <section className="mb-5 space-y-3 rounded-2xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5 space-y-3 text-sm">
                 <Rule
                     n="1"
                     text="De hoogste steen telt als tientallen: 5 en 3 wordt 53. Dubbels verslaan alles, en 2-1 is de Mex — de allerhoogste."
@@ -283,21 +256,21 @@ function NormaalSetupScreen({
                     n="4"
                     text="De laagste worp van de ronde drinkt. Elke Mex op tafel verdubbelt de slokken!"
                 />
-            </section>
+            </Panel>
 
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-sm font-medium">
-                        <Users className="size-4" /> Spelers
+                        <Users className="size-4" aria-hidden /> Spelers
                     </span>
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={() => setPlayerCount(playerCount - 1)}
                             disabled={playerCount <= MIN_PLAYERS}
-                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:outline-none disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
                         >
-                            <Minus className="size-4" />
+                            <Minus className="size-4" aria-hidden />
                         </button>
                         <span className="w-6 text-center text-lg font-bold tabular-nums">
                             {playerCount}
@@ -306,21 +279,18 @@ function NormaalSetupScreen({
                             type="button"
                             onClick={() => setPlayerCount(playerCount + 1)}
                             disabled={playerCount >= MAX_PLAYERS}
-                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:outline-none disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
                         >
-                            <Plus className="size-4" />
+                            <Plus className="size-4" aria-hidden />
                         </button>
                     </div>
                 </div>
-            </section>
+            </Panel>
 
             <div className="mt-auto pt-2">
-                <Button
-                    onClick={onStart}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-lg font-bold text-white shadow-lg shadow-amber-900/40 transition hover:from-amber-400 hover:to-rose-400 active:scale-[0.99]"
-                >
+                <ActionButton onClick={onStart} className="text-lg">
                     Start het spel
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -356,8 +326,10 @@ function NormaalTurnScreen({
         return (
             <div className="flex flex-1 flex-col">
                 <div className="flex flex-1 flex-col items-center justify-center text-center">
-                    <span className="text-5xl">🎲</span>
-                    <h1 className="mt-4 text-2xl font-black">
+                    <span className="flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                        <Dices className="size-10" aria-hidden />
+                    </span>
+                    <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
                         Speler {player + 1}, jouw beurt
                     </h1>
                     <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
@@ -367,12 +339,12 @@ function NormaalTurnScreen({
                             : ` Je mag ${throwLimit === 1 ? 'één keer' : `tot ${throwLimit} keer`} rollen.`}
                     </p>
 
-                    <Button
+                    <ActionButton
                         onClick={throwDice}
-                        className="mt-8 h-14 w-full max-w-xs rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-lg font-bold text-white shadow-lg shadow-amber-900/40 transition hover:from-amber-400 hover:to-rose-400 active:scale-[0.99]"
+                        className="mt-8 max-w-xs text-lg"
                     >
-                        🎲 Rollen
-                    </Button>
+                        <Dices className="size-5" aria-hidden /> Rollen
+                    </ActionButton>
                 </div>
 
                 <RolledSoFar rolledSoFar={rolledSoFar} />
@@ -386,7 +358,7 @@ function NormaalTurnScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-300">
+                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
                     Speler {player + 1} · worp {throwsUsed} van {throwLimit}
                 </span>
                 <div className="mt-4">
@@ -403,7 +375,7 @@ function NormaalTurnScreen({
                         </p>
                     ) : call.isMax ? (
                         <>
-                            <motion.p
+                            <motion.div
                                 initial={{ scale: 0.6, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{
@@ -411,10 +383,15 @@ function NormaalTurnScreen({
                                     stiffness: 220,
                                     damping: 16,
                                 }}
-                                className="mt-4 text-4xl font-black text-amber-500 dark:text-amber-300"
+                                className="mt-4 flex items-center gap-3"
                             >
-                                MEX! 🍻
-                            </motion.p>
+                                <span className="flex size-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                                    <Beer className="size-5" aria-hidden />
+                                </span>
+                                <p className="text-4xl font-bold text-amber-600 dark:text-amber-400">
+                                    MEX!
+                                </p>
+                            </motion.div>
                             <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
                                 De allerhoogste worp — de slokken verdubbelen!
                             </p>
@@ -426,7 +403,7 @@ function NormaalTurnScreen({
                             className="mt-4 text-sm text-slate-500 dark:text-slate-400"
                         >
                             Dat is{' '}
-                            <span className="text-2xl font-black text-slate-900 dark:text-white">
+                            <span className="text-2xl font-bold text-slate-900 dark:text-white">
                                 {call.label}
                             </span>
                         </motion.p>
@@ -438,23 +415,25 @@ function NormaalTurnScreen({
 
             <div className="mt-auto space-y-3 pt-4">
                 {mayRethrow && (
-                    <Button
+                    <ActionButton
+                        variant="neutral"
                         onClick={throwDice}
                         disabled={rolling}
-                        className="h-14 w-full rounded-2xl bg-white text-lg font-bold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-100 active:scale-[0.99] dark:bg-white/10 dark:text-white dark:ring-white/10 dark:hover:bg-white/20"
+                        className="text-lg"
                     >
-                        🎲 Nog een keer rollen
-                    </Button>
+                        <Dices className="size-5" aria-hidden /> Nog een keer
+                        rollen
+                    </ActionButton>
                 )}
-                <Button
+                <ActionButton
                     onClick={() => onStand(call, throwsUsed)}
                     disabled={rolling}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-lg font-bold text-white transition hover:from-amber-400 hover:to-rose-400 active:scale-[0.99]"
+                    className="text-lg"
                 >
                     {isLast
                         ? 'Blijven staan → uitslag'
                         : 'Blijven staan → geef door'}
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -521,25 +500,27 @@ function NormaalResultScreen({
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-                    className="text-6xl drop-shadow-lg"
+                    className="flex size-20 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300"
                 >
-                    🍺
+                    <Beer className="size-10" aria-hidden />
                 </motion.span>
-                <h1 className="mt-4 text-3xl font-black">{loserNames}!</h1>
+                <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
+                    {loserNames}!
+                </h1>
                 <AnimatePresence>
                     <motion.p
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-4 flex items-center gap-2 rounded-full bg-rose-500/15 px-5 py-2 text-lg font-bold text-rose-700 ring-1 ring-rose-400/30 dark:text-rose-200"
                     >
-                        <Beer className="size-5" />
+                        <Beer className="size-5" aria-hidden />
                         {loserIndices.length > 1
                             ? `Laagste worp — allebei ${sips} ${sips === 1 ? 'slok' : 'slokken'}!`
                             : `Laagste worp — ${sips} ${sips === 1 ? 'slok' : 'slokken'}!`}
                     </motion.p>
                 </AnimatePresence>
                 {sips > 1 && (
-                    <p className="mt-2 text-sm text-amber-600 dark:text-amber-300">
+                    <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
                         Er lag een Mex op tafel — de slokken zijn verdubbeld!
                     </p>
                 )}
@@ -560,13 +541,16 @@ function NormaalResultScreen({
                     >
                         <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
                             {losers.has(player) && (
-                                <Beer className="size-4 text-rose-600 dark:text-rose-300" />
+                                <Beer
+                                    className="size-4 text-rose-600 dark:text-rose-300"
+                                    aria-hidden
+                                />
                             )}
                             Speler {player + 1}
                         </span>
                         <span
                             className={cn(
-                                'text-lg font-black tabular-nums',
+                                'text-lg font-bold tabular-nums',
                                 call.isMax
                                     ? 'text-amber-600 dark:text-amber-300'
                                     : 'text-slate-900 dark:text-white',
@@ -579,12 +563,12 @@ function NormaalResultScreen({
             </div>
 
             <div className="mt-auto pt-6">
-                <Button
+                <ActionButton
                     onClick={() => onNext(loserIndices[0])}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-lg font-bold text-white transition hover:from-amber-400 hover:to-rose-400 active:scale-[0.99]"
+                    className="text-lg"
                 >
-                    <RotateCcw className="size-5" /> Nieuwe ronde
-                </Button>
+                    <RotateCcw className="size-5" aria-hidden /> Nieuwe ronde
+                </ActionButton>
                 <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
                     De verliezer opent de volgende ronde.
                 </p>
@@ -694,20 +678,13 @@ function BlufMexen() {
 function BlufSetupScreen({ onStart }: { onStart: () => void }) {
     return (
         <div className="flex flex-1 flex-col">
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-rose-400/15 px-3 py-1 text-xs font-bold tracking-widest text-rose-600 uppercase ring-1 ring-rose-400/30 dark:text-rose-300">
-                    🕵️ Bluf Mexen
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-rose-700 to-amber-500 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-rose-100 dark:to-amber-300">
-                    Bluf Mexen
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Bluffen met twee dobbelstenen. Rol stiekem, noem iets hogers
-                    dan de vorige — of lieg erop los. Wie betrapt wordt, drinkt!
-                </p>
-            </header>
+            <GameHeader
+                kicker="Blufspel"
+                title="Bluf Mexen"
+                description="Bluffen met twee dobbelstenen. Rol stiekem, noem iets hogers dan de vorige — of lieg erop los. Wie betrapt wordt, drinkt!"
+            />
 
-            <section className="mb-6 space-y-3 rounded-2xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-6 space-y-3 text-sm">
                 <Rule
                     n="1"
                     text="De hoogste steen telt als tientallen, de laagste als eenheden: 5 en 3 wordt 53."
@@ -724,15 +701,12 @@ function BlufSetupScreen({ onStart }: { onStart: () => void }) {
                     n="4"
                     text="Geloof je de vorige niet? Ontmasker! Klopte de claim, dan drink jij. Was het een leugen, dan drinkt hij."
                 />
-            </section>
+            </Panel>
 
             <div className="mt-auto pt-2">
-                <Button
-                    onClick={onStart}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-lg font-bold text-white shadow-lg shadow-rose-900/40 transition hover:from-rose-400 hover:to-amber-400 active:scale-[0.99]"
-                >
+                <ActionButton onClick={onStart} className="text-lg">
                     Start het spel
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -754,8 +728,12 @@ function BlufTurnScreen({
     if (!roll) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <Eye className="mb-4 size-10 text-rose-500" />
-                <h1 className="text-2xl font-black">Jouw beurt</h1>
+                <span className="flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <Eye className="size-10" aria-hidden />
+                </span>
+                <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
+                    Jouw beurt
+                </h1>
                 <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
                     Zorg dat niemand meekijkt.
                     {previousCall ? (
@@ -772,12 +750,12 @@ function BlufTurnScreen({
                     )}
                 </p>
 
-                <Button
+                <ActionButton
                     onClick={() => setRoll(rollDice())}
-                    className="mt-8 h-14 w-full max-w-xs rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-lg font-bold text-white shadow-lg shadow-rose-900/40 transition hover:from-rose-400 hover:to-amber-400 active:scale-[0.99]"
+                    className="mt-8 max-w-xs text-lg"
                 >
-                    🎲 Rol stiekem
-                </Button>
+                    <Dices className="size-5" aria-hidden /> Rol stiekem
+                </ActionButton>
             </div>
         );
     }
@@ -808,7 +786,7 @@ function BlufAnnounceScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="mb-4 flex flex-col items-center">
-                <span className="text-xs font-semibold tracking-widest text-rose-600 uppercase dark:text-rose-300">
+                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
                     Jouw geheime worp
                 </span>
                 <div className="mt-3">
@@ -862,11 +840,11 @@ function BlufAnnounceScreen({
                             key={call.code}
                             onClick={() => onAnnounce(roll, call)}
                             className={cn(
-                                'relative rounded-xl py-3 text-lg font-black ring-1 transition active:scale-[0.97]',
+                                'relative rounded-xl py-3 text-lg font-bold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
                                 call.isMax
                                     ? 'bg-amber-500/15 text-amber-700 ring-amber-400/40 dark:text-amber-300'
                                     : call.isDouble
-                                      ? 'bg-rose-500/10 text-rose-700 ring-rose-400/30 dark:text-rose-200'
+                                      ? 'bg-white text-amber-700 ring-amber-400/30 hover:bg-slate-100 dark:bg-white/5 dark:text-amber-300 dark:hover:bg-white/10'
                                       : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                                 isReal &&
                                     'ring-2 ring-emerald-400 dark:ring-emerald-400',
@@ -901,18 +879,22 @@ function BlufDecideScreen({
     if (!revealed) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="text-5xl">📱</span>
-                <h1 className="mt-4 text-2xl font-black">Geef door</h1>
+                <span className="flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <Smartphone className="size-10" aria-hidden />
+                </span>
+                <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
+                    Geef door
+                </h1>
                 <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
                     De volgende speler pakt de telefoon. Tik pas als jij het
                     bent.
                 </p>
-                <Button
+                <ActionButton
                     onClick={() => setRevealed(true)}
-                    className="mt-8 h-14 w-full max-w-xs rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-lg font-bold text-white shadow-lg shadow-rose-900/40 transition hover:from-rose-400 hover:to-amber-400 active:scale-[0.99]"
+                    className="mt-8 max-w-xs text-lg"
                 >
                     Ik ben aan de beurt
-                </Button>
+                </ActionButton>
             </div>
         );
     }
@@ -920,18 +902,11 @@ function BlufDecideScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold tracking-widest text-rose-600 uppercase dark:text-rose-300">
+                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
                     De vorige speler claimt
                 </span>
-                <div
-                    className={cn(
-                        'mt-4 flex size-40 items-center justify-center rounded-3xl shadow-2xl ring-1',
-                        announced.isMax
-                            ? 'bg-gradient-to-br from-amber-400 to-orange-500 ring-white/20'
-                            : 'bg-gradient-to-br from-rose-500 to-rose-700 ring-white/20',
-                    )}
-                >
-                    <span className="text-6xl font-black text-white">
+                <div className="mt-4 flex size-40 items-center justify-center rounded-3xl bg-amber-500 shadow-sm ring-1 ring-amber-600/20">
+                    <span className="text-6xl font-bold text-slate-950">
                         {announced.label}
                     </span>
                 </div>
@@ -944,19 +919,21 @@ function BlufDecideScreen({
 
             <div className="mt-auto space-y-3 pt-4">
                 {!announced.isMax && (
-                    <Button
+                    <ActionButton
                         onClick={onBelieve}
-                        className="h-14 w-full rounded-2xl bg-emerald-500 text-lg font-bold text-white transition hover:bg-emerald-400 active:scale-[0.99]"
+                        className="bg-emerald-600 text-lg text-white hover:bg-emerald-500"
                     >
                         Ik geloof het → ik rol
-                    </Button>
+                    </ActionButton>
                 )}
-                <Button
+                <ActionButton
+                    variant="danger"
                     onClick={onDoubt}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-lg font-bold text-white transition hover:from-rose-400 hover:to-amber-400 active:scale-[0.99]"
+                    className="text-lg"
                 >
-                    <ShieldQuestion className="size-5" /> Ik geloof het niet
-                </Button>
+                    <ShieldQuestion className="size-5" aria-hidden /> Ik geloof
+                    het niet
+                </ActionButton>
             </div>
         </div>
     );
@@ -978,11 +955,20 @@ function BlufResultScreen({
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-                    className="text-6xl drop-shadow-lg"
+                    className={cn(
+                        'flex size-20 items-center justify-center rounded-full',
+                        honest
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
+                            : 'bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
+                    )}
                 >
-                    {honest ? '🎯' : '🤥'}
+                    {honest ? (
+                        <Target className="size-10" aria-hidden />
+                    ) : (
+                        <VenetianMask className="size-10" aria-hidden />
+                    )}
                 </motion.span>
-                <h1 className="mt-4 text-3xl font-black">
+                <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
                     {honest ? 'De claim klopte!' : 'Betrapt op een leugen!'}
                 </h1>
 
@@ -991,7 +977,7 @@ function BlufResultScreen({
                         <span className="mb-1 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                             Claim
                         </span>
-                        <span className="text-2xl font-black">
+                        <span className="text-2xl font-bold">
                             {announced.label}
                         </span>
                     </div>
@@ -1013,7 +999,7 @@ function BlufResultScreen({
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-6 flex items-center gap-2 rounded-full bg-rose-500/15 px-5 py-2 text-lg font-bold text-rose-700 ring-1 ring-rose-400/30 dark:text-rose-200"
                     >
-                        <Beer className="size-5" />
+                        <Beer className="size-5" aria-hidden />
                         {honest
                             ? 'De twijfelaar drinkt!'
                             : 'De bluffer drinkt!'}
@@ -1029,12 +1015,9 @@ function BlufResultScreen({
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
-                    onClick={onNext}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-lg font-bold text-white transition hover:from-rose-400 hover:to-amber-400 active:scale-[0.99]"
-                >
-                    <RotateCcw className="size-5" /> Nieuwe ronde
-                </Button>
+                <ActionButton onClick={onNext} className="text-lg">
+                    <RotateCcw className="size-5" aria-hidden /> Nieuwe ronde
+                </ActionButton>
                 <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
                     De verliezer begint de volgende ronde.
                 </p>

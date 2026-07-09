@@ -1,6 +1,5 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
     ArrowRight,
     Eye,
     EyeOff,
@@ -11,12 +10,17 @@ import {
     RotateCcw,
     Timer,
     Trophy,
-    VenetianMask,
     Users,
+    VenetianMask,
     Vote,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import {
+    ActionButton,
+    GameHeader,
+    GameShell,
+    Panel,
+} from '@/components/game-ui';
 import {
     dealSpyLocation,
     isLocationGuessCorrect,
@@ -30,7 +34,6 @@ import {
 import type { SpyPlayer, SpySettings, SpyWinner } from '@/lib/spy-location';
 import { usePersistedGame } from '@/lib/use-persisted-game';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
 type Phase = 'reveal' | 'discuss' | 'vote' | 'spyguess' | 'gameover';
 
@@ -84,29 +87,22 @@ export default function SpyLocation() {
     };
 
     return (
-        <>
-            <Head title="Spion" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-rose-300/40 blur-3xl dark:bg-rose-600/25" />
-                <div className="pointer-events-none absolute -right-24 -bottom-40 h-80 w-80 rounded-full bg-indigo-300/40 blur-3xl dark:bg-indigo-600/20" />
-                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    {game === null ? (
-                        <SetupScreen
-                            resumable={currentGame}
-                            history={history}
-                            onResume={(state) => setGame(state)}
-                            onStart={setGame}
-                        />
-                    ) : (
-                        <PlayScreen
-                            game={game}
-                            setGame={setGame}
-                            onReset={resetToSetup}
-                        />
-                    )}
-                </main>
-            </div>
-        </>
+        <GameShell title="Spion">
+            {game === null ? (
+                <SetupScreen
+                    resumable={currentGame}
+                    history={history}
+                    onResume={(state) => setGame(state)}
+                    onStart={setGame}
+                />
+            ) : (
+                <PlayScreen
+                    game={game}
+                    setGame={setGame}
+                    onReset={resetToSetup}
+                />
+            )}
+        </GameShell>
     );
 }
 
@@ -175,53 +171,40 @@ function SetupScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-2">
-                <Link
-                    href={dashboard()}
-                    className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                    <ArrowLeft className="size-4" /> Dashboard
-                </Link>
-            </div>
-
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-rose-400/15 px-3 py-1 text-xs font-bold tracking-widest text-rose-600 uppercase ring-1 ring-rose-400/30 dark:text-rose-300">
-                    <VenetianMask className="size-3.5" /> Pim Pam Pet
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-rose-700 to-indigo-700 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-rose-200 dark:to-indigo-200">
-                    Spion
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Iedereen kent de geheime locatie — behalve de Spion. Stel
-                    vragen, ontmasker de Spion, of bluf je naar de winst.
-                </p>
-            </header>
+            <GameHeader
+                kicker="Blufspel"
+                title="Spion"
+                description="Iedereen kent de geheime locatie — behalve de Spion. Stel vragen, ontmasker de Spion, of bluf je naar de winst."
+            />
 
             {resumable && (
                 <button
                     type="button"
                     onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-3 text-left ring-1 ring-emerald-400/40 transition active:scale-[0.99]"
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10"
                 >
-                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/30">
-                        <Play className="size-5 text-emerald-200" />
+                    <span className="flex size-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                        <Play className="size-5" aria-hidden />
                     </span>
                     <span className="flex-1">
-                        <span className="block text-sm font-bold text-white">
+                        <span className="block text-sm font-bold text-slate-900 dark:text-white">
                             Ga verder
                         </span>
-                        <span className="block text-xs text-emerald-200/80">
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">
                             {resumable.state.players?.length ?? 0} spelers
                         </span>
                     </span>
-                    <ArrowRight className="size-5 text-emerald-200" />
+                    <ArrowRight
+                        className="size-5 text-slate-400 dark:text-slate-500"
+                        aria-hidden
+                    />
                 </button>
             )}
 
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur-sm dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <Stepper
                     label="Spelers"
-                    icon={<Users className="size-4" />}
+                    icon={<Users className="size-4" aria-hidden />}
                     value={names.length}
                     min={MIN_PLAYERS}
                     max={MAX_PLAYERS}
@@ -229,7 +212,7 @@ function SetupScreen({
                 />
                 <Stepper
                     label="Spionnen"
-                    icon={<VenetianMask className="size-4" />}
+                    icon={<VenetianMask className="size-4" aria-hidden />}
                     value={spyCount}
                     min={1}
                     max={Math.max(1, names.length - 2)}
@@ -242,11 +225,12 @@ function SetupScreen({
                         )
                     }
                 />
-            </section>
+            </Panel>
 
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                    <Timer className="size-4" /> Tijd om te overleggen
+                    <Timer className="size-4" aria-hidden /> Tijd om te
+                    overleggen
                 </h2>
                 <div className="grid grid-cols-3 gap-3">
                     {TIMER_MINUTES_OPTIONS.map((option) => (
@@ -256,17 +240,17 @@ function SetupScreen({
                             onClick={() => setMinutes(option)}
                             aria-pressed={minutes === option}
                             className={cn(
-                                'rounded-xl py-3 text-base font-bold ring-1 transition focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none active:scale-[0.98]',
+                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.98]',
                                 minutes === option
-                                    ? 'bg-rose-500 text-white ring-rose-300'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
+                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                             )}
                         >
                             {option} min
                         </button>
                     ))}
                 </div>
-            </section>
+            </Panel>
 
             <section className="mb-5 space-y-2">
                 <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
@@ -280,7 +264,7 @@ function SetupScreen({
                             updateName(index, event.target.value)
                         }
                         maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                         placeholder={`Speler ${index + 1}`}
                     />
                 ))}
@@ -294,14 +278,14 @@ function SetupScreen({
                         {error}
                     </p>
                 )}
-                <Button
+                <ActionButton
                     onClick={start}
                     disabled={Boolean(error)}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 text-lg font-bold text-white shadow-lg shadow-rose-900/40 hover:from-rose-400 hover:to-orange-400"
+                    className="text-lg"
                 >
                     Start spel
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -424,7 +408,7 @@ function StepperButton({
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
         >
             {children}
         </button>
@@ -447,9 +431,9 @@ function PhaseHeader({
                 <button
                     type="button"
                     onClick={onReset}
-                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-200"
                 >
-                    <RotateCcw className="size-3.5" /> Nieuw spel
+                    <RotateCcw className="size-3.5" aria-hidden /> Nieuw spel
                 </button>
             )}
         </div>
@@ -533,15 +517,16 @@ function RevealScreen({
                     <button
                         type="button"
                         onClick={() => setRevealed(true)}
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-gradient-to-br from-rose-600 to-indigo-700 p-6 text-center shadow-2xl ring-1 ring-white/20 transition active:scale-[0.98]"
+                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-slate-900 p-6 text-center shadow-sm ring-1 ring-slate-800 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.98] dark:ring-white/10"
                     >
                         <span className="text-2xl font-bold text-white">
                             {player.name}
                         </span>
-                        <span className="flex items-center gap-2 rounded-full bg-black/20 px-4 py-2 text-sm text-white/90">
-                            <Eye className="size-4" /> Tik om je kaart te zien
+                        <span className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90">
+                            <Eye className="size-4" aria-hidden /> Tik om je
+                            kaart te zien
                         </span>
-                        <span className="text-xs text-white/70">
+                        <span className="text-xs text-white/60">
                             Zorg dat niemand meekijkt
                         </span>
                     </button>
@@ -549,26 +534,33 @@ function RevealScreen({
                     <div
                         role="status"
                         aria-live="polite"
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-2xl"
+                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
                     >
                         {player.isSpy ? (
-                            <div className="flex flex-col items-center gap-2">
-                                <VenetianMask className="size-12 text-slate-900" />
-                                <span className="text-3xl font-black text-slate-900">
+                            <div className="flex flex-col items-center gap-3">
+                                <span className="flex size-20 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
+                                    <VenetianMask
+                                        className="size-10"
+                                        aria-hidden
+                                    />
+                                </span>
+                                <span className="text-3xl font-bold text-slate-900 dark:text-white">
                                     Spion
                                 </span>
-                                <span className="text-sm text-slate-500">
+                                <span className="text-sm text-slate-500 dark:text-slate-400">
                                     Jij kent de locatie niet. Stel slimme vragen
                                     en raad hem!
                                 </span>
                             </div>
                         ) : (
                             <>
-                                <span className="text-sm font-medium text-slate-500">
+                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
                                     {player.name}, de locatie is
                                 </span>
-                                <MapPin className="size-8 text-rose-500" />
-                                <span className="text-4xl font-black break-words text-slate-900">
+                                <span className="flex size-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
+                                    <MapPin className="size-8" aria-hidden />
+                                </span>
+                                <span className="text-4xl font-bold break-words text-slate-900 dark:text-white">
                                     {game.location}
                                 </span>
                             </>
@@ -579,15 +571,12 @@ function RevealScreen({
 
             <div className="mt-auto pt-4">
                 {revealed ? (
-                    <Button
-                        onClick={next}
-                        className="h-14 w-full rounded-2xl bg-rose-500 text-lg font-bold hover:bg-rose-400"
-                    >
-                        <EyeOff className="size-5" />
+                    <ActionButton onClick={next} className="text-lg">
+                        <EyeOff className="size-5" aria-hidden />
                         {isLast
                             ? 'Klaar — start het overleg'
                             : 'Verberg & geef door'}
-                    </Button>
+                    </ActionButton>
                 ) : (
                     <p className="text-center text-sm text-slate-600 dark:text-slate-300">
                         Geef de telefoon aan {player.name}
@@ -636,7 +625,7 @@ function DiscussScreen({
             >
                 <span
                     className={cn(
-                        'text-4xl font-black tabular-nums',
+                        'text-4xl font-bold tabular-nums',
                         urgent
                             ? 'text-rose-600 dark:text-rose-300'
                             : 'text-slate-900 dark:text-white',
@@ -675,17 +664,12 @@ function DiscussScreen({
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
+                <ActionButton
                     onClick={() => setGame({ ...game, phase: 'vote' })}
-                    className={cn(
-                        'h-14 w-full rounded-2xl text-lg font-bold',
-                        timeUp
-                            ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-900/40 hover:from-rose-400 hover:to-orange-400'
-                            : 'bg-rose-500 hover:bg-rose-400',
-                    )}
+                    className="text-lg"
                 >
-                    <Vote className="size-5" /> Naar de stemming
-                </Button>
+                    <Vote className="size-5" aria-hidden /> Naar de stemming
+                </ActionButton>
             </div>
         </div>
     );
@@ -748,10 +732,10 @@ function VoteScreen({
                         onClick={() => setSelectedId(player.id)}
                         aria-pressed={selectedId === player.id}
                         className={cn(
-                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none active:scale-[0.98]',
+                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.98]',
                             selectedId === player.id
-                                ? 'bg-rose-500 text-white ring-rose-300'
-                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                ? 'bg-amber-500 text-slate-950 ring-amber-500'
+                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                         )}
                     >
                         {player.name}
@@ -760,13 +744,14 @@ function VoteScreen({
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
+                <ActionButton
+                    variant="danger"
                     onClick={confirmVote}
                     disabled={selectedId === null}
-                    className="h-14 w-full rounded-2xl bg-rose-500 text-lg font-bold hover:bg-rose-400"
+                    className="text-lg"
                 >
                     Beschuldigen
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -805,8 +790,14 @@ function SpyGuessScreen({
         <div className="flex flex-1 flex-col">
             <PhaseHeader label="Spion ontmaskerd" onReset={onReset} />
 
-            <div role="status" aria-live="polite" className="mb-4 text-center">
-                <VenetianMask className="mx-auto mb-3 size-12 text-rose-600 dark:text-rose-300" />
+            <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 flex flex-col items-center text-center"
+            >
+                <span className="mb-3 flex size-16 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
+                    <VenetianMask className="size-8" aria-hidden />
+                </span>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {caughtSpy?.name} was de Spion!
                 </h2>
@@ -824,10 +815,10 @@ function SpyGuessScreen({
                             onClick={() => setSelectedLocation(location)}
                             aria-pressed={selectedLocation === location}
                             className={cn(
-                                'rounded-xl px-3 py-3 text-center text-sm font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none active:scale-[0.98]',
+                                'rounded-xl px-3 py-3 text-center text-sm font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.98]',
                                 selectedLocation === location
-                                    ? 'bg-rose-500 text-white ring-rose-300'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
+                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                             )}
                         >
                             {location}
@@ -837,13 +828,13 @@ function SpyGuessScreen({
             </div>
 
             <div className="pt-4">
-                <Button
+                <ActionButton
                     onClick={confirmGuess}
                     disabled={selectedLocation === null}
-                    className="h-14 w-full rounded-2xl bg-rose-500 text-lg font-bold hover:bg-rose-400"
+                    className="text-lg"
                 >
                     Bevestig gok
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -878,16 +869,18 @@ function GameOverScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mt-6 mb-6 text-center">
-                <Trophy
+            <div className="mt-6 mb-6 flex flex-col items-center text-center">
+                <span
                     className={cn(
-                        'mx-auto mb-3 size-12',
+                        'mb-3 flex size-20 items-center justify-center rounded-full',
                         playersWon
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-rose-600 dark:text-rose-400',
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
+                            : 'bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
                     )}
-                />
-                <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+                >
+                    <Trophy className="size-10" aria-hidden />
+                </span>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
                     {title}
                 </h1>
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -928,19 +921,17 @@ function GameOverScreen({
             </div>
 
             <div className="mt-auto space-y-3 pt-6">
-                <Button
-                    onClick={playAgain}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 text-lg font-bold hover:from-rose-400 hover:to-orange-400"
-                >
-                    <RotateCcw className="size-5" /> Opnieuw — zelfde spelers
-                </Button>
-                <Button
+                <ActionButton onClick={playAgain} className="text-lg">
+                    <RotateCcw className="size-5" aria-hidden /> Opnieuw —
+                    zelfde spelers
+                </ActionButton>
+                <ActionButton
+                    variant="neutral"
                     onClick={onReset}
-                    variant="ghost"
-                    className="h-12 w-full rounded-2xl text-slate-600 dark:text-slate-300"
+                    className="h-12"
                 >
                     Nieuw spel
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );

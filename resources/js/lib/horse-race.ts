@@ -97,7 +97,11 @@ export function startRace(bets: Bet[], trackLength: number): RaceState {
         phase: 'racing',
         trackLength,
         positions: { hearts: 0, spades: 0, clubs: 0, diamonds: 0 },
-        backfires: backfireRows(trackLength).map((row) => ({ row, suit: randomSuit(), revealed: false })),
+        backfires: backfireRows(trackLength).map((row) => ({
+            row,
+            suit: randomSuit(),
+            revealed: false,
+        })),
         bets,
         deck: buildDeck(),
         drawn: null,
@@ -129,12 +133,16 @@ export function flip(state: RaceState): RaceState {
     for (const backfire of backfires) {
         if (!backfire.revealed && passedAll >= backfire.row) {
             backfire.revealed = true;
-            positions[backfire.suit] = Math.max(0, positions[backfire.suit] - 1);
+            positions[backfire.suit] = Math.max(
+                0,
+                positions[backfire.suit] - 1,
+            );
             lastEvent = `${suitInfo(backfire.suit).symbol} ${suitInfo(backfire.suit).label} stapt terug! (backfire)`;
         }
     }
 
-    const winner = SUIT_KEYS.find((s) => positions[s] >= state.trackLength) ?? null;
+    const winner =
+        SUIT_KEYS.find((s) => positions[s] >= state.trackLength) ?? null;
 
     return {
         ...state,

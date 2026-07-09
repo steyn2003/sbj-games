@@ -9,13 +9,19 @@ export interface PersistableState {
 }
 
 function readCookie(name: string): string | null {
-    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    const match = document.cookie.match(
+        new RegExp('(?:^|; )' + name + '=([^;]*)'),
+    );
 
     return match ? decodeURIComponent(match[1]) : null;
 }
 
 /** Sends a JSON request with the Inertia/Laravel CSRF token attached. */
-async function sendJson(url: string, method: string, body: unknown): Promise<{ id: number }> {
+async function sendJson(
+    url: string,
+    method: string,
+    body: unknown,
+): Promise<{ id: number }> {
     const response = await fetch(url, {
         method,
         headers: {
@@ -67,11 +73,17 @@ export function usePersistedGame<T extends PersistableState>(
         saveChainRef.current = saveChainRef.current
             .then(async () => {
                 if (serverIdRef.current === null) {
-                    const created = await sendJson(store().url, store().method, { type, state: snapshot });
+                    const created = await sendJson(
+                        store().url,
+                        store().method,
+                        { type, state: snapshot },
+                    );
                     serverIdRef.current = created.id;
                 } else {
                     const action = update(serverIdRef.current);
-                    await sendJson(action.url, action.method, { state: snapshot });
+                    await sendJson(action.url, action.method, {
+                        state: snapshot,
+                    });
                 }
             })
             .catch(() => {

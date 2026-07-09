@@ -86,7 +86,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="bijv. MacBook Pro, iPhone"
-                    className="h-auto rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                    className="h-auto rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                     autoFocus
                 />
                 <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -104,7 +104,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             <div className="flex gap-2">
                 <Button
                     type="submit"
-                    className="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400"
+                    className="rounded-2xl bg-amber-500 px-5 font-semibold text-slate-950 hover:bg-amber-400"
                     disabled={isLoading || !name.trim()}
                 >
                     {isLoading

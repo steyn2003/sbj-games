@@ -166,8 +166,28 @@ export const CATEGORIES: string[] = [
 
 /** Letters that comfortably start common Dutch words. */
 export const LETTERS: string[] = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-    'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'V', 'W', 'Z',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'R',
+    'S',
+    'T',
+    'V',
+    'W',
+    'Z',
 ];
 
 /** Picks a random element, optionally avoiding the previous value. */

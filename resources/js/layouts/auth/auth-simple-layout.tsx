@@ -20,7 +20,7 @@ export default function AuthSimpleLayout({
                             <div className="flex size-16 items-center justify-center rounded-2xl bg-amber-400/15 ring-1 ring-amber-400/30">
                                 <AppLogoIcon className="size-11" />
                             </div>
-                            <span className="text-lg font-black tracking-tight text-amber-600 dark:text-amber-300">
+                            <span className="text-lg font-bold tracking-tight text-amber-600 dark:text-amber-400">
                                 Pim Pam Pet
                             </span>
                         </Link>

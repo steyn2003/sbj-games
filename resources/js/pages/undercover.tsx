@@ -1,8 +1,6 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
     ArrowRight,
-    Beer,
     Eye,
     EyeOff,
     Megaphone,
@@ -17,7 +15,12 @@ import {
     Vote,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import {
+    ActionButton,
+    GameHeader,
+    GameShell,
+    Panel,
+} from '@/components/game-ui';
 import {
     alivePlayers,
     dealRoles,
@@ -34,7 +37,6 @@ import type { GameSettings, Player, Winner } from '@/lib/undercover/game';
 import type { WordPair } from '@/lib/undercover/words';
 import { usePersistedGame } from '@/lib/use-persisted-game';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
 type Phase = 'setup' | 'reveal' | 'discuss' | 'vote' | 'mrwhite' | 'gameover';
 
@@ -93,29 +95,22 @@ export default function Undercover() {
     };
 
     return (
-        <>
-            <Head title="Undercover" />
-            <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-300/40 blur-3xl dark:bg-indigo-600/30" />
-                <div className="pointer-events-none absolute -right-24 -bottom-40 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
-                <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    {game === null ? (
-                        <SetupScreen
-                            resumable={currentGame}
-                            history={history}
-                            onResume={(state) => setGame(state)}
-                            onStart={setGame}
-                        />
-                    ) : (
-                        <PlayScreen
-                            game={game}
-                            setGame={setGame}
-                            onReset={resetToSetup}
-                        />
-                    )}
-                </main>
-            </div>
-        </>
+        <GameShell title="Undercover">
+            {game === null ? (
+                <SetupScreen
+                    resumable={currentGame}
+                    history={history}
+                    onResume={(state) => setGame(state)}
+                    onStart={setGame}
+                />
+            ) : (
+                <PlayScreen
+                    game={game}
+                    setGame={setGame}
+                    onReset={resetToSetup}
+                />
+            )}
+        </GameShell>
     );
 }
 
@@ -185,54 +180,42 @@ function SetupScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-2">
-                <Link
-                    href={dashboard()}
-                    className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                    <ArrowLeft className="size-4" /> Dashboard
-                </Link>
-            </div>
-            <header className="mb-6 text-center">
-                <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-bold tracking-widest text-amber-600 uppercase ring-1 ring-amber-400/30 dark:text-amber-300">
-                    <Beer className="size-3.5" /> Pim Pam Pet
-                </span>
-                <h1 className="bg-gradient-to-br from-slate-900 via-amber-700 to-amber-500 bg-clip-text text-5xl font-black tracking-tight text-transparent dark:from-white dark:via-amber-100 dark:to-amber-300">
-                    Undercover
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Iedereen krijgt een geheim woord — behalve de Undercover.
-                    Ontmasker ze.
-                </p>
-            </header>
+            <GameHeader
+                kicker="Blufspel"
+                title="Undercover"
+                description="Iedereen krijgt een geheim woord — behalve de Undercover. Ontmasker ze."
+            />
 
             {resumable && (
                 <button
                     type="button"
                     onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-left ring-1 ring-emerald-400/40 transition active:scale-[0.99] dark:from-emerald-500/20 dark:to-teal-500/20"
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10"
                 >
-                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/30">
-                        <Play className="size-5 text-emerald-200" />
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                        <Play className="size-5" aria-hidden />
                     </span>
                     <span className="flex-1">
-                        <span className="block text-sm font-bold text-white">
+                        <span className="block text-sm font-bold text-slate-900 dark:text-white">
                             Ga verder
                         </span>
-                        <span className="block text-xs text-emerald-200/80">
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">
                             Ronde {resumable.state.round ?? 1} ·{' '}
                             {alivePlayers(resumable.state.players ?? []).length}{' '}
                             spelers over
                         </span>
                     </span>
-                    <ArrowRight className="size-5 text-emerald-200" />
+                    <ArrowRight
+                        className="size-5 text-slate-400 dark:text-slate-500"
+                        aria-hidden
+                    />
                 </button>
             )}
 
-            <section className="mb-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur-sm dark:bg-white/5 dark:shadow-none dark:ring-white/10">
+            <Panel className="mb-5">
                 <Stepper
                     label="Spelers"
-                    icon={<Users className="size-4" />}
+                    icon={<Users className="size-4" aria-hidden />}
                     value={names.length}
                     min={MIN_PLAYERS}
                     max={MAX_PLAYERS}
@@ -240,7 +223,7 @@ function SetupScreen({
                 />
                 <Stepper
                     label="Undercover"
-                    icon={<ShieldQuestion className="size-4" />}
+                    icon={<ShieldQuestion className="size-4" aria-hidden />}
                     value={undercoverCount}
                     min={1}
                     max={Math.max(1, names.length - 2)}
@@ -249,16 +232,17 @@ function SetupScreen({
                 <button
                     type="button"
                     onClick={() => setIncludeMrWhite((value) => !value)}
-                    className="mt-2 flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left transition hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10"
+                    className="mt-2 flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:bg-white/5 dark:hover:bg-white/10"
                 >
                     <span className="flex items-center gap-2 text-sm font-medium">
-                        <Skull className="size-4" /> Mr. White meespelen
+                        <Skull className="size-4" aria-hidden /> Mr. White
+                        meespelen
                     </span>
                     <span
                         className={cn(
                             'relative h-6 w-11 rounded-full transition',
                             includeMrWhite
-                                ? 'bg-emerald-500'
+                                ? 'bg-amber-500'
                                 : 'bg-slate-300 dark:bg-slate-600',
                         )}
                     >
@@ -275,7 +259,7 @@ function SetupScreen({
                     {undercoverCount} Undercover
                     {includeMrWhite ? ' · 1 Mr. White' : ''}
                 </p>
-            </section>
+            </Panel>
 
             <section className="mb-5 space-y-2">
                 <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
@@ -289,7 +273,7 @@ function SetupScreen({
                             updateName(index, event.target.value)
                         }
                         maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                         placeholder={`Speler ${index + 1}`}
                     />
                 ))}
@@ -303,14 +287,14 @@ function SetupScreen({
                         {error}
                     </p>
                 )}
-                <Button
+                <ActionButton
                     onClick={start}
                     disabled={Boolean(error)}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400"
+                    className="text-lg"
                 >
                     Start spel
-                    <ArrowRight className="size-5" />
-                </Button>
+                    <ArrowRight className="size-5" aria-hidden />
+                </ActionButton>
             </div>
         </div>
     );
@@ -408,7 +392,7 @@ function Stepper({
                     onClick={() => onChange(value - 1)}
                     disabled={value <= min}
                 >
-                    <Minus className="size-4" />
+                    <Minus className="size-4" aria-hidden />
                 </StepperButton>
                 <span className="w-6 text-center text-lg font-bold tabular-nums">
                     {value}
@@ -417,7 +401,7 @@ function Stepper({
                     onClick={() => onChange(value + 1)}
                     disabled={value >= max}
                 >
-                    <Plus className="size-4" />
+                    <Plus className="size-4" aria-hidden />
                 </StepperButton>
             </div>
         </div>
@@ -438,7 +422,7 @@ function StepperButton({
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
         >
             {children}
         </button>
@@ -518,31 +502,34 @@ function RevealScreen({
                     <button
                         type="button"
                         onClick={() => setRevealed(true)}
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-center shadow-2xl ring-1 ring-white/20 transition active:scale-[0.98]"
+                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-slate-900 p-6 text-center shadow-sm ring-1 ring-white/10 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.98] dark:bg-slate-800"
                     >
                         <span className="text-2xl font-bold text-white">
                             {player.name}
                         </span>
-                        <span className="flex items-center gap-2 rounded-full bg-black/20 px-4 py-2 text-sm text-white/90">
-                            <Eye className="size-4" /> Tik om je woord te zien
+                        <span className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90">
+                            <Eye className="size-4" aria-hidden /> Tik om je
+                            woord te zien
                         </span>
                         <span className="text-xs text-white/70">
                             Zorg dat niemand meekijkt
                         </span>
                     </button>
                 ) : (
-                    <div className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-2xl">
+                    <div className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200">
                         <span className="text-sm font-medium text-slate-500">
                             {player.name}, jouw woord is
                         </span>
                         {player.word ? (
-                            <span className="text-4xl font-black break-words text-slate-900">
+                            <span className="text-4xl font-bold break-words text-slate-900">
                                 {player.word}
                             </span>
                         ) : (
                             <div className="flex flex-col items-center gap-2">
-                                <Skull className="size-10 text-slate-800" />
-                                <span className="text-3xl font-black text-slate-900">
+                                <span className="flex size-16 items-center justify-center rounded-full bg-slate-500/15 text-slate-700">
+                                    <Skull className="size-8" aria-hidden />
+                                </span>
+                                <span className="text-3xl font-bold text-slate-900">
                                     Mr. White
                                 </span>
                                 <span className="text-sm text-slate-500">
@@ -557,15 +544,12 @@ function RevealScreen({
 
             <div className="mt-auto pt-4">
                 {revealed ? (
-                    <Button
-                        onClick={next}
-                        className="h-14 w-full rounded-2xl bg-indigo-500 text-lg font-bold hover:bg-indigo-400"
-                    >
-                        <EyeOff className="size-5" />
+                    <ActionButton onClick={next} className="text-lg">
+                        <EyeOff className="size-5" aria-hidden />
                         {isLast
                             ? 'Klaar — begin de ronde'
                             : 'Verberg & geef door'}
-                    </Button>
+                    </ActionButton>
                 ) : (
                     <p className="text-center text-sm text-slate-400 dark:text-slate-500">
                         Geef de telefoon aan {player.name}
@@ -606,8 +590,11 @@ function DiscussScreen({
                 </p>
 
                 {starter && (
-                    <div className="mb-4 flex items-center gap-3 rounded-2xl bg-indigo-500/15 px-4 py-3 ring-1 ring-indigo-400/40">
-                        <Megaphone className="size-5 shrink-0 text-indigo-600 dark:text-indigo-300" />
+                    <div className="mb-4 flex items-center gap-3 rounded-2xl bg-amber-500/15 px-4 py-3 ring-1 ring-amber-400/40 dark:bg-amber-500/10">
+                        <Megaphone
+                            className="size-5 shrink-0 text-amber-600 dark:text-amber-400"
+                            aria-hidden
+                        />
                         <p className="text-sm text-slate-800 dark:text-slate-200">
                             <span className="font-bold text-slate-900 dark:text-white">
                                 {starter.name}
@@ -624,7 +611,7 @@ function DiscussScreen({
                             className={cn(
                                 'flex items-center gap-3 rounded-xl px-4 py-3 ring-1',
                                 index === 0
-                                    ? 'bg-indigo-500/15 ring-indigo-400/50 dark:bg-indigo-500/20'
+                                    ? 'bg-amber-500/15 ring-amber-400/50 dark:bg-amber-500/10'
                                     : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
                             )}
                         >
@@ -632,8 +619,8 @@ function DiscussScreen({
                                 className={cn(
                                     'flex size-7 items-center justify-center rounded-full text-xs font-bold',
                                     index === 0
-                                        ? 'bg-indigo-400 text-slate-900'
-                                        : 'bg-indigo-500/30 text-indigo-700 dark:text-indigo-200',
+                                        ? 'bg-amber-500 text-slate-950'
+                                        : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
                                 )}
                             >
                                 {index + 1}
@@ -642,7 +629,7 @@ function DiscussScreen({
                                 {player.name}
                             </span>
                             {index === 0 && (
-                                <span className="ml-auto text-xs font-semibold tracking-wide text-indigo-600 uppercase dark:text-indigo-300">
+                                <span className="ml-auto text-xs font-semibold tracking-wide text-amber-600 uppercase dark:text-amber-400">
                                     Begint
                                 </span>
                             )}
@@ -652,12 +639,12 @@ function DiscussScreen({
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
+                <ActionButton
                     onClick={() => setGame({ ...game, phase: 'vote' })}
-                    className="h-14 w-full rounded-2xl bg-rose-500 text-lg font-bold hover:bg-rose-400"
+                    className="text-lg"
                 >
-                    <Vote className="size-5" /> Naar de stemming
-                </Button>
+                    <Vote className="size-5" aria-hidden /> Naar de stemming
+                </ActionButton>
             </div>
         </div>
     );
@@ -716,10 +703,10 @@ function VoteScreen({
                         type="button"
                         onClick={() => setSelectedId(player.id)}
                         className={cn(
-                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition',
+                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.98]',
                             selectedId === player.id
-                                ? 'bg-rose-500 text-white ring-rose-300'
-                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                ? 'bg-rose-600 text-white ring-rose-600'
+                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
                         )}
                     >
                         {player.name}
@@ -728,13 +715,14 @@ function VoteScreen({
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
+                <ActionButton
+                    variant="danger"
                     onClick={confirmVote}
                     disabled={selectedId === null}
-                    className="h-14 w-full rounded-2xl bg-rose-500 text-lg font-bold hover:bg-rose-400"
+                    className="text-lg"
                 >
                     Wegstemmen
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -815,7 +803,9 @@ function MrWhiteScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <Skull className="mb-4 size-12 text-slate-600 dark:text-slate-300" />
+                <span className="mb-4 flex size-20 items-center justify-center rounded-full bg-slate-500/15 text-slate-600 dark:bg-white/10 dark:text-slate-300">
+                    <Skull className="size-10" aria-hidden />
+                </span>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {mrWhite?.name} was Mr. White!
                 </h2>
@@ -828,19 +818,19 @@ function MrWhiteScreen({
                     value={guess}
                     onChange={(event) => setGuess(event.target.value)}
                     autoFocus
-                    className="w-full max-w-xs rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-xl font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                    className="w-full max-w-xs rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-xl font-semibold text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                     placeholder="Jouw gok"
                 />
             </div>
 
             <div className="mt-auto pt-4">
-                <Button
+                <ActionButton
                     onClick={submitGuess}
                     disabled={guess.trim() === ''}
-                    className="h-14 w-full rounded-2xl bg-indigo-500 text-lg font-bold hover:bg-indigo-400"
+                    className="text-lg"
                 >
                     Gok indienen
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -892,15 +882,17 @@ function GameOverScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="mt-6 mb-6 text-center">
-                <Trophy
+                <span
                     className={cn(
-                        'mx-auto mb-3 size-12',
+                        'mx-auto mb-3 flex size-20 items-center justify-center rounded-full',
                         civiliansWon
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-rose-600 dark:text-rose-400',
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
+                            : 'bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
                     )}
-                />
-                <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+                >
+                    <Trophy className="size-10" aria-hidden />
+                </span>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
                     {title}
                 </h1>
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -929,7 +921,10 @@ function GameOverScreen({
                         <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
                             {player.name}
                             {player.eliminated && (
-                                <Skull className="size-4 text-slate-400 dark:text-slate-500" />
+                                <Skull
+                                    className="size-4 text-slate-400 dark:text-slate-500"
+                                    aria-hidden
+                                />
                             )}
                         </span>
                         <span
@@ -951,19 +946,17 @@ function GameOverScreen({
             </div>
 
             <div className="mt-auto space-y-3 pt-6">
-                <Button
-                    onClick={playAgain}
-                    className="h-14 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-lg font-bold hover:from-amber-400 hover:to-orange-400"
-                >
-                    <RotateCcw className="size-5" /> Opnieuw — zelfde spelers
-                </Button>
-                <Button
+                <ActionButton onClick={playAgain} className="text-lg">
+                    <RotateCcw className="size-5" aria-hidden /> Opnieuw —
+                    zelfde spelers
+                </ActionButton>
+                <ActionButton
+                    variant="neutral"
                     onClick={onReset}
-                    variant="ghost"
-                    className="h-12 w-full rounded-2xl text-slate-600 dark:text-slate-300"
+                    className="h-12"
                 >
                     Nieuw spel
-                </Button>
+                </ActionButton>
             </div>
         </div>
     );
@@ -979,9 +972,9 @@ function Header({ round, onReset }: { round: number; onReset?: () => void }) {
                 <button
                     type="button"
                     onClick={onReset}
-                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-200"
                 >
-                    <RotateCcw className="size-3.5" /> Nieuw spel
+                    <RotateCcw className="size-3.5" aria-hidden /> Nieuw spel
                 </button>
             )}
         </div>

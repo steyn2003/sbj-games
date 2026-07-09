@@ -17,12 +17,12 @@ type Props = {
     ManageTwoFactorProps;
 
 const darkPasswordInput =
-    'h-auto rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-11 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
+    'h-auto rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-11 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
 
 const darkLabel = 'text-sm font-medium text-slate-800 dark:text-slate-200';
 
 const darkPrimaryButton =
-    'h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 text-base font-bold text-white shadow-lg shadow-amber-900/40 hover:from-amber-400 hover:to-orange-400';
+    'h-12 rounded-2xl bg-amber-500 px-6 text-base font-semibold text-slate-950 hover:bg-amber-400';
 
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
