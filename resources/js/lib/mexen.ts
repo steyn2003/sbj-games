@@ -7,7 +7,7 @@ export interface Call {
     code: number;
     /** Higher rank beats lower rank. */
     rank: number;
-    /** Short label for the announcement, e.g. "53", "66", "Mex". */
+    /** Short label for the announcement, e.g. "53", "600", "Mex". */
     label: string;
     /** True for the unbeatable 2-1 roll. */
     isMax: boolean;
@@ -34,10 +34,11 @@ function makeCall(code: number): Call {
     const low = code % 10;
 
     if (high === low) {
+        // Doubles count as hundreds in Mexen: 3-3 is "300", not "33".
         return {
             code,
             rank: 100 + high,
-            label: String(code),
+            label: `${high}00`,
             isMax: false,
             isDouble: true,
         };
