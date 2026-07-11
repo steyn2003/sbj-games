@@ -1,9 +1,10 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
+import { UserRound } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
+import { ActionButton, Panel } from '@/components/game-ui';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
@@ -14,13 +15,10 @@ type PageProps = {
     auth: Auth;
 };
 
-const darkInput =
-    'h-auto rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
+const nightInput =
+    'h-auto rounded-xl border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-slate-500 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/40';
 
-const darkLabel = 'text-sm font-medium text-slate-800 dark:text-slate-200';
-
-const darkPrimaryButton =
-    'h-12 rounded-2xl bg-amber-500 px-6 text-base font-semibold text-slate-950 hover:bg-amber-400';
+const nightLabel = 'text-sm font-medium text-slate-300';
 
 export default function Profile({
     mustVerifyEmail,
@@ -37,14 +35,22 @@ export default function Profile({
 
             <h1 className="sr-only">Profielinstellingen</h1>
 
-            <section className="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
-                <div>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                        Profiel
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Werk je naam en e-mailadres bij.
-                    </p>
+            <Panel className="space-y-5 p-5">
+                <div className="flex items-start gap-3">
+                    <span
+                        aria-hidden
+                        className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/12 text-amber-300 ring-1 ring-amber-400/25"
+                    >
+                        <UserRound className="size-5" />
+                    </span>
+                    <div>
+                        <h2 className="text-lg font-bold text-white">
+                            Profiel
+                        </h2>
+                        <p className="mt-0.5 text-sm text-slate-400">
+                            Werk je naam en e-mailadres bij.
+                        </p>
+                    </div>
                 </div>
 
                 <Form
@@ -57,13 +63,13 @@ export default function Profile({
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name" className={darkLabel}>
+                                <Label htmlFor="name" className={nightLabel}>
                                     Naam
                                 </Label>
 
                                 <Input
                                     id="name"
-                                    className={darkInput}
+                                    className={nightInput}
                                     defaultValue={auth.user.name}
                                     name="name"
                                     required
@@ -71,21 +77,18 @@ export default function Profile({
                                     placeholder="Volledige naam"
                                 />
 
-                                <InputError
-                                    className="mt-1 text-rose-600 dark:text-rose-400"
-                                    message={errors.name}
-                                />
+                                <InputError message={errors.name} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email" className={darkLabel}>
+                                <Label htmlFor="email" className={nightLabel}>
                                     E-mailadres
                                 </Label>
 
                                 <Input
                                     id="email"
                                     type="email"
-                                    className={darkInput}
+                                    className={nightInput}
                                     defaultValue={auth.user.email}
                                     name="email"
                                     required
@@ -93,22 +96,19 @@ export default function Profile({
                                     placeholder="E-mailadres"
                                 />
 
-                                <InputError
-                                    className="mt-1 text-rose-600 dark:text-rose-400"
-                                    message={errors.email}
-                                />
+                                <InputError message={errors.email} />
                             </div>
 
                             {mustVerifyEmail &&
                                 auth.user.email_verified_at === null && (
                                     <div>
-                                        <p className="-mt-4 text-sm text-slate-500 dark:text-slate-400">
+                                        <p className="-mt-4 text-sm text-slate-400">
                                             Je e-mailadres is nog niet
                                             geverifieerd.{' '}
                                             <Link
                                                 href={send()}
                                                 as="button"
-                                                className="font-medium text-amber-600 underline underline-offset-4 transition-colors hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200"
+                                                className="font-medium text-amber-300 underline underline-offset-4 transition-colors hover:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70"
                                             >
                                                 Klik hier om de verificatiemail
                                                 opnieuw te versturen.
@@ -117,7 +117,10 @@ export default function Profile({
 
                                         {status ===
                                             'verification-link-sent' && (
-                                            <div className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                                            <div
+                                                aria-live="polite"
+                                                className="mt-2 text-sm font-medium text-emerald-400"
+                                            >
                                                 Er is een nieuwe verificatielink
                                                 naar je e-mailadres verstuurd.
                                             </div>
@@ -125,19 +128,17 @@ export default function Profile({
                                     </div>
                                 )}
 
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    className={darkPrimaryButton}
-                                    data-test="update-profile-button"
-                                >
-                                    Opslaan
-                                </Button>
-                            </div>
+                            <ActionButton
+                                type="submit"
+                                disabled={processing}
+                                data-test="update-profile-button"
+                            >
+                                Opslaan
+                            </ActionButton>
                         </>
                     )}
                 </Form>
-            </section>
+            </Panel>
 
             <DeleteUser />
         </>

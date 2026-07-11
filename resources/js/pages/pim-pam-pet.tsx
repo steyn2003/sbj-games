@@ -1,12 +1,15 @@
+import { motion, useReducedMotion } from 'framer-motion';
 import { RotateCcw, Timer, TimerOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     ActionButton,
+    CelebrationHeader,
     GameHeader,
     GameShell,
     Panel,
+    PhaseTransition,
 } from '@/components/game-ui';
-import { useAppearance } from '@/hooks/use-appearance';
+import { feel } from '@/hooks/use-game-feel';
 import {
     CATEGORIES,
     LETTERS,
@@ -69,30 +72,32 @@ export default function PimPamPet() {
     const pass = () => beginTurn();
 
     return (
-        <GameShell title="Pim Pam Pet">
-            {phase === 'setup' && (
-                <SetupScreen
-                    seconds={seconds}
-                    onSelectSeconds={setSeconds}
-                    onStart={startRound}
-                />
-            )}
-            {phase === 'play' && (
-                <PlayScreen
-                    category={category}
-                    letter={letter}
-                    secondsLeft={secondsLeft}
-                    seconds={seconds}
-                    onPass={pass}
-                />
-            )}
-            {phase === 'timeout' && (
-                <TimeoutScreen
-                    category={category}
-                    letter={letter}
-                    onNewRound={newRound}
-                />
-            )}
+        <GameShell title="Pim Pam Pet" accent="orange">
+            <PhaseTransition phaseKey={phase}>
+                {phase === 'setup' && (
+                    <SetupScreen
+                        seconds={seconds}
+                        onSelectSeconds={setSeconds}
+                        onStart={startRound}
+                    />
+                )}
+                {phase === 'play' && (
+                    <PlayScreen
+                        category={category}
+                        letter={letter}
+                        secondsLeft={secondsLeft}
+                        seconds={seconds}
+                        onPass={pass}
+                    />
+                )}
+                {phase === 'timeout' && (
+                    <TimeoutScreen
+                        category={category}
+                        letter={letter}
+                        onNewRound={newRound}
+                    />
+                )}
+            </PhaseTransition>
         </GameShell>
     );
 }
@@ -115,24 +120,38 @@ function SetupScreen({
             />
 
             <Panel className="mb-6">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                    <Timer className="size-4" aria-hidden /> Tijd per beurt
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-300">
+                    <Timer
+                        className="size-4 text-(--glow-strong)"
+                        aria-hidden
+                    />
+                    Tijd per beurt
                 </h2>
                 <div className="grid grid-cols-3 gap-3">
                     {TURN_SECONDS_OPTIONS.map((option) => (
-                        <button
+                        <motion.button
                             key={option}
                             type="button"
-                            onClick={() => onSelectSeconds(option)}
+                            aria-pressed={seconds === option}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 25,
+                            }}
+                            onClick={() => {
+                                feel.select();
+                                onSelectSeconds(option);
+                            }}
                             className={cn(
-                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
+                                'h-12 rounded-xl text-base font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
                                 seconds === option
-                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-(--glow) text-slate-950 shadow-[0_0_28px_-8px_var(--glow)]'
+                                    : 'bg-white/5 text-white ring-1 ring-white/10 hover:bg-white/10',
                             )}
                         >
                             {option}s
-                        </button>
+                        </motion.button>
                     ))}
                 </div>
             </Panel>
@@ -142,6 +161,146 @@ function SetupScreen({
                     Start ronde
                 </ActionButton>
             </div>
+        </div>
+    );
+}
+
+/**
+ * Cumulative delays for the letter-wheel flicks: fast at first, then an
+ * ease-out deceleration into the landing.
+ */
+const WHEEL_TICKS_MS = [
+    0, 70, 140, 215, 300, 395, 505, 635, 790, 975, 1195,
+] as const;
+const WHEEL_LANDING_MS = 1450;
+
+/**
+ * The signature Pim Pam Pet moment: a letter wheel that flicks through
+ * random letters, decelerates, and lands on the drawn letter with a pop.
+ * Purely visual — the letter is already decided when this mounts.
+ */
+function LetterWheel({ letter }: { letter: string }) {
+    const reduceMotion = useReducedMotion();
+    const [shown, setShown] = useState(letter);
+    const [spinDone, setSpinDone] = useState(false);
+
+    useEffect(() => {
+        if (reduceMotion) {
+            return;
+        }
+
+        const timers = WHEEL_TICKS_MS.map((at) =>
+            window.setTimeout(() => {
+                feel.tick();
+                setShown((current) => pickRandom(LETTERS, current));
+            }, at),
+        );
+
+        timers.push(
+            window.setTimeout(() => {
+                setShown(letter);
+                setSpinDone(true);
+                feel.success();
+            }, WHEEL_LANDING_MS),
+        );
+
+        return () => timers.forEach((id) => window.clearTimeout(id));
+    }, [letter, reduceMotion]);
+
+    // Under reduced motion the wheel skips straight to the drawn letter.
+    const landed = reduceMotion || spinDone;
+    const shownLetter = reduceMotion ? letter : shown;
+
+    return (
+        <div className="relative">
+            <motion.div
+                animate={
+                    landed
+                        ? { scale: 1, opacity: 1 }
+                        : { scale: 0.92, opacity: 0.85 }
+                }
+                transition={
+                    landed
+                        ? { type: 'spring', stiffness: 300, damping: 15 }
+                        : { duration: 0.15 }
+                }
+                className={cn(
+                    'flex size-40 items-center justify-center rounded-3xl bg-(--glow) text-slate-950 transition-shadow duration-500',
+                    landed
+                        ? 'shadow-[0_0_60px_-12px_var(--glow)]'
+                        : 'shadow-[0_0_36px_-18px_var(--glow)]',
+                )}
+            >
+                <span
+                    aria-hidden
+                    className="font-display text-8xl leading-none"
+                >
+                    {shownLetter}
+                </span>
+            </motion.div>
+            <span aria-live="polite" className="sr-only">
+                {landed ? `De letter is ${letter}` : 'Het letterwiel draait'}
+            </span>
+        </div>
+    );
+}
+
+/**
+ * Sprint-sized countdown ring: same visual language as the kit's TimerRing
+ * but tuned for 5-15 second turns (bare seconds, urgent at 3s or less).
+ */
+function SprintRing({
+    secondsLeft,
+    total,
+}: {
+    secondsLeft: number;
+    total: number;
+}) {
+    const size = 120;
+    const stroke = 8;
+    const radius = (size - stroke) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const fraction = total > 0 ? Math.max(0, secondsLeft / total) : 0;
+    const urgent = secondsLeft <= 3;
+
+    return (
+        <div
+            className="relative inline-flex items-center justify-center"
+            style={{ width: size, height: size }}
+        >
+            <svg width={size} height={size} className="-rotate-90">
+                <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="none"
+                    strokeWidth={stroke}
+                    className="stroke-white/10"
+                />
+                <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="none"
+                    strokeWidth={stroke}
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={circumference * (1 - fraction)}
+                    className={cn(
+                        'transition-[stroke-dashoffset,stroke] duration-1000 ease-linear',
+                        urgent ? 'stroke-rose-400' : 'stroke-(--glow)',
+                    )}
+                />
+            </svg>
+            <span
+                aria-hidden
+                className={cn(
+                    'absolute font-display text-5xl tabular-nums',
+                    urgent ? 'animate-pulse text-rose-300' : 'text-white',
+                )}
+            >
+                {secondsLeft}
+            </span>
         </div>
     );
 }
@@ -160,71 +319,72 @@ function PlayScreen({
     onPass: () => void;
 }) {
     const urgent = secondsLeft <= 3;
-    const { resolvedAppearance } = useAppearance();
-    const ringTrackColor =
-        resolvedAppearance === 'dark'
-            ? 'rgba(255,255,255,0.1)'
-            : 'rgba(15,23,42,0.1)';
+
+    // Heartbeat ticks in the final stretch — decoration only, never gates.
+    useEffect(() => {
+        if (secondsLeft <= 3 && secondsLeft > 0) {
+            feel.tick();
+        }
+    }, [secondsLeft]);
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-4 text-center">
-                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
-                    Categorie
-                </span>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {category}
-                </p>
-            </div>
-
-            <div className="flex flex-1 flex-col items-center justify-center gap-8">
-                <div className="flex size-44 items-center justify-center rounded-3xl bg-amber-500 shadow-sm ring-1 ring-amber-600/20">
-                    <span className="text-8xl font-bold text-slate-950">
-                        {letter}
-                    </span>
-                </div>
-
-                <div className="flex flex-col items-center gap-2">
-                    <div
-                        role="timer"
-                        aria-live="assertive"
-                        aria-atomic="true"
-                        aria-label={`Nog ${secondsLeft} seconden`}
-                        className="flex size-24 items-center justify-center rounded-full p-1.5 transition"
-                        style={{
-                            background: `conic-gradient(${urgent ? 'var(--color-rose-500)' : 'var(--color-amber-500)'} ${(secondsLeft / seconds) * 360}deg, ${ringTrackColor} 0deg)`,
-                        }}
+            <div className="flex flex-1 flex-col items-center justify-center gap-6">
+                <Panel className="flex w-full flex-col items-center gap-5 px-4 py-6 text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
                     >
-                        <div
-                            className={cn(
-                                'flex size-full items-center justify-center rounded-full text-3xl font-bold tabular-nums transition',
-                                urgent
-                                    ? 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300'
-                                    : 'bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white',
-                            )}
-                        >
-                            {secondsLeft}
-                        </div>
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                            Categorie
+                        </p>
+                        <p className="mt-1 text-2xl leading-tight font-bold text-white">
+                            {category}
+                        </p>
+                    </motion.div>
+
+                    <LetterWheel letter={letter} />
+
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                        className="text-sm text-slate-400"
+                    >
                         Noem iets in{' '}
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        <span className="font-semibold text-slate-200">
                             {category}
                         </span>{' '}
                         met de letter{' '}
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        <span className="font-semibold text-slate-200">
                             {letter}
                         </span>
-                    </p>
+                    </motion.p>
+                </Panel>
+
+                <div role="timer" aria-live="polite" aria-atomic="true">
+                    <span className="sr-only">
+                        {urgent ? 'Nog 3 seconden' : `Nog ${seconds} seconden`}
+                    </span>
+                    <SprintRing secondsLeft={secondsLeft} total={seconds} />
                 </div>
             </div>
 
             <div className="mt-auto pt-4">
-                <ActionButton onClick={onPass} className="text-lg">
+                <ActionButton
+                    variant="success"
+                    silent
+                    onClick={() => {
+                        feel.success();
+                        onPass();
+                    }}
+                    className="text-lg"
+                >
                     Gehaald, geef door
                 </ActionButton>
-                <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-                    Reset de tijd voor de volgende speler ({seconds}s)
+                <p className="mt-2 text-center text-xs text-slate-500">
+                    De tijd start opnieuw voor de volgende speler ({seconds}s)
                 </p>
             </div>
         </div>
@@ -240,36 +400,41 @@ function TimeoutScreen({
     letter: string;
     onNewRound: () => void;
 }) {
-    // Buzz the phone on timeout for the "drink!" payoff.
+    const reduceMotion = useReducedMotion();
+
+    // Buzz the phone on timeout for the "drink!" payoff. Runs after
+    // CelebrationHeader's fail feedback, so the long buzz wins.
     useEffect(() => {
         navigator.vibrate?.(400);
     }, []);
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="flex size-20 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
-                    <TimerOff className="size-10" aria-hidden />
-                </span>
-                <h1
-                    aria-live="assertive"
-                    className="mt-4 text-3xl font-bold text-slate-900 dark:text-white"
-                >
-                    Tijd voorbij!
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Wie de telefoon vasthoudt, verliest deze ronde en drinkt.
-                </p>
-                <p className="mt-6 text-sm text-slate-400 dark:text-slate-500">
-                    Categorie was{' '}
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">
-                        {category}
-                    </span>{' '}
-                    · letter{' '}
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">
-                        {letter}
-                    </span>
-                </p>
+            <div
+                className={cn(
+                    'flex flex-1 flex-col items-center justify-center',
+                    !reduceMotion && 'animate-shake',
+                )}
+            >
+                <div aria-live="assertive">
+                    <CelebrationHeader
+                        icon={TimerOff}
+                        tone="lose"
+                        title="Tijd is om!"
+                        subtitle="Wie de telefoon vasthoudt, verliest deze ronde en drinkt."
+                    >
+                        <p className="text-sm text-slate-500">
+                            Categorie was{' '}
+                            <span className="font-semibold text-slate-300">
+                                {category}
+                            </span>{' '}
+                            · letter{' '}
+                            <span className="font-semibold text-slate-300">
+                                {letter}
+                            </span>
+                        </p>
+                    </CelebrationHeader>
+                </div>
             </div>
 
             <div className="mt-auto pt-4">

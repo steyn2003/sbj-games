@@ -53,23 +53,26 @@ export default function TwoFactorRecoveryCodes({
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
 
     return (
-        <Card className="w-full border-slate-200 bg-white text-slate-900 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:shadow-none">
-            <CardHeader>
-                <CardTitle className="flex gap-3 text-slate-900 dark:text-white">
-                    <LockKeyhole className="size-4" aria-hidden="true" />
+        <Card className="w-full gap-4 border-white/10 bg-white/[0.03] py-5 text-slate-100 shadow-none">
+            <CardHeader className="px-5">
+                <CardTitle className="flex items-center gap-2.5 text-white">
+                    <LockKeyhole
+                        className="size-4 text-amber-300"
+                        aria-hidden="true"
+                    />
                     2FA-herstelcodes
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400">
+                <CardDescription className="text-slate-400">
                     Met herstelcodes krijg je weer toegang als je je
                     2FA-apparaat kwijtraakt. Bewaar ze in een veilige
                     wachtwoordmanager.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-5">
                 <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
                     <Button
                         onClick={toggleCodesVisibility}
-                        className="w-fit rounded-2xl bg-amber-500 font-semibold text-slate-950 hover:bg-amber-400"
+                        className="h-11 w-fit rounded-xl bg-amber-400 px-4 font-semibold text-slate-950 hover:bg-amber-300"
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
                     >
@@ -90,7 +93,7 @@ export default function TwoFactorRecoveryCodes({
                                 <Button
                                     variant="secondary"
                                     type="submit"
-                                    className="rounded-2xl bg-slate-100 font-semibold text-slate-800 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                                    className="h-11 rounded-xl bg-white/5 px-4 font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-white/10 hover:text-white"
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
@@ -112,7 +115,7 @@ export default function TwoFactorRecoveryCodes({
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-xl bg-slate-100 p-4 font-mono text-sm text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950/50 dark:text-slate-200 dark:ring-white/10"
+                                    className="grid gap-1 rounded-xl bg-slate-950/50 p-4 font-mono text-sm text-slate-200 ring-1 ring-white/10"
                                     role="list"
                                     aria-label="Herstelcodes"
                                 >
@@ -136,7 +139,7 @@ export default function TwoFactorRecoveryCodes({
                                                 (_, index) => (
                                                     <div
                                                         key={index}
-                                                        className="h-4 animate-pulse rounded bg-slate-200 dark:bg-white/10"
+                                                        className="h-4 animate-pulse rounded bg-white/10"
                                                         aria-hidden="true"
                                                     />
                                                 ),
@@ -145,13 +148,13 @@ export default function TwoFactorRecoveryCodes({
                                     )}
                                 </div>
 
-                                <div className="text-xs text-slate-400 select-none dark:text-slate-500">
+                                <div className="text-xs text-slate-500 select-none">
                                     <p id="regenerate-warning">
                                         Elke herstelcode kan één keer worden
                                         gebruikt om toegang te krijgen tot je
                                         account en wordt daarna verwijderd. Heb
                                         je er meer nodig, klik dan hierboven op{' '}
-                                        <span className="font-bold text-slate-600 dark:text-slate-300">
+                                        <span className="font-bold text-slate-300">
                                             Codes opnieuw genereren
                                         </span>
                                         .

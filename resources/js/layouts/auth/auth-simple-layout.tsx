@@ -1,5 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
+import { Panel } from '@/components/game-ui';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -8,33 +9,44 @@ export default function AuthSimpleLayout({
     title,
     description,
 }: AuthLayoutProps) {
-    return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-3 font-medium"
-                        >
-                            <div className="flex size-16 items-center justify-center rounded-2xl bg-amber-400/15 ring-1 ring-amber-400/30">
-                                <AppLogoIcon className="size-11" />
-                            </div>
-                            <span className="text-lg font-bold tracking-tight text-amber-600 dark:text-amber-400">
-                                Pim Pam Pet
-                            </span>
-                        </Link>
+    const { name } = usePage().props;
 
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
-                    </div>
-                    {children}
-                </div>
-            </div>
+    return (
+        <div
+            data-accent="gold"
+            className="relative flex min-h-[100dvh] flex-col bg-background felt text-foreground"
+        >
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 lamp-glow"
+            />
+            <main className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+                <header className="mb-8 flex flex-col items-center text-center">
+                    <Link
+                        href={home()}
+                        className="group flex flex-col items-center gap-3 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
+                    >
+                        <span
+                            aria-hidden
+                            className="flex size-16 items-center justify-center rounded-2xl bg-(--glow)/12 ring-1 ring-(--glow)/25 transition group-hover:bg-(--glow)/20 motion-safe:animate-pop-in"
+                        >
+                            <AppLogoIcon className="size-10" />
+                        </span>
+                        <span className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                            {name}
+                        </span>
+                    </Link>
+                    <h1 className="mt-4 font-display text-3xl text-white">
+                        {title}
+                    </h1>
+                    {description && (
+                        <p className="mt-2 max-w-xs text-sm leading-relaxed text-balance text-slate-400">
+                            {description}
+                        </p>
+                    )}
+                </header>
+                <Panel className="p-6">{children}</Panel>
+            </main>
         </div>
     );
 }

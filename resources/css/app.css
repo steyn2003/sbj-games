@@ -12,6 +12,8 @@
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-display:
+        'Lilita One', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -59,77 +61,103 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    --animate-pop-in: pop-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.4) both;
+    --animate-float: float 3s ease-in-out infinite;
+    --animate-glow-pulse: glow-pulse 1.6s ease-in-out infinite;
+    --animate-shake: shake 0.5s ease-in-out both;
 }
 
-:root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
-}
-
+/*
+ * Game-night theme. The whole suite commits to one look: an ink-indigo
+ * table under a lamp glow, gold as the house accent, one neon accent per
+ * game. There is no light theme — .dark mirrors :root so any leftover
+ * dark: variants render identically.
+ */
+:root,
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
+    --background: oklch(0.155 0.03 277);
+    --foreground: oklch(0.965 0.008 280);
+    --card: oklch(0.205 0.032 277);
+    --card-foreground: oklch(0.965 0.008 280);
+    --popover: oklch(0.23 0.032 277);
+    --popover-foreground: oklch(0.965 0.008 280);
+    --primary: oklch(0.828 0.189 84.429);
+    --primary-foreground: oklch(0.235 0.045 80);
+    --secondary: oklch(1 0 0 / 7%);
+    --secondary-foreground: oklch(0.965 0.008 280);
+    --muted: oklch(1 0 0 / 6%);
+    --muted-foreground: oklch(0.72 0.024 278);
+    --accent: oklch(1 0 0 / 8%);
+    --accent-foreground: oklch(0.965 0.008 280);
+    --destructive: oklch(0.645 0.215 16.44);
+    --destructive-foreground: oklch(0.965 0.008 280);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 12%);
+    --ring: oklch(0.828 0.189 84.429 / 60%);
+    --chart-1: oklch(0.828 0.189 84.429);
     --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --chart-3: oklch(0.702 0.183 293.541);
+    --chart-4: oklch(0.789 0.154 211.53);
+    --chart-5: oklch(0.712 0.194 13.428);
+    --radius: 0.75rem;
+    --sidebar: oklch(0.185 0.031 277);
+    --sidebar-foreground: oklch(0.965 0.008 280);
+    --sidebar-primary: oklch(0.828 0.189 84.429);
+    --sidebar-primary-foreground: oklch(0.235 0.045 80);
+    --sidebar-accent: oklch(1 0 0 / 8%);
+    --sidebar-accent-foreground: oklch(0.965 0.008 280);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.828 0.189 84.429 / 60%);
+}
+
+/*
+ * Per-game accent. Set data-accent on a wrapper (GameShell does this) and
+ * every descendant can use bg-(--glow), text-(--glow-soft), etc.
+ *   --glow        the game's neon (400-range, readable as text on ink)
+ *   --glow-strong brighter tint for text/icons on dark surfaces
+ *   --glow-deep   saturated base for filled buttons (text stays ink)
+ */
+[data-accent='gold'] {
+    --glow: var(--color-amber-400);
+    --glow-strong: var(--color-amber-300);
+    --glow-deep: var(--color-amber-500);
+}
+
+[data-accent='violet'] {
+    --glow: var(--color-violet-400);
+    --glow-strong: var(--color-violet-300);
+    --glow-deep: var(--color-violet-500);
+}
+
+[data-accent='cyan'] {
+    --glow: var(--color-cyan-400);
+    --glow-strong: var(--color-cyan-300);
+    --glow-deep: var(--color-cyan-500);
+}
+
+[data-accent='rose'] {
+    --glow: var(--color-rose-400);
+    --glow-strong: var(--color-rose-300);
+    --glow-deep: var(--color-rose-500);
+}
+
+[data-accent='orange'] {
+    --glow: var(--color-orange-400);
+    --glow-strong: var(--color-orange-300);
+    --glow-deep: var(--color-orange-500);
+}
+
+[data-accent='pink'] {
+    --glow: var(--color-pink-400);
+    --glow-strong: var(--color-pink-300);
+    --glow-deep: var(--color-pink-500);
+}
+
+[data-accent='emerald'] {
+    --glow: var(--color-emerald-400);
+    --glow-strong: var(--color-emerald-300);
+    --glow-deep: var(--color-emerald-500);
 }
 
 @layer base {
@@ -137,7 +165,101 @@
         @apply border-border;
     }
 
+    html {
+        color-scheme: dark;
+    }
+
     body {
         @apply bg-background text-foreground;
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+@utility font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+}
+
+/* The lamp: a soft pool of the game's accent falling from above the table. */
+@utility lamp-glow {
+    background:
+        radial-gradient(
+            120% 55% at 50% -12%,
+            color-mix(in oklab, var(--glow, var(--primary)) 17%, transparent),
+            transparent 70%
+        ),
+        radial-gradient(
+            80% 40% at 50% 108%,
+            color-mix(in oklab, var(--glow, var(--primary)) 6%, transparent),
+            transparent 70%
+        );
+}
+
+/* Felt: barely-there dot grain so large dark areas don't read as flat pixels. */
+@utility felt {
+    background-image: radial-gradient(oklch(1 0 0 / 2.5%) 1px, transparent 1px);
+    background-size: 22px 22px;
+}
+
+@keyframes pop-in {
+    from {
+        opacity: 0;
+        transform: scale(0.55);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes glow-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 24px -6px
+            color-mix(in oklab, var(--glow, var(--primary)) 55%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 44px -4px
+            color-mix(in oklab, var(--glow, var(--primary)) 85%, transparent);
+    }
+}
+
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    20% {
+        transform: translateX(-7px);
+    }
+    40% {
+        transform: translateX(6px);
+    }
+    60% {
+        transform: translateX(-4px);
+    }
+    80% {
+        transform: translateX(3px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

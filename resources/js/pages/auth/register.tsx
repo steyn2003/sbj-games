@@ -115,6 +115,6 @@ export default function Register({ passwordRules }: Props) {
 }
 
 Register.layout = {
-    title: 'Account aanmaken',
-    description: 'Vul hieronder je gegevens in om een account te maken',
+    title: 'Doe mee met de spelavond',
+    description: 'Maak een account en speel direct mee',
 };

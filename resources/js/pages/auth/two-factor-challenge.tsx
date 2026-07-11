@@ -116,7 +116,7 @@ export default function TwoFactorChallenge() {
                                 <span>of je kunt </span>
                                 <button
                                     type="button"
-                                    className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                    className="cursor-pointer rounded-sm text-foreground underline decoration-white/30 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
                                     onClick={() =>
                                         toggleRecoveryMode(clearErrors)
                                     }

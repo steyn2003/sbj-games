@@ -1,61 +1,117 @@
 import { Head, usePage } from '@inertiajs/react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { ActionButton, GAMES } from '@/components/game-ui';
+import { ActionButton, GAMES, Panel } from '@/components/game-ui';
+import { cn } from '@/lib/utils';
 import { dashboard, login, register } from '@/routes';
 
 export default function Welcome() {
     const { auth } = usePage().props;
+    const reduceMotion = useReducedMotion();
+
+    const rise = (delay: number) => ({
+        initial: reduceMotion
+            ? { opacity: 0 }
+            : ({ opacity: 0, y: 16 } as const),
+        animate: { opacity: 1, y: 0 },
+        transition: {
+            delay,
+            type: 'spring' as const,
+            stiffness: 300,
+            damping: 24,
+        },
+    });
 
     return (
         <>
             <Head title="Welkom" />
-            <div className="flex min-h-[100dvh] flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-                <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    <header className="mt-8 mb-8">
-                        <span
-                            aria-hidden
-                            className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-amber-500/15 ring-1 ring-amber-500/25"
+            <div
+                data-accent="gold"
+                className="relative flex min-h-[100dvh] flex-col bg-background felt text-foreground"
+            >
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 lamp-glow"
+                />
+                <main className="relative mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                    <header className="mt-4 mb-8 flex flex-col items-center text-center">
+                        <motion.div
+                            initial={
+                                reduceMotion
+                                    ? { opacity: 0 }
+                                    : { opacity: 0, scale: 0, rotate: -12 }
+                            }
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 300,
+                                damping: 18,
+                            }}
                         >
-                            <AppLogoIcon className="size-10" />
-                        </span>
-                        <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
+                            <span
+                                aria-hidden
+                                className={cn(
+                                    'flex size-20 items-center justify-center rounded-3xl bg-(--glow)/12 shadow-[0_0_50px_-12px_var(--glow)] ring-1 ring-(--glow)/25',
+                                    !reduceMotion && 'animate-float',
+                                )}
+                            >
+                                <AppLogoIcon className="size-12" />
+                            </span>
+                        </motion.div>
+                        <motion.p
+                            {...rise(0.1)}
+                            className="mt-6 text-xs font-semibold tracking-widest text-(--glow-strong) uppercase"
+                        >
                             Pass-the-phone partyspellen
-                        </p>
-                        <h1 className="mt-1 text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        </motion.p>
+                        <motion.h1
+                            {...rise(0.16)}
+                            className="mt-2 font-display text-5xl text-white"
+                        >
                             Speel samen
-                        </h1>
-                        <p className="mt-3 text-base leading-relaxed text-slate-500 dark:text-slate-400">
+                        </motion.h1>
+                        <motion.p
+                            {...rise(0.22)}
+                            className="mt-3 text-base leading-relaxed text-slate-400"
+                        >
                             Eén telefoon, de hele groep mee. Een avond vol bluf
                             en lol.
-                        </p>
+                        </motion.p>
                     </header>
 
-                    <section className="mb-8 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10">
-                        <h2 className="mb-3 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
-                            De spellen
-                        </h2>
-                        <div className="space-y-2">
-                            {GAMES.map((game) => (
-                                <div
-                                    key={game.title}
-                                    className="flex items-center gap-3"
-                                >
-                                    <span
-                                        aria-hidden
-                                        className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-white/10 dark:text-slate-300 dark:ring-white/10"
+                    <motion.div {...rise(0.3)}>
+                        <Panel className="mb-8">
+                            <h2 className="mb-3 px-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
+                                De spellen
+                            </h2>
+                            <ul className="space-y-2.5">
+                                {GAMES.map((game) => (
+                                    <li
+                                        key={game.title}
+                                        data-accent={game.accent}
+                                        className="flex items-center gap-3 px-1"
                                     >
-                                        <game.icon className="size-5" />
-                                    </span>
-                                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                                        {game.title}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
+                                        <span
+                                            aria-hidden
+                                            className="size-2 shrink-0 rounded-full bg-(--glow) shadow-[0_0_10px_var(--glow)]"
+                                        />
+                                        <span className="text-sm font-semibold text-white">
+                                            {game.title}
+                                        </span>
+                                        <span className="min-w-0 flex-1 truncate text-right text-xs text-slate-500">
+                                            {game.tagline}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Panel>
+                    </motion.div>
 
-                    <div className="mt-auto space-y-3 pt-2">
+                    <motion.div
+                        {...rise(0.38)}
+                        className="mt-auto space-y-3 pt-2"
+                    >
                         {auth.user ? (
                             <ActionButton
                                 href={dashboard().url}
@@ -84,7 +140,7 @@ export default function Welcome() {
                                 </ActionButton>
                             </>
                         )}
-                    </div>
+                    </motion.div>
                 </main>
             </div>
         </>

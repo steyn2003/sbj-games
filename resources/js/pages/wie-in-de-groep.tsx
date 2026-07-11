@@ -1,11 +1,18 @@
-import { ArrowRight, Beer, Minus, Plus, RotateCcw, Users } from 'lucide-react';
-import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight, Beer, RotateCcw } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
     ActionButton,
+    CelebrationHeader,
+    CountUp,
     GameHeader,
     GameShell,
     Panel,
+    PassPhoneGate,
+    PhaseTransition,
+    Stepper,
 } from '@/components/game-ui';
+import { feel } from '@/hooks/use-game-feel';
 import {
     MAX_PLAYERS,
     MIN_PLAYERS,
@@ -49,35 +56,39 @@ export default function WieInDeGroep() {
     };
 
     return (
-        <GameShell title="Wie in de groep…?">
-            {phase === 'setup' && (
-                <SetupScreen
-                    names={names}
-                    setNames={setNames}
-                    onStart={() => startQuestion(names)}
-                />
-            )}
-            {phase === 'vote' && (
-                <VoteScreen
-                    key={voterIndex}
-                    statement={statement}
-                    voter={names[voterIndex]}
-                    voterIndex={voterIndex}
-                    total={names.length}
-                    names={names}
-                    onVote={castVote}
-                    onReset={() => setPhase('setup')}
-                />
-            )}
-            {phase === 'reveal' && (
-                <RevealScreen
-                    statement={statement}
-                    names={names}
-                    votes={votes}
-                    onNext={() => startQuestion(names)}
-                    onReset={() => setPhase('setup')}
-                />
-            )}
+        <GameShell title="Wie in de groep…?" accent="pink">
+            <PhaseTransition
+                phaseKey={phase === 'vote' ? `vote-${voterIndex}` : phase}
+            >
+                {phase === 'setup' && (
+                    <SetupScreen
+                        names={names}
+                        setNames={setNames}
+                        onStart={() => startQuestion(names)}
+                    />
+                )}
+                {phase === 'vote' && (
+                    <VoteScreen
+                        key={voterIndex}
+                        statement={statement}
+                        voter={names[voterIndex]}
+                        voterIndex={voterIndex}
+                        total={names.length}
+                        names={names}
+                        onVote={castVote}
+                        onReset={() => setPhase('setup')}
+                    />
+                )}
+                {phase === 'reveal' && (
+                    <RevealScreen
+                        statement={statement}
+                        names={names}
+                        votes={votes}
+                        onNext={() => startQuestion(names)}
+                        onReset={() => setPhase('setup')}
+                    />
+                )}
+            </PhaseTransition>
         </GameShell>
     );
 }
@@ -91,6 +102,8 @@ function SetupScreen({
     setNames: React.Dispatch<React.SetStateAction<string[]>>;
     onStart: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
+
     const setPlayerCount = (count: number) => {
         const next = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, count));
 
@@ -122,55 +135,51 @@ function SetupScreen({
             />
 
             <Panel className="mb-5">
-                <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-sm font-medium">
-                        <Users className="size-4" aria-hidden /> Spelers
-                    </span>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setPlayerCount(names.length - 1)}
-                            disabled={names.length <= MIN_PLAYERS}
-                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-                        >
-                            <Minus className="size-4" />
-                        </button>
-                        <span className="w-6 text-center text-lg font-bold tabular-nums">
-                            {names.length}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setPlayerCount(names.length + 1)}
-                            disabled={names.length >= MAX_PLAYERS}
-                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-                        >
-                            <Plus className="size-4" />
-                        </button>
-                    </div>
-                </div>
+                <Stepper
+                    label="Spelers"
+                    value={names.length}
+                    onChange={setPlayerCount}
+                    min={MIN_PLAYERS}
+                    max={MAX_PLAYERS}
+                />
             </Panel>
 
             <section className="mb-5 space-y-2">
-                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                <h2 className="px-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
                     Namen
                 </h2>
                 {names.map((name, index) => (
-                    <input
+                    <motion.div
                         key={index}
-                        value={name}
-                        onChange={(event) =>
-                            updateName(index, event.target.value)
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 8, scale: 0.98 }
                         }
-                        maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
-                        placeholder={`Speler ${index + 1}`}
-                    />
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 380,
+                            damping: 26,
+                        }}
+                    >
+                        <input
+                            value={name}
+                            onChange={(event) =>
+                                updateName(index, event.target.value)
+                            }
+                            maxLength={20}
+                            aria-label={`Naam van speler ${index + 1}`}
+                            className="w-full rounded-xl bg-white/5 px-4 py-3 text-base text-white ring-1 ring-white/10 transition-shadow placeholder:text-slate-500 focus:ring-2 focus:ring-(--glow) focus:outline-none"
+                            placeholder={`Speler ${index + 1}`}
+                        />
+                    </motion.div>
                 ))}
             </section>
 
             <div className="mt-auto pt-2">
                 {error && (
-                    <p className="mb-3 text-center text-sm text-rose-600 dark:text-rose-400">
+                    <p className="mb-3 text-center text-sm text-rose-400">
                         {error}
                     </p>
                 )}
@@ -179,7 +188,7 @@ function SetupScreen({
                     disabled={Boolean(error)}
                     className="text-lg"
                 >
-                    Start
+                    Start het spel
                     <ArrowRight className="size-5" aria-hidden />
                 </ActionButton>
             </div>
@@ -204,6 +213,7 @@ function VoteScreen({
     onVote: (index: number) => void;
     onReset: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const [ready, setReady] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -216,29 +226,20 @@ function VoteScreen({
                     label={`Stem ${voterIndex + 1} van ${total}`}
                     onReset={onReset}
                 />
+                <ProgressDots current={voterIndex} total={total} />
 
-                <div className="flex flex-1 flex-col items-center justify-center">
-                    <button
-                        type="button"
-                        onClick={() => setReady(true)}
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-amber-500 p-6 text-center shadow-sm ring-1 ring-amber-600/20 transition focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 focus-visible:outline-none active:scale-[0.98] dark:focus-visible:ring-offset-slate-950"
-                    >
-                        <span className="text-2xl font-bold text-slate-950">
-                            {voter}, jij bent
-                        </span>
-                        <span className="flex items-center gap-2 rounded-full bg-slate-950/10 px-4 py-2 text-sm font-medium text-slate-900">
-                            <Beer className="size-4" aria-hidden /> Tik als je
-                            de telefoon hebt
-                        </span>
-                        <span className="text-xs text-slate-900/70">
-                            Zorg dat niemand meekijkt met je stem
-                        </span>
-                    </button>
-                </div>
-
-                <p className="mt-auto pt-4 text-center text-sm text-slate-400 dark:text-slate-500">
-                    Geef de telefoon aan {voter}
-                </p>
+                <PassPhoneGate
+                    name={voter}
+                    instruction="Geef de telefoon aan"
+                    onReady={() => {
+                        feel.flip();
+                        setReady(true);
+                    }}
+                >
+                    <p className="text-xs text-slate-500">
+                        Zorg dat niemand meekijkt met je stem.
+                    </p>
+                </PassPhoneGate>
             </div>
         );
     }
@@ -249,39 +250,75 @@ function VoteScreen({
                 label={`Stem ${voterIndex + 1} van ${total}`}
                 onReset={onReset}
             />
+            <ProgressDots current={voterIndex} total={total} />
 
-            <Panel className="mb-5 p-5 text-center">
-                <p className="text-xl font-bold text-slate-900 dark:text-white">
+            <motion.section
+                initial={
+                    reduceMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: 14, scale: 0.92 }
+                }
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                className="mb-6 rounded-3xl bg-(--glow)/12 p-6 text-center shadow-[0_0_40px_-10px_var(--glow)] ring-1 ring-(--glow)/25"
+            >
+                <p className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                    Stelling
+                </p>
+                <p className="mt-2 font-display text-2xl leading-snug text-white">
                     {statement}
                 </p>
-            </Panel>
+            </motion.section>
 
-            <p className="mb-3 text-center text-sm text-slate-500 dark:text-slate-400">
-                <span className="font-semibold text-slate-900 dark:text-white">
-                    {voter}
-                </span>
-                , op wie stem jij?
+            <p className="mb-3 text-center text-sm text-slate-400">
+                <span className="font-semibold text-white">{voter}</span>, op
+                wie stem jij?
             </p>
 
             <div className="grid grid-cols-2 gap-3">
                 {names.map((name, index) => (
-                    <button
+                    <motion.button
                         key={index}
                         type="button"
-                        onClick={() => setSelectedId(index)}
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 10 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 380,
+                            damping: 26,
+                            delay: reduceMotion ? 0 : 0.08 + index * 0.035,
+                        }}
+                        whileTap={{
+                            scale: 0.96,
+                            transition: {
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 25,
+                                delay: 0,
+                            },
+                        }}
+                        aria-pressed={selectedId === index}
+                        onClick={() => {
+                            feel.select();
+                            setSelectedId(index);
+                        }}
                         className={cn(
-                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none active:scale-[0.98]',
+                            'min-h-14 rounded-2xl px-4 py-4 text-center text-base font-semibold ring-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
                             selectedId === index
-                                ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                : 'bg-white text-slate-900 shadow-sm ring-slate-200 hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10',
+                                ? 'bg-(--glow) text-slate-950 shadow-[0_10px_32px_-12px_var(--glow)] ring-(--glow)'
+                                : 'bg-white/5 text-white ring-white/10 hover:bg-white/10',
                         )}
                     >
                         {name}
-                    </button>
+                    </motion.button>
                 ))}
             </div>
 
-            <div className="mt-auto pt-4">
+            <div className="mt-auto pt-5">
                 <ActionButton
                     onClick={() => selectedId !== null && onVote(selectedId)}
                     disabled={selectedId === null}
@@ -308,68 +345,120 @@ function RevealScreen({
     onNext: () => void;
     onReset: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const { winners, maxVotes } = tallyVotes(names, votes);
     const ranked = names
         .map((name, index) => ({ name, count: votes[index] }))
         .sort((a, b) => b.count - a.count);
 
+    const verdict =
+        winners.length > 2
+            ? 'Gelijkspel — allemaal drinken!'
+            : winners.length === 2
+              ? 'Gelijkspel — allebei drinken!'
+              : 'Drinken!';
+
     return (
         <div className="flex flex-1 flex-col">
             <Header label="Uitslag" onReset={onReset} />
 
-            <Panel className="mb-5 p-5 text-center">
-                <p className="text-xl font-bold text-slate-900 dark:text-white">
-                    {statement}
-                </p>
-            </Panel>
+            <p className="mb-6 text-center text-sm text-slate-400 italic">
+                “{statement}”
+            </p>
 
-            <div className="mb-6 flex flex-col items-center text-center">
-                <span className="flex size-16 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-                    <Beer className="size-8" aria-hidden />
-                </span>
-                <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
-                    {winners.length === 1
+            <CelebrationHeader
+                icon={Beer}
+                tone="win"
+                title={
+                    winners.length === 1
                         ? `${winners[0]}!`
-                        : winners.join(' & ') + '!'}
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {winners.length > 1
-                        ? 'Gelijkspel — allebei drinken!'
-                        : 'Drinken!'}
-                </p>
-            </div>
+                        : `${winners.join(' & ')}!`
+                }
+                subtitle={
+                    <span role="status" aria-live="polite">
+                        {verdict}
+                    </span>
+                }
+            />
 
-            <div className="space-y-2">
-                {ranked.map((entry) => (
-                    <div
-                        key={entry.name}
-                        className={cn(
-                            'flex items-center justify-between rounded-xl px-4 py-3 ring-1',
-                            entry.count === maxVotes && maxVotes > 0
-                                ? 'bg-amber-500/15 ring-amber-400/40'
-                                : 'bg-white shadow-sm ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10',
-                        )}
-                    >
-                        <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
-                            {entry.count === maxVotes && maxVotes > 0 && (
-                                <Beer
-                                    className="size-4 text-amber-600 dark:text-amber-300"
-                                    aria-hidden
-                                />
+            <div className="mt-8 space-y-2">
+                {ranked.map((entry, index) => {
+                    const isLeader = entry.count === maxVotes && maxVotes > 0;
+                    const fraction = maxVotes > 0 ? entry.count / maxVotes : 0;
+
+                    return (
+                        <motion.div
+                            key={`${entry.name}-${index}`}
+                            initial={
+                                reduceMotion
+                                    ? { opacity: 0 }
+                                    : { opacity: 0, x: -14 }
+                            }
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 300,
+                                damping: 24,
+                                delay: reduceMotion ? 0 : 0.4 + index * 0.07,
+                            }}
+                            className={cn(
+                                'relative overflow-hidden rounded-xl bg-white/[0.045] px-4 py-3 ring-1',
+                                isLeader ? 'ring-(--glow)/40' : 'ring-white/10',
                             )}
-                            {entry.name}
-                        </span>
-                        <span className="text-sm font-bold text-amber-600 tabular-nums dark:text-amber-300">
-                            {entry.count}{' '}
-                            {entry.count === 1 ? 'stem' : 'stemmen'}
-                        </span>
-                    </div>
-                ))}
+                        >
+                            <motion.span
+                                aria-hidden
+                                initial={{ width: 0 }}
+                                animate={{
+                                    width: `${entry.count > 0 ? Math.max(fraction * 100, 8) : 0}%`,
+                                }}
+                                transition={{
+                                    duration: reduceMotion ? 0 : 0.6,
+                                    ease: 'easeOut',
+                                    delay: reduceMotion
+                                        ? 0
+                                        : 0.55 + index * 0.07,
+                                }}
+                                className={cn(
+                                    'absolute inset-y-0 left-0',
+                                    isLeader
+                                        ? 'bg-(--glow)/20'
+                                        : 'bg-white/[0.06]',
+                                )}
+                            />
+                            <span className="relative flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-base font-medium text-white">
+                                    {isLeader && (
+                                        <Beer
+                                            className="size-4 text-(--glow-strong)"
+                                            aria-hidden
+                                        />
+                                    )}
+                                    {entry.name}
+                                </span>
+                                <span
+                                    className={cn(
+                                        'text-sm font-bold tabular-nums',
+                                        isLeader
+                                            ? 'text-(--glow-strong)'
+                                            : 'text-slate-400',
+                                    )}
+                                >
+                                    <CountUp
+                                        value={entry.count}
+                                        duration={0.8}
+                                    />{' '}
+                                    {entry.count === 1 ? 'stem' : 'stemmen'}
+                                </span>
+                            </span>
+                        </motion.div>
+                    );
+                })}
             </div>
 
             <div className="mt-auto pt-6">
                 <ActionButton onClick={onNext} className="text-lg">
-                    Volgende vraag
+                    Volgende stelling
                     <ArrowRight className="size-5" aria-hidden />
                 </ActionButton>
             </div>
@@ -377,19 +466,69 @@ function RevealScreen({
     );
 }
 
+/** How far the secret ballot is around the table. */
+function ProgressDots({ current, total }: { current: number; total: number }) {
+    return (
+        <div
+            aria-hidden
+            className="mb-6 flex items-center justify-center gap-1.5"
+        >
+            {Array.from({ length: total }, (_, index) => (
+                <span
+                    key={index}
+                    className={cn(
+                        'h-1.5 rounded-full transition-all duration-300',
+                        index < current
+                            ? 'w-4 bg-(--glow)'
+                            : index === current
+                              ? 'w-6 bg-(--glow-strong)'
+                              : 'w-1.5 bg-white/15',
+                    )}
+                />
+            ))}
+        </div>
+    );
+}
+
 function Header({ label, onReset }: { label: string; onReset?: () => void }) {
+    const [armed, setArmed] = useState(false);
+
+    useEffect(() => {
+        if (!armed) {
+            return;
+        }
+
+        const id = window.setTimeout(() => setArmed(false), 3000);
+
+        return () => window.clearTimeout(id);
+    }, [armed]);
+
     return (
         <div className="mb-5 flex items-center justify-between">
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
+            <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold tracking-wide text-slate-300 uppercase ring-1 ring-white/10">
                 {label}
             </span>
             {onReset && (
                 <button
                     type="button"
-                    onClick={onReset}
-                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none dark:text-slate-400 dark:hover:text-slate-200"
+                    onClick={() => {
+                        if (armed) {
+                            feel.tap();
+                            onReset();
+                        } else {
+                            feel.select();
+                            setArmed(true);
+                        }
+                    }}
+                    className={cn(
+                        '-my-2 flex min-h-11 items-center gap-1.5 rounded-full px-2 text-xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                        armed
+                            ? 'font-semibold text-rose-400'
+                            : 'text-slate-400 hover:text-white',
+                    )}
                 >
-                    <RotateCcw className="size-3.5" aria-hidden /> Nieuw spel
+                    <RotateCcw className="size-3.5" aria-hidden />
+                    {armed ? 'Zeker weten?' : 'Nieuw spel'}
                 </button>
             )}
         </div>

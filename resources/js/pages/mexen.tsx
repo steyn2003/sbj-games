@@ -1,28 +1,33 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowLeft,
+    ArrowRight,
     Beer,
     ChevronRight,
+    Crown,
     Dice5,
     Dices,
-    Eye,
-    Minus,
-    Plus,
     RotateCcw,
     ShieldQuestion,
-    Smartphone,
     Target,
-    Users,
     VenetianMask,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     ActionButton,
+    CelebrationHeader,
+    CountUp,
+    FlipCard,
     GameHeader,
     GameShell,
+    IconBadge,
     Panel,
+    PassPhoneGate,
+    PhaseTransition,
+    Stepper,
 } from '@/components/game-ui';
+import { feel } from '@/hooks/use-game-feel';
 import {
     callForRoll,
     callsAbove,
@@ -41,24 +46,63 @@ export default function Mexen() {
     const [variant, setVariant] = useState<Variant>('menu');
 
     return (
-        <GameShell title="Mexen" back={variant === 'menu'}>
+        <GameShell title="Mexen" accent="gold" back={variant === 'menu'}>
             {variant !== 'menu' && (
                 <div className="mb-3">
-                    <button
-                        type="button"
-                        onClick={() => setVariant('menu')}
-                        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-100"
-                    >
-                        <ArrowLeft className="size-4" aria-hidden />
-                        Kies variant
-                    </button>
+                    <LeaveGameChip onLeave={() => setVariant('menu')} />
                 </div>
             )}
 
-            {variant === 'menu' && <VariantMenu onPick={setVariant} />}
-            {variant === 'normaal' && <NormaalMexen />}
-            {variant === 'bluf' && <BlufMexen />}
+            <PhaseTransition phaseKey={variant}>
+                {variant === 'menu' && <VariantMenu onPick={setVariant} />}
+                {variant === 'normaal' && <NormaalMexen />}
+                {variant === 'bluf' && <BlufMexen />}
+            </PhaseTransition>
         </GameShell>
+    );
+}
+
+/**
+ * Mid-game escape hatch back to the variant menu. Destroys the running game,
+ * so the first tap only arms it — a second tap within 3s confirms.
+ */
+function LeaveGameChip({ onLeave }: { onLeave: () => void }) {
+    const [armed, setArmed] = useState(false);
+
+    useEffect(() => {
+        if (!armed) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => setArmed(false), 3000);
+
+        return () => window.clearTimeout(timer);
+    }, [armed]);
+
+    return (
+        <button
+            type="button"
+            onClick={() => {
+                feel.select();
+
+                if (armed) {
+                    onLeave();
+                } else {
+                    setArmed(true);
+                }
+            }}
+            className={cn(
+                'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                armed
+                    ? 'bg-rose-500/15 text-rose-300 ring-rose-400/40'
+                    : 'bg-white/5 text-slate-400 ring-white/10 hover:bg-white/10 hover:text-white',
+            )}
+        >
+            <ArrowLeft className="size-4" aria-hidden />
+            <span aria-live="polite">
+                {armed ? 'Zeker weten? Het spel stopt' : 'Kies variant'}
+            </span>
+        </button>
     );
 }
 
@@ -77,12 +121,14 @@ function VariantMenu({ onPick }: { onPick: (variant: Variant) => void }) {
                     title="Normaal Mexen"
                     description="Iedereen rolt open, tot drie keer. De laagste worp van de ronde drinkt — elke Mex verdubbelt de slokken."
                     icon={Dice5}
+                    index={0}
                     onClick={() => onPick('normaal')}
                 />
                 <VariantCard
                     title="Bluf Mexen"
                     description="Rol stiekem en noem iets hogers dan de vorige — of lieg erop los. Wie betrapt wordt, drinkt!"
                     icon={VenetianMask}
+                    index={1}
                     onClick={() => onPick('bluf')}
                 />
             </div>
@@ -93,49 +139,58 @@ function VariantMenu({ onPick }: { onPick: (variant: Variant) => void }) {
 function VariantCard({
     title,
     description,
-    icon: Icon,
+    icon,
+    index,
     onClick,
 }: {
     title: string;
     description: string;
     icon: LucideIcon;
+    index: number;
     onClick: () => void;
 }) {
     return (
-        <button
+        <motion.button
             type="button"
-            onClick={onClick}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-amber-400/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/[0.07]"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+                delay: index * 0.08,
+                type: 'spring',
+                stiffness: 300,
+                damping: 24,
+            }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+                feel.select();
+                onClick();
+            }}
+            className="flex w-full items-center gap-4 rounded-2xl bg-white/[0.045] p-4 text-left ring-1 ring-white/10 transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
         >
-            <span
-                aria-hidden
-                className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
-            >
-                <Icon className="size-6" />
-            </span>
+            <IconBadge icon={icon} className="shrink-0" />
             <span className="flex-1">
-                <span className="block text-base font-bold text-slate-900 dark:text-white">
+                <span className="block text-base font-bold text-white">
                     {title}
                 </span>
-                <span className="block text-sm text-slate-500 dark:text-slate-400">
+                <span className="block text-sm text-slate-400">
                     {description}
                 </span>
             </span>
             <ChevronRight
-                className="size-5 shrink-0 text-slate-400 dark:text-slate-500"
+                className="size-5 shrink-0 text-slate-500"
                 aria-hidden
             />
-        </button>
+        </motion.button>
     );
 }
 
 function Rule({ n, text }: { n: string; text: string }) {
     return (
         <div className="flex gap-3">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--glow)/15 text-xs font-bold text-(--glow-strong)">
                 {n}
             </span>
-            <p className="text-slate-600 dark:text-slate-300">{text}</p>
+            <p className="text-slate-300">{text}</p>
         </div>
     );
 }
@@ -146,6 +201,8 @@ function Rule({ n, text }: { n: string; text: string }) {
 
 type NormaalPhase = 'setup' | 'turn' | 'result';
 
+const PRINCE_KEY = 'mexen-prince';
+
 function NormaalMexen() {
     const [phase, setPhase] = useState<NormaalPhase>('setup');
     const [playerCount, setPlayerCount] = useState(4);
@@ -154,10 +211,44 @@ function NormaalMexen() {
     const [turn, setTurn] = useState(0);
     const [throwLimit, setThrowLimit] = useState(MAX_THROWS);
     const [results, setResults] = useState<(Call | null)[]>([]);
+    // The Prince: whoever rolls 1-1 drinks on EVERY double until someone else
+    // rolls 1-1. The crown outlives rounds, games and reloads (localStorage).
+    const [prince, setPrince] = useState<number | null>(() => {
+        if (typeof localStorage === 'undefined') {
+            return null;
+        }
+
+        const stored = localStorage.getItem(PRINCE_KEY);
+
+        return stored === null ? null : Number(stored);
+    });
 
     const currentPlayer = (startIndex + turn) % playerCount;
 
+    const crown = (player: number | null) => {
+        setPrince(player);
+
+        if (player === null) {
+            localStorage.removeItem(PRINCE_KEY);
+        } else {
+            localStorage.setItem(PRINCE_KEY, String(player));
+        }
+    };
+
+    // Fires when open dice settle: 1-1 crowns (or re-confirms) the Prince.
+    const handleRollSettled = (call: Call) => {
+        if (call.code === 11 && prince !== currentPlayer) {
+            feel.success();
+            crown(currentPlayer);
+        }
+    };
+
     const beginRound = (firstPlayer: number) => {
+        // A remembered Prince from a bigger group doesn't exist in this one.
+        if (prince !== null && prince >= playerCount) {
+            crown(null);
+        }
+
         setStartIndex(firstPlayer);
         setResults(new Array(playerCount).fill(null));
         setTurn(0);
@@ -192,7 +283,9 @@ function NormaalMexen() {
     });
 
     return (
-        <>
+        <PhaseTransition
+            phaseKey={phase === 'turn' ? `turn-${startIndex}-${turn}` : phase}
+        >
             {phase === 'setup' && (
                 <NormaalSetupScreen
                     playerCount={playerCount}
@@ -204,21 +297,24 @@ function NormaalMexen() {
                 <NormaalTurnScreen
                     key={`${startIndex}-${turn}`}
                     player={currentPlayer}
+                    prince={prince}
                     isFirst={turn === 0}
                     isLast={turn + 1 >= playerCount}
                     throwLimit={throwLimit}
                     rolledSoFar={rolledSoFar}
                     onStand={stand}
+                    onRollSettled={handleRollSettled}
                 />
             )}
             {phase === 'result' && (
                 <NormaalResultScreen
                     startIndex={startIndex}
                     calls={results as Call[]}
+                    prince={prince}
                     onNext={beginRound}
                 />
             )}
-        </>
+        </PhaseTransition>
     );
 }
 
@@ -256,61 +352,48 @@ function NormaalSetupScreen({
                     n="4"
                     text="De laagste worp van de ronde drinkt. Elke Mex op tafel verdubbelt de slokken!"
                 />
+                <Rule
+                    n="5"
+                    text="Rol je 1-1 (100)? Dan ben jij de Prins: je drinkt bij élke dubbel die valt — tot iemand anders 1-1 rolt."
+                />
             </Panel>
 
             <Panel className="mb-5">
-                <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-sm font-medium">
-                        <Users className="size-4" aria-hidden /> Spelers
-                    </span>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setPlayerCount(playerCount - 1)}
-                            disabled={playerCount <= MIN_PLAYERS}
-                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-                        >
-                            <Minus className="size-4" aria-hidden />
-                        </button>
-                        <span className="w-6 text-center text-lg font-bold tabular-nums">
-                            {playerCount}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setPlayerCount(playerCount + 1)}
-                            disabled={playerCount >= MAX_PLAYERS}
-                            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-                        >
-                            <Plus className="size-4" aria-hidden />
-                        </button>
-                    </div>
-                </div>
+                <Stepper
+                    label="Spelers"
+                    value={playerCount}
+                    onChange={setPlayerCount}
+                    min={MIN_PLAYERS}
+                    max={MAX_PLAYERS}
+                />
             </Panel>
 
             <div className="mt-auto pt-2">
-                <ActionButton onClick={onStart} className="text-lg">
-                    Start het spel
-                </ActionButton>
+                <ActionButton onClick={onStart}>Start het spel</ActionButton>
             </div>
         </div>
     );
 }
 
-/** One player's open turn: roll, optionally re-roll, then stand. */
+/** One player's open turn: claim the phone, roll, optionally re-roll, stand. */
 function NormaalTurnScreen({
     player,
+    prince,
     isFirst,
     isLast,
     throwLimit,
     rolledSoFar,
     onStand,
+    onRollSettled,
 }: {
     player: number;
+    prince: number | null;
     isFirst: boolean;
     isLast: boolean;
     throwLimit: number;
     rolledSoFar: { player: number; call: Call }[];
     onStand: (call: Call, throwsUsed: number) => void;
+    onRollSettled: (call: Call) => void;
 }) {
     const [roll, setRoll] = useState<DiePair | null>(null);
     const [throwsUsed, setThrowsUsed] = useState(0);
@@ -324,31 +407,23 @@ function NormaalTurnScreen({
 
     if (!roll) {
         return (
-            <div className="flex flex-1 flex-col">
-                <div className="flex flex-1 flex-col items-center justify-center text-center">
-                    <span className="flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                        <Dices className="size-10" aria-hidden />
-                    </span>
-                    <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
-                        Speler {player + 1}, jouw beurt
-                    </h1>
-                    <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                        Rol open, iedereen mag meekijken.
+            <PassPhoneGate
+                name={`Speler ${player + 1}`}
+                instruction="Geef de telefoon aan"
+                buttonLabel="Rol de dobbelstenen"
+                onReady={throwDice}
+            >
+                <div className="flex w-full flex-col items-center">
+                    <p className="max-w-xs text-sm text-slate-400">
+                        Rol open — iedereen kijkt mee.
                         {isFirst
                             ? ` Jij opent de ronde: je mag tot ${MAX_THROWS} keer rollen en bepaalt zo het aantal worpen voor de rest.`
                             : ` Je mag ${throwLimit === 1 ? 'één keer' : `tot ${throwLimit} keer`} rollen.`}
                     </p>
-
-                    <ActionButton
-                        onClick={throwDice}
-                        className="mt-8 max-w-xs text-lg"
-                    >
-                        <Dices className="size-5" aria-hidden /> Rollen
-                    </ActionButton>
+                    <PrinceBadge prince={prince} className="mt-4" />
+                    <RolledSoFar rolledSoFar={rolledSoFar} />
                 </div>
-
-                <RolledSoFar rolledSoFar={rolledSoFar} />
-            </div>
+            </PassPhoneGate>
         );
     }
 
@@ -358,55 +433,54 @@ function NormaalTurnScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
+                <span className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
                     Speler {player + 1} · worp {throwsUsed} van {throwLimit}
                 </span>
-                <div className="mt-4">
+                <div className="mt-5">
                     <RollingDice
                         key={throwsUsed}
                         roll={roll}
-                        onSettled={() => setRolling(false)}
+                        onSettled={() => {
+                            setRolling(false);
+                            onRollSettled(call);
+                        }}
                     />
                 </div>
-                <div className="flex min-h-24 flex-col items-center">
+                <div
+                    aria-live="polite"
+                    className="mt-5 flex min-h-44 w-full flex-col items-center justify-center"
+                >
                     {rolling ? (
-                        <p className="mt-4 text-sm text-slate-400 dark:text-slate-500">
+                        <p className="text-sm text-slate-500">
                             De stenen rollen…
                         </p>
-                    ) : call.isMax ? (
-                        <>
-                            <motion.div
-                                initial={{ scale: 0.6, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{
-                                    type: 'spring',
-                                    stiffness: 220,
-                                    damping: 16,
-                                }}
-                                className="mt-4 flex items-center gap-3"
-                            >
-                                <span className="flex size-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                                    <Beer className="size-5" aria-hidden />
-                                </span>
-                                <p className="text-4xl font-bold text-amber-600 dark:text-amber-400">
-                                    MEX!
-                                </p>
-                            </motion.div>
-                            <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                                De allerhoogste worp — de slokken verdubbelen!
-                            </p>
-                        </>
                     ) : (
-                        <motion.p
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-4 text-sm text-slate-500 dark:text-slate-400"
-                        >
-                            Dat is{' '}
-                            <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                                {call.label}
-                            </span>
-                        </motion.p>
+                        <>
+                            {call.isMax ? (
+                                <MexJackpot />
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-col items-center"
+                                >
+                                    <p className="text-sm text-slate-400">
+                                        Dat is
+                                    </p>
+                                    <p className="mt-1 font-display text-6xl text-white">
+                                        {call.label}
+                                    </p>
+                                </motion.div>
+                            )}
+                            {call.isDouble &&
+                                (call.code === 11 || prince !== null) && (
+                                    <PrinceDrinks
+                                        call={call}
+                                        prince={prince}
+                                        player={player}
+                                    />
+                                )}
+                        </>
                     )}
                 </div>
             </div>
@@ -419,7 +493,6 @@ function NormaalTurnScreen({
                         variant="neutral"
                         onClick={throwDice}
                         disabled={rolling}
-                        className="text-lg"
                     >
                         <Dices className="size-5" aria-hidden /> Nog een keer
                         rollen
@@ -428,7 +501,6 @@ function NormaalTurnScreen({
                 <ActionButton
                     onClick={() => onStand(call, throwsUsed)}
                     disabled={rolling}
-                    className="text-lg"
                 >
                     {isLast
                         ? 'Blijven staan → uitslag'
@@ -436,6 +508,84 @@ function NormaalTurnScreen({
                 </ActionButton>
             </div>
         </div>
+    );
+}
+
+/** The jackpot takeover for an open Mex roll: confetti, fanfare, gold flood. */
+function MexJackpot() {
+    return (
+        <div className="relative flex w-full flex-col items-center">
+            <motion.div
+                aria-hidden
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+                className="pointer-events-none fixed inset-0 bg-[radial-gradient(90%_60%_at_50%_35%,color-mix(in_oklab,var(--glow)_20%,transparent),transparent_72%)]"
+            />
+            <CelebrationHeader
+                icon={Crown}
+                title="MEX!"
+                tone="win"
+                subtitle="De allerhoogste worp — de slokken verdubbelen!"
+            />
+        </div>
+    );
+}
+
+/** Persistent crown chip naming the current Prince. */
+function PrinceBadge({
+    prince,
+    className,
+}: {
+    prince: number | null;
+    className?: string;
+}) {
+    if (prince === null) {
+        return null;
+    }
+
+    return (
+        <p
+            className={cn(
+                'inline-flex items-center gap-1.5 rounded-full bg-(--glow)/10 px-3 py-1 text-xs font-bold text-(--glow-strong) ring-1 ring-(--glow)/25',
+                className,
+            )}
+        >
+            <Crown className="size-3.5" aria-hidden />
+            Speler {prince + 1} is de Prins — drinkt bij elke dubbel
+        </p>
+    );
+}
+
+/** The Prince verdict under a settled double: crowning or a forced sip. */
+function PrinceDrinks({
+    call,
+    prince,
+    player,
+}: {
+    call: Call;
+    prince: number | null;
+    player: number;
+}) {
+    const crowned = call.code === 11;
+
+    return (
+        <motion.p
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+                delay: 0.25,
+                type: 'spring',
+                stiffness: 300,
+                damping: 20,
+            }}
+            className="mt-4 flex items-center gap-2 rounded-full bg-(--glow)/12 px-4 py-2 text-sm font-bold text-(--glow-strong) ring-1 ring-(--glow)/30"
+        >
+            <Crown className="size-4" aria-hidden />
+            {crowned
+                ? `Speler ${player + 1} is de Prins — en drinkt!`
+                : `Dubbel! De Prins drinkt — Speler ${(prince ?? 0) + 1}!`}
+        </motion.p>
     );
 }
 
@@ -449,25 +599,34 @@ function RolledSoFar({
         return null;
     }
 
+    const lowestRank = Math.min(...rolledSoFar.map(({ call }) => call.rank));
+
     return (
         <div className="mt-4">
-            <p className="mb-2 text-center text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+            <p className="mb-2 text-center text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
                 Deze ronde
             </p>
             <div className="flex flex-wrap justify-center gap-2">
-                {rolledSoFar.map(({ player, call }) => (
-                    <span
-                        key={player}
-                        className={cn(
-                            'rounded-full px-3 py-1 text-xs font-bold ring-1',
-                            call.isMax
-                                ? 'bg-amber-500/15 text-amber-700 ring-amber-400/40 dark:text-amber-300'
-                                : 'bg-white text-slate-700 ring-slate-200 dark:bg-white/5 dark:text-slate-300 dark:ring-white/10',
-                        )}
-                    >
-                        Speler {player + 1}: {call.label}
-                    </span>
-                ))}
+                {rolledSoFar.map(({ player, call }) => {
+                    const isLowest = call.rank === lowestRank && !call.isMax;
+
+                    return (
+                        <span
+                            key={player}
+                            className={cn(
+                                'rounded-full px-3 py-1 text-xs font-bold ring-1',
+                                call.isMax
+                                    ? 'bg-(--glow)/12 text-(--glow-strong) ring-(--glow)/30'
+                                    : isLowest
+                                      ? 'bg-rose-500/10 text-rose-300 ring-rose-400/30'
+                                      : 'bg-white/5 text-slate-300 ring-white/10',
+                            )}
+                        >
+                            Speler {player + 1}: {call.label}
+                            {isLowest && ' · laagste'}
+                        </span>
+                    );
+                })}
             </div>
         </div>
     );
@@ -476,14 +635,18 @@ function RolledSoFar({
 function NormaalResultScreen({
     startIndex,
     calls,
+    prince,
     onNext,
 }: {
     startIndex: number;
     calls: Call[];
+    prince: number | null;
     onNext: (firstPlayer: number) => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const { loserIndices, sips } = judgeRound(calls);
     const losers = new Set(loserIndices);
+    const mexCount = calls.filter((call) => call.isMax).length;
     const loserNames = loserIndices
         .map((index) => `Speler ${index + 1}`)
         .join(' & ');
@@ -493,84 +656,210 @@ function NormaalResultScreen({
         return { player, call: calls[player] };
     });
 
+    // The verdict waits until the per-player rows have cascaded in.
+    const [verdictShown, setVerdictShown] = useState(false);
+    const cascadeMs = 350 + inThrowOrder.length * 90;
+
+    useEffect(() => {
+        const timer = window.setTimeout(
+            () => {
+                setVerdictShown(true);
+                feel.fail();
+            },
+            reduceMotion ? 0 : cascadeMs + 250,
+        );
+
+        return () => window.clearTimeout(timer);
+        // Mount-only: the staged reveal plays once per result screen.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Every Mex on the table doubles the pot: 1 → 2 → 4 → …
+    const doubling = Array.from({ length: mexCount + 1 }, (_, i) => 2 ** i);
+
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-6 flex flex-col items-center text-center">
-                <motion.span
-                    initial={{ scale: 0.6, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-                    className="flex size-20 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300"
-                >
-                    <Beer className="size-10" aria-hidden />
-                </motion.span>
-                <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
-                    {loserNames}!
-                </h1>
-                <AnimatePresence>
-                    <motion.p
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-4 flex items-center gap-2 rounded-full bg-rose-500/15 px-5 py-2 text-lg font-bold text-rose-700 ring-1 ring-rose-400/30 dark:text-rose-200"
-                    >
-                        <Beer className="size-5" aria-hidden />
-                        {loserIndices.length > 1
-                            ? `Laagste worp — allebei ${sips} ${sips === 1 ? 'slok' : 'slokken'}!`
-                            : `Laagste worp — ${sips} ${sips === 1 ? 'slok' : 'slokken'}!`}
-                    </motion.p>
-                </AnimatePresence>
-                {sips > 1 && (
-                    <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
-                        Er lag een Mex op tafel — de slokken zijn verdubbeld!
-                    </p>
+            <p className="mb-4 text-center text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                Uitslag
+            </p>
+
+            <div
+                aria-live="polite"
+                className="mb-6 flex min-h-56 flex-col items-center justify-center text-center"
+            >
+                {verdictShown && (
+                    <>
+                        <motion.span
+                            aria-hidden
+                            initial={
+                                reduceMotion
+                                    ? { opacity: 0 }
+                                    : { scale: 0, rotate: -14 }
+                            }
+                            animate={
+                                reduceMotion
+                                    ? { opacity: 1 }
+                                    : { scale: 1, rotate: 0, opacity: 1 }
+                            }
+                            transition={{
+                                type: 'spring',
+                                stiffness: 300,
+                                damping: 16,
+                            }}
+                            className="flex size-20 items-center justify-center rounded-3xl bg-rose-400/12 text-rose-300 ring-1 ring-rose-400/25"
+                        >
+                            <Beer className="size-10" />
+                        </motion.span>
+                        <h2 className="mt-4 font-display text-3xl text-white">
+                            {loserNames}{' '}
+                            {loserIndices.length > 1 ? 'drinken' : 'drinkt'}!
+                        </h2>
+                        <motion.p
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.12 }}
+                            className="mt-3 flex items-center gap-2 rounded-full bg-rose-500/12 px-5 py-2 text-lg font-bold text-rose-200 ring-1 ring-rose-400/30"
+                        >
+                            <Beer className="size-5" aria-hidden />
+                            <span>
+                                {loserIndices.length > 1
+                                    ? 'Laagste worp — ieder'
+                                    : 'Laagste worp —'}
+                            </span>
+                            <CountUp
+                                value={sips}
+                                className="font-display text-2xl"
+                            />
+                            <span>{sips === 1 ? 'slok' : 'slokken'}!</span>
+                        </motion.p>
+                        {mexCount > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="mt-3 flex items-center gap-2 text-sm text-(--glow-strong)"
+                            >
+                                <Crown className="size-4" aria-hidden />
+                                <span>
+                                    {mexCount === 1
+                                        ? 'Mex op tafel:'
+                                        : `${mexCount}× Mex op tafel:`}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    {doubling.map((count, index) => (
+                                        <span
+                                            key={count}
+                                            className="flex items-center gap-1"
+                                        >
+                                            {index > 0 && (
+                                                <ArrowRight
+                                                    className="size-3.5"
+                                                    aria-hidden
+                                                />
+                                            )}
+                                            <span
+                                                className={
+                                                    index ===
+                                                    doubling.length - 1
+                                                        ? 'font-display text-xl'
+                                                        : 'text-slate-400'
+                                                }
+                                            >
+                                                {count}
+                                            </span>
+                                        </span>
+                                    ))}
+                                </span>
+                                <span>slokken</span>
+                            </motion.div>
+                        )}
+                    </>
                 )}
             </div>
 
             <div className="space-y-2">
-                {inThrowOrder.map(({ player, call }) => (
-                    <div
+                {inThrowOrder.map(({ player, call }, index) => (
+                    <motion.div
                         key={player}
-                        className={cn(
-                            'flex items-center justify-between rounded-xl px-4 py-3 ring-1',
-                            losers.has(player)
-                                ? 'bg-rose-500/15 ring-rose-400/40'
-                                : call.isMax
-                                  ? 'bg-amber-500/15 ring-amber-400/40'
-                                  : 'bg-white shadow-sm ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10',
-                        )}
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, x: -18 }
+                        }
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                            delay: reduceMotion ? 0 : 0.15 + index * 0.09,
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 26,
+                        }}
+                        className="relative"
                     >
-                        <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
-                            {losers.has(player) && (
-                                <Beer
-                                    className="size-4 text-rose-600 dark:text-rose-300"
-                                    aria-hidden
-                                />
-                            )}
-                            Speler {player + 1}
-                        </span>
-                        <span
+                        <motion.div
+                            aria-hidden
+                            initial={false}
+                            animate={{
+                                opacity:
+                                    verdictShown && losers.has(player) ? 1 : 0,
+                            }}
+                            className="absolute inset-0 rounded-xl bg-rose-500/15 ring-1 ring-rose-400/40"
+                        />
+                        <div
                             className={cn(
-                                'text-lg font-bold tabular-nums',
+                                'relative flex items-center justify-between rounded-xl px-4 py-3 ring-1',
                                 call.isMax
-                                    ? 'text-amber-600 dark:text-amber-300'
-                                    : 'text-slate-900 dark:text-white',
+                                    ? 'bg-(--glow)/10 ring-(--glow)/30'
+                                    : 'bg-white/[0.045] ring-white/10',
                             )}
                         >
-                            {call.label}
-                        </span>
-                    </div>
+                            <span className="flex items-center gap-2 text-base font-medium text-white">
+                                {losers.has(player) && (
+                                    <motion.span
+                                        initial={{ scale: 0 }}
+                                        animate={{
+                                            scale: verdictShown ? 1 : 0,
+                                        }}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 400,
+                                            damping: 18,
+                                        }}
+                                    >
+                                        <Beer
+                                            className="size-4 text-rose-300"
+                                            aria-hidden
+                                        />
+                                    </motion.span>
+                                )}
+                                Speler {player + 1}
+                            </span>
+                            <span
+                                className={cn(
+                                    'font-display text-xl tabular-nums',
+                                    call.isMax
+                                        ? 'text-(--glow-strong)'
+                                        : 'text-white',
+                                )}
+                            >
+                                {call.label}
+                            </span>
+                        </div>
+                    </motion.div>
                 ))}
             </div>
 
+            {prince !== null && (
+                <div className="mt-4 flex justify-center">
+                    <PrinceBadge prince={prince} />
+                </div>
+            )}
+
             <div className="mt-auto pt-6">
-                <ActionButton
-                    onClick={() => onNext(loserIndices[0])}
-                    className="text-lg"
-                >
+                <ActionButton onClick={() => onNext(loserIndices[0])}>
                     <RotateCcw className="size-5" aria-hidden /> Nieuwe ronde
                 </ActionButton>
-                <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-                    De verliezer opent de volgende ronde.
+                <p className="mt-2 text-center text-xs text-slate-500">
+                    Speler {loserIndices[0] + 1} opent de volgende ronde.
                 </p>
             </div>
         </div>
@@ -653,7 +942,7 @@ function BlufMexen() {
     };
 
     return (
-        <>
+        <PhaseTransition phaseKey={phase}>
             {phase === 'setup' && <BlufSetupScreen onStart={startGame} />}
             {phase === 'turn' && (
                 <BlufTurnScreen
@@ -671,7 +960,7 @@ function BlufMexen() {
             {phase === 'result' && outcome && (
                 <BlufResultScreen outcome={outcome} onNext={nextRound} />
             )}
-        </>
+        </PhaseTransition>
     );
 }
 
@@ -704,9 +993,7 @@ function BlufSetupScreen({ onStart }: { onStart: () => void }) {
             </Panel>
 
             <div className="mt-auto pt-2">
-                <ActionButton onClick={onStart} className="text-lg">
-                    Start het spel
-                </ActionButton>
+                <ActionButton onClick={onStart}>Start het spel</ActionButton>
             </div>
         </div>
     );
@@ -727,36 +1014,31 @@ function BlufTurnScreen({
 
     if (!roll) {
         return (
-            <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                    <Eye className="size-10" aria-hidden />
-                </span>
-                <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
-                    Jouw beurt
-                </h1>
-                <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                    Zorg dat niemand meekijkt.
-                    {previousCall ? (
-                        <>
-                            {' '}
-                            De vorige speler noemde{' '}
-                            <span className="font-bold text-slate-800 dark:text-slate-200">
-                                {previousCall.label}
-                            </span>
-                            . Jij moet hoger.
-                        </>
-                    ) : (
-                        ' Jij opent de ronde.'
-                    )}
-                </p>
-
-                <ActionButton
-                    onClick={() => setRoll(rollDice())}
-                    className="mt-8 max-w-xs text-lg"
-                >
-                    <Dices className="size-5" aria-hidden /> Rol stiekem
-                </ActionButton>
-            </div>
+            <PassPhoneGate
+                instruction="Geef de telefoon aan de volgende speler."
+                buttonLabel="Rol stiekem"
+                onReady={() => setRoll(rollDice())}
+            >
+                {previousCall ? (
+                    <div className="flex flex-col items-center">
+                        <p className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
+                            Te overtreffen
+                        </p>
+                        <p className="mt-1 font-display text-5xl text-(--glow-strong)">
+                            {previousCall.label}
+                        </p>
+                        <p className="mt-3 max-w-xs text-sm text-slate-400">
+                            Zorg dat niemand meekijkt. Rol stiekem en claim
+                            hoger — of bluf.
+                        </p>
+                    </div>
+                ) : (
+                    <p className="max-w-xs text-sm text-slate-400">
+                        Jij opent de ronde. Zorg dat niemand meekijkt en rol
+                        stiekem.
+                    </p>
+                )}
+            </PassPhoneGate>
         );
     }
 
@@ -785,41 +1067,41 @@ function BlufAnnounceScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-4 flex flex-col items-center">
-                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
+            <div className="mb-4 flex flex-col items-center text-center">
+                <span className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
                     Jouw geheime worp
                 </span>
-                <div className="mt-3">
+                <div className="mt-4">
                     <RollingDice
                         roll={roll}
                         onSettled={() => setRolling(false)}
                     />
                 </div>
-                {rolling ? (
-                    <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
-                        De stenen rollen…
-                    </p>
-                ) : (
-                    <motion.p
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-3 text-sm text-slate-500 dark:text-slate-400"
-                    >
-                        Dat is{' '}
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
-                            {realCall.label}
-                        </span>
-                        {canTellTruth
-                            ? ' — de waarheid is genoeg.'
-                            : ' — te laag, je moet bluffen.'}
-                    </motion.p>
-                )}
+                <div aria-live="polite" className="mt-4 min-h-12 text-sm">
+                    {rolling ? (
+                        <p className="text-slate-500">De stenen rollen…</p>
+                    ) : (
+                        <motion.p
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-slate-400"
+                        >
+                            Dat is{' '}
+                            <span className="font-display text-2xl text-white">
+                                {realCall.label}
+                            </span>
+                            {canTellTruth
+                                ? ' — de waarheid is genoeg.'
+                                : ' — te laag, je moet bluffen.'}
+                        </motion.p>
+                    )}
+                </div>
             </div>
 
             <motion.div
                 animate={{ opacity: rolling ? 0 : 1 }}
                 className={cn(
-                    'mb-2 text-center text-sm font-semibold text-slate-600 dark:text-slate-300',
+                    'mb-2 text-center text-sm font-semibold text-slate-300',
                     rolling && 'pointer-events-none',
                 )}
             >
@@ -836,18 +1118,22 @@ function BlufAnnounceScreen({
                     const isReal = call.code === realCall.code;
 
                     return (
-                        <button
+                        <motion.button
                             key={call.code}
-                            onClick={() => onAnnounce(roll, call)}
+                            type="button"
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                                feel.tap();
+                                onAnnounce(roll, call);
+                            }}
                             className={cn(
-                                'relative rounded-xl py-3 text-lg font-bold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
+                                'relative rounded-xl py-3 text-lg font-bold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
                                 call.isMax
-                                    ? 'bg-amber-500/15 text-amber-700 ring-amber-400/40 dark:text-amber-300'
+                                    ? 'bg-(--glow)/15 text-(--glow-strong) ring-(--glow)/40'
                                     : call.isDouble
-                                      ? 'bg-white text-amber-700 ring-amber-400/30 hover:bg-slate-100 dark:bg-white/5 dark:text-amber-300 dark:hover:bg-white/10'
-                                      : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
-                                isReal &&
-                                    'ring-2 ring-emerald-400 dark:ring-emerald-400',
+                                      ? 'bg-white/5 text-(--glow-strong) ring-(--glow)/25 hover:bg-white/10'
+                                      : 'bg-white/5 text-white ring-white/10 hover:bg-white/10',
+                                isReal && 'ring-2 ring-emerald-400',
                             )}
                         >
                             {call.label}
@@ -856,7 +1142,7 @@ function BlufAnnounceScreen({
                                     echt
                                 </span>
                             )}
-                        </button>
+                        </motion.button>
                     );
                 })}
             </motion.div>
@@ -878,59 +1164,48 @@ function BlufDecideScreen({
 
     if (!revealed) {
         return (
-            <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                    <Smartphone className="size-10" aria-hidden />
-                </span>
-                <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
-                    Geef door
-                </h1>
-                <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                    De volgende speler pakt de telefoon. Tik pas als jij het
-                    bent.
+            <PassPhoneGate
+                instruction="Geef de telefoon door."
+                buttonLabel="Ik ben aan de beurt"
+                onReady={() => setRevealed(true)}
+            >
+                <p className="max-w-xs text-sm text-slate-400">
+                    Tik pas als jij het bent — dan zie je de claim.
                 </p>
-                <ActionButton
-                    onClick={() => setRevealed(true)}
-                    className="mt-8 max-w-xs text-lg"
-                >
-                    Ik ben aan de beurt
-                </ActionButton>
-            </div>
+            </PassPhoneGate>
         );
     }
 
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
+                <span className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
                     De vorige speler claimt
                 </span>
-                <div className="mt-4 flex size-40 items-center justify-center rounded-3xl bg-amber-500 shadow-sm ring-1 ring-amber-600/20">
-                    <span className="text-6xl font-bold text-slate-950">
+                <motion.div
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="mt-5 flex size-44 animate-glow-pulse items-center justify-center rounded-3xl bg-(--glow) ring-1 ring-white/20"
+                >
+                    <span className="font-display text-7xl text-slate-950">
                         {announced.label}
                     </span>
-                </div>
-                <p className="mt-4 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+                </motion.div>
+                <p className="mt-5 max-w-xs text-sm text-slate-400">
                     {announced.isMax
-                        ? 'Een Mex! Onmogelijk te overtreffen — geloof je het?'
+                        ? 'Een Mex is niet te overtreffen — geloven heeft geen zin. Je kunt alleen ontmaskeren!'
                         : 'Geloof je het? Dan rol jij en noem je hoger. Zo niet: ontmasker!'}
                 </p>
             </div>
 
             <div className="mt-auto space-y-3 pt-4">
                 {!announced.isMax && (
-                    <ActionButton
-                        onClick={onBelieve}
-                        className="bg-emerald-600 text-lg text-white hover:bg-emerald-500"
-                    >
+                    <ActionButton variant="success" onClick={onBelieve}>
                         Ik geloof het → ik rol
                     </ActionButton>
                 )}
-                <ActionButton
-                    variant="danger"
-                    onClick={onDoubt}
-                    className="text-lg"
-                >
+                <ActionButton variant="danger" onClick={onDoubt}>
                     <ShieldQuestion className="size-5" aria-hidden /> Ik geloof
                     het niet
                 </ActionButton>
@@ -938,6 +1213,12 @@ function BlufDecideScreen({
         </div>
     );
 }
+
+/** How long the challenge reveal waits before the dice flip over. */
+const REVEAL_FLIP_MS = 900;
+
+/** How long after the flip the verdict slams in. */
+const REVEAL_VERDICT_MS = 1900;
 
 function BlufResultScreen({
     outcome,
@@ -947,78 +1228,168 @@ function BlufResultScreen({
     onNext: () => void;
 }) {
     const { announced, secretRoll, secretCall, honest } = outcome;
+    const reduceMotion = useReducedMotion();
+    // Staged reveal: 0 = claim, 1 = dice flipped, 2 = verdict.
+    const [stage, setStage] = useState(0);
+
+    useEffect(() => {
+        const verdictFeel = () => {
+            if (honest) {
+                feel.success();
+            } else {
+                feel.fail();
+            }
+        };
+
+        const flipTimer = reduceMotion
+            ? undefined
+            : window.setTimeout(() => {
+                  setStage(1);
+                  feel.flip();
+              }, REVEAL_FLIP_MS);
+        const verdictTimer = window.setTimeout(
+            () => {
+                setStage(2);
+                verdictFeel();
+            },
+            reduceMotion ? 0 : REVEAL_VERDICT_MS,
+        );
+
+        return () => {
+            window.clearTimeout(flipTimer);
+            window.clearTimeout(verdictTimer);
+        };
+        // Mount-only: the staged reveal plays once per challenge.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <motion.span
-                    initial={{ scale: 0.6, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-                    className={cn(
-                        'flex size-20 items-center justify-center rounded-full',
-                        honest
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
-                            : 'bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
-                    )}
+                <motion.div
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center"
                 >
-                    {honest ? (
-                        <Target className="size-10" aria-hidden />
-                    ) : (
-                        <VenetianMask className="size-10" aria-hidden />
-                    )}
-                </motion.span>
-                <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
-                    {honest ? 'De claim klopte!' : 'Betrapt op een leugen!'}
-                </h1>
-
-                <div className="mt-6 flex items-center gap-4">
-                    <div className="flex flex-col items-center">
-                        <span className="mb-1 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
-                            Claim
-                        </span>
-                        <span className="text-2xl font-bold">
-                            {announced.label}
-                        </span>
-                    </div>
-                    <span className="text-slate-400">vs</span>
-                    <div className="flex flex-col items-center">
-                        <span className="mb-1 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
-                            Echte worp
-                        </span>
-                        <div className="flex gap-2">
-                            <Die value={secretRoll[0]} small />
-                            <Die value={secretRoll[1]} small />
-                        </div>
-                    </div>
-                </div>
-
-                <AnimatePresence>
-                    <motion.p
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-6 flex items-center gap-2 rounded-full bg-rose-500/15 px-5 py-2 text-lg font-bold text-rose-700 ring-1 ring-rose-400/30 dark:text-rose-200"
-                    >
-                        <Beer className="size-5" aria-hidden />
-                        {honest
-                            ? 'De twijfelaar drinkt!'
-                            : 'De bluffer drinkt!'}
-                    </motion.p>
-                </AnimatePresence>
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                    Echte worp was{' '}
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {secretCall.label}
+                    <span className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                        De claim
                     </span>
-                    .
-                </p>
+                    <span className="mt-1 font-display text-5xl text-white">
+                        {announced.label}
+                    </span>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.35 }}
+                    className="mt-6 flex flex-col items-center"
+                >
+                    <span className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
+                        De echte worp
+                    </span>
+                    <div className="mt-3 flex gap-3">
+                        {([0, 1] as const).map((index) => (
+                            <FlipCard
+                                key={index}
+                                revealed={stage >= 1}
+                                className="size-16"
+                                front={
+                                    <div className="flex size-full items-center justify-center rounded-2xl bg-white/[0.06] ring-1 ring-white/15">
+                                        <Dices
+                                            className="size-7 text-slate-500"
+                                            aria-hidden
+                                        />
+                                    </div>
+                                }
+                                back={
+                                    <Die value={secretRoll[index]} size="sm" />
+                                }
+                            />
+                        ))}
+                    </div>
+                    <div className="mt-2 min-h-5 text-sm text-slate-400">
+                        {stage >= 1 && (
+                            <motion.span
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                            >
+                                Dat is{' '}
+                                <span className="font-semibold text-white">
+                                    {secretCall.label}
+                                </span>
+                            </motion.span>
+                        )}
+                    </div>
+                </motion.div>
+
+                <div
+                    aria-live="polite"
+                    className="mt-6 flex min-h-48 w-full flex-col items-center justify-start"
+                >
+                    {stage >= 2 && (
+                        <>
+                            <motion.span
+                                aria-hidden
+                                initial={
+                                    reduceMotion
+                                        ? { opacity: 0 }
+                                        : { scale: 0, rotate: -14 }
+                                }
+                                animate={
+                                    reduceMotion
+                                        ? { opacity: 1 }
+                                        : { scale: 1, rotate: 0, opacity: 1 }
+                                }
+                                transition={{
+                                    type: 'spring',
+                                    stiffness: 300,
+                                    damping: 16,
+                                }}
+                                className={cn(
+                                    'flex size-20 items-center justify-center rounded-3xl ring-1',
+                                    honest
+                                        ? 'bg-emerald-400/12 text-emerald-300 ring-emerald-400/25'
+                                        : 'bg-rose-400/12 text-rose-300 ring-rose-400/25',
+                                )}
+                            >
+                                {honest ? (
+                                    <Target className="size-10" />
+                                ) : (
+                                    <VenetianMask className="size-10" />
+                                )}
+                            </motion.span>
+                            <h2
+                                className={cn(
+                                    'mt-4 font-display text-4xl',
+                                    honest
+                                        ? 'text-emerald-300'
+                                        : 'animate-shake text-rose-300',
+                                )}
+                            >
+                                {honest ? 'De claim klopte!' : 'Betrapt!'}
+                            </h2>
+                            <motion.p
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15 }}
+                                className="mt-3 flex items-center gap-2 rounded-full bg-rose-500/12 px-5 py-2 text-lg font-bold text-rose-200 ring-1 ring-rose-400/30"
+                            >
+                                <Beer className="size-5" aria-hidden />
+                                {honest
+                                    ? 'De twijfelaar drinkt!'
+                                    : 'De bluffer drinkt!'}
+                            </motion.p>
+                        </>
+                    )}
+                </div>
             </div>
 
             <div className="mt-auto pt-4">
-                <ActionButton onClick={onNext} className="text-lg">
+                <ActionButton onClick={onNext}>
                     <RotateCcw className="size-5" aria-hidden /> Nieuwe ronde
                 </ActionButton>
-                <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
+                <p className="mt-2 text-center text-xs text-slate-500">
                     De verliezer begint de volgende ronde.
                 </p>
             </div>
@@ -1040,16 +1411,21 @@ function RollingDice({
     roll: DiePair;
     onSettled?: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     // Start on random faces so the real roll never flashes early.
     const [faces, setFaces] = useState<DiePair>(() => rollDice());
     const [settled, setSettled] = useState(false);
 
     useEffect(() => {
-        const spin = window.setInterval(() => setFaces(rollDice()), 90);
+        const spin = window.setInterval(() => {
+            setFaces(rollDice());
+            feel.tick();
+        }, 90);
         const stop = window.setTimeout(() => {
             window.clearInterval(spin);
             setFaces(roll);
             setSettled(true);
+            feel.flip();
             onSettled?.();
         }, ROLL_MS);
 
@@ -1062,25 +1438,27 @@ function RollingDice({
     }, []);
 
     return (
-        <div className="flex gap-3">
+        <div className="flex gap-4">
             {([0, 1] as const).map((index) => (
                 <motion.div
                     key={index}
                     animate={
-                        settled
-                            ? {
-                                  rotate: index === 0 ? -720 : 720,
-                                  y: 0,
-                                  scale: 1,
-                              }
-                            : {
-                                  rotate:
-                                      index === 0
-                                          ? [0, -340, -700]
-                                          : [0, 340, 700],
-                                  y: [0, -22, 0, -10, 0],
-                                  scale: [1, 1.15, 1.05],
-                              }
+                        reduceMotion
+                            ? undefined
+                            : settled
+                              ? {
+                                    rotate: index === 0 ? -720 : 720,
+                                    y: 0,
+                                    scale: 1,
+                                }
+                              : {
+                                    rotate:
+                                        index === 0
+                                            ? [0, -340, -700]
+                                            : [0, 340, 700],
+                                    y: [0, -26, 0, -12, 0],
+                                    scale: [1, 1.18, 1.06],
+                                }
                     }
                     transition={
                         settled
@@ -1095,8 +1473,16 @@ function RollingDice({
     );
 }
 
-/** A single pip die drawn from a 3×3 dot grid. */
-function Die({ value, small = false }: { value: number; small?: boolean }) {
+/** A single pip die drawn from a 3×3 dot grid, with a bit of tabletop depth. */
+function Die({
+    value,
+    size = 'lg',
+    className,
+}: {
+    value: number;
+    size?: 'sm' | 'lg';
+    className?: string;
+}) {
     // Which of the 9 grid cells hold a pip for each face.
     const pips: Record<number, number[]> = {
         1: [4],
@@ -1111,8 +1497,12 @@ function Die({ value, small = false }: { value: number; small?: boolean }) {
     return (
         <div
             className={cn(
-                'grid grid-cols-3 grid-rows-3 gap-1 rounded-2xl bg-white p-2 shadow-lg ring-1 ring-slate-200 dark:bg-slate-100',
-                small ? 'size-12' : 'size-20',
+                'grid grid-cols-3 grid-rows-3 bg-gradient-to-br from-white via-slate-100 to-slate-300 ring-1 ring-slate-950/25',
+                'shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),inset_0_-6px_10px_rgba(15,23,42,0.28),0_12px_28px_-10px_rgba(0,0,0,0.65)]',
+                size === 'lg'
+                    ? 'size-24 gap-1.5 rounded-[1.4rem] p-3'
+                    : 'size-16 gap-1 rounded-2xl p-2',
+                className,
             )}
         >
             {Array.from({ length: 9 }, (_, i) => (
@@ -1120,7 +1510,8 @@ function Die({ value, small = false }: { value: number; small?: boolean }) {
                     key={i}
                     className={cn(
                         'rounded-full',
-                        lit.has(i) ? 'bg-slate-900' : 'bg-transparent',
+                        lit.has(i) &&
+                            'bg-slate-900 shadow-[inset_0_2px_3px_rgba(0,0,0,0.8),inset_0_-1px_1px_rgba(255,255,255,0.25)]',
                     )}
                 />
             ))}

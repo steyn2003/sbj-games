@@ -1,9 +1,9 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
     ArrowLeft,
     Beer,
     Flag,
-    Minus,
+    Layers,
     Monitor,
     Plus,
     Rabbit,
@@ -12,6 +12,7 @@ import {
     WalletCards,
     X,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
     useCallback,
     useEffect,
@@ -27,10 +28,16 @@ import {
 } from '@/actions/App/Http/Controllers/RaceController';
 import {
     ActionButton,
+    CelebrationHeader,
+    CountUp,
     GameHeader,
     GameShell,
+    IconBadge,
     Panel,
+    PhaseTransition,
+    Stepper,
 } from '@/components/game-ui';
+import { feel } from '@/hooks/use-game-feel';
 import {
     DEFAULT_STEPS,
     flip,
@@ -42,6 +49,7 @@ import {
 } from '@/lib/horse-race';
 import type { Bet, RaceState, Suit } from '@/lib/horse-race';
 import { cn } from '@/lib/utils';
+import { horseRace } from '@/routes';
 
 function readCookie(name: string): string | null {
     const match = document.cookie.match(
@@ -84,6 +92,30 @@ function bettingState(
     };
 }
 
+/** Pip colour on a white card face (spades/clubs must read as black). */
+const SUIT_ON_CARD: Record<Suit, string> = {
+    hearts: 'text-red-500',
+    diamonds: 'text-red-500',
+    spades: 'text-slate-900',
+    clubs: 'text-slate-900',
+};
+
+/** Glow colour for the reveal flash behind the dealer card. */
+const SUIT_FLASH: Record<Suit, string> = {
+    hearts: 'var(--color-red-500)',
+    diamonds: 'var(--color-red-500)',
+    spades: 'var(--color-slate-300)',
+    clubs: 'var(--color-slate-300)',
+};
+
+/** Lane flash on the board when a suit's horse takes a step. */
+const LANE_FLASH: Record<Suit, string> = {
+    hearts: 'bg-red-500/20',
+    diamonds: 'bg-red-500/20',
+    spades: 'bg-slate-100/15',
+    clubs: 'bg-slate-100/15',
+};
+
 type Role = 'choose' | 'board' | 'dealer';
 
 export default function HorseRace() {
@@ -91,21 +123,23 @@ export default function HorseRace() {
     const [code, setCode] = useState('');
 
     return (
-        <GameShell title="Paardenrace">
-            {role === 'choose' && (
-                <ChooseScreen
-                    onBoard={(c) => {
-                        setCode(c);
-                        setRole('board');
-                    }}
-                    onDealer={(c) => {
-                        setCode(c);
-                        setRole('dealer');
-                    }}
-                />
-            )}
-            {role === 'board' && <BoardScreen code={code} />}
-            {role === 'dealer' && <DealerScreen code={code} />}
+        <GameShell title="Paardenrace" accent="emerald">
+            <PhaseTransition phaseKey={role}>
+                {role === 'choose' && (
+                    <ChooseScreen
+                        onBoard={(c) => {
+                            setCode(c);
+                            setRole('board');
+                        }}
+                        onDealer={(c) => {
+                            setCode(c);
+                            setRole('dealer');
+                        }}
+                    />
+                )}
+                {role === 'board' && <BoardScreen code={code} />}
+                {role === 'dealer' && <DealerScreen code={code} />}
+            </PhaseTransition>
         </GameShell>
     );
 }
@@ -116,8 +150,49 @@ interface OpenRace {
     players: number;
 }
 
-const optionCardClasses =
-    'flex w-full items-start gap-4 rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] disabled:opacity-50 dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10';
+/** One of the two big role cards on the choose screen. */
+function RoleCard({
+    icon,
+    title,
+    description,
+    onClick,
+    disabled = false,
+    className,
+}: {
+    icon: LucideIcon;
+    title: string;
+    description: string;
+    onClick: () => void;
+    disabled?: boolean;
+    className?: string;
+}) {
+    return (
+        <motion.button
+            type="button"
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+            disabled={disabled}
+            onClick={() => {
+                feel.select();
+                onClick();
+            }}
+            className={cn(
+                'flex w-full items-center gap-4 rounded-2xl bg-white/[0.045] p-5 text-left ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow) disabled:opacity-50',
+                className,
+            )}
+        >
+            <IconBadge icon={icon} />
+            <span className="min-w-0">
+                <span className="block text-lg font-bold text-white">
+                    {title}
+                </span>
+                <span className="mt-0.5 block text-sm leading-snug text-slate-400">
+                    {description}
+                </span>
+            </span>
+        </motion.button>
+    );
+}
 
 function ChooseScreen({
     onBoard,
@@ -132,7 +207,7 @@ function ChooseScreen({
     const [busy, setBusy] = useState(false);
 
     // The dealer (leading phone) starts the race and runs it.
-    const startRace = async () => {
+    const createRace = async () => {
         setBusy(true);
         setError(null);
 
@@ -190,108 +265,131 @@ function ChooseScreen({
         };
     }, [view]);
 
-    if (view === 'join') {
-        return (
-            <div className="flex flex-1 flex-col">
-                <button
-                    type="button"
-                    onClick={() => setView('pick')}
-                    className="mb-4 inline-flex items-center gap-1.5 self-start text-sm text-slate-500 transition hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-100"
-                >
-                    <ArrowLeft className="size-4" aria-hidden /> Terug
-                </button>
-                <GameHeader
-                    kicker="Racespel"
-                    title="Kies een race"
-                    description="Tik op de race die de dealer net startte."
-                />
+    return (
+        <PhaseTransition phaseKey={view}>
+            {view === 'join' ? (
+                <div className="flex flex-1 flex-col">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            feel.select();
+                            setView('pick');
+                        }}
+                        className="mb-4 inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-white/5 pr-4 pl-3 text-sm font-medium text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
+                    >
+                        <ArrowLeft className="size-4" aria-hidden /> Terug
+                    </button>
+                    <GameHeader
+                        kicker="Racespel"
+                        title="Kies een race"
+                        description="Tik op de race die de dealer net startte."
+                    />
 
-                {races.length === 0 ? (
-                    <div className="mt-10 flex flex-col items-center text-center text-slate-500 dark:text-slate-400">
-                        <span className="mb-4 flex size-20 animate-pulse items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-                            <Rabbit className="size-10" aria-hidden />
-                        </span>
-                        Wachten tot de dealer een race start…
-                    </div>
-                ) : (
-                    <ul className="space-y-2">
-                        {races.map((race) => (
-                            <li key={race.code}>
-                                <button
-                                    type="button"
-                                    onClick={() => onBoard(race.code)}
-                                    className="flex w-full items-center justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10"
-                                >
-                                    <span className="text-xl font-bold tracking-[0.3em] text-amber-600 dark:text-amber-400">
-                                        {race.code}
-                                    </span>
-                                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                                        {race.players}{' '}
-                                        {race.players === 1
-                                            ? 'inzet'
-                                            : 'inzetten'}
-                                    </span>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-        );
-    }
+                    {races.length === 0 ? (
+                        <div className="mt-10 flex flex-col items-center gap-4 text-center">
+                            <IconBadge
+                                icon={Rabbit}
+                                size="lg"
+                                className="animate-float"
+                            />
+                            <p className="text-sm text-slate-400">
+                                Wachten tot de dealer een race start…
+                            </p>
+                        </div>
+                    ) : (
+                        <ul className="space-y-2">
+                            {races.map((race) => (
+                                <li key={race.code}>
+                                    <motion.button
+                                        type="button"
+                                        whileTap={{ scale: 0.97 }}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 400,
+                                            damping: 24,
+                                        }}
+                                        onClick={() => {
+                                            feel.tap();
+                                            onBoard(race.code);
+                                        }}
+                                        className="flex min-h-14 w-full items-center justify-between rounded-2xl bg-white/[0.045] p-4 ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
+                                    >
+                                        <span className="font-display text-2xl tracking-[0.3em] text-(--glow-strong)">
+                                            {race.code}
+                                        </span>
+                                        <span className="text-sm text-slate-400">
+                                            {race.players}{' '}
+                                            {race.players === 1
+                                                ? 'inzet'
+                                                : 'inzetten'}
+                                        </span>
+                                    </motion.button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            ) : (
+                <div className="flex flex-1 flex-col">
+                    <GameHeader
+                        kicker="Racespel"
+                        title="Paardenrace"
+                        description="Twee telefoons: de dealer start de race en draait de kaarten, het bord toont de baan."
+                    />
+
+                    <RoleCard
+                        icon={WalletCards}
+                        title="Ik ben de dealer"
+                        description="Start de race, plaats de weddenschappen en draai de kaarten."
+                        disabled={busy}
+                        onClick={createRace}
+                        className="mb-3"
+                    />
+
+                    <RoleCard
+                        icon={Monitor}
+                        title="Ik ben het bord"
+                        description="Toon de baan. Kies de race die de dealer startte."
+                        onClick={() => setView('join')}
+                    />
+
+                    {error && (
+                        <p
+                            aria-live="polite"
+                            className="mt-4 text-center text-sm text-rose-400"
+                        >
+                            {error}
+                        </p>
+                    )}
+                </div>
+            )}
+        </PhaseTransition>
+    );
+}
+
+/** A single bet row on the board's waiting screen. */
+function BetRow({ bet }: { bet: Bet }) {
+    const reduceMotion = useReducedMotion();
 
     return (
-        <div className="flex flex-1 flex-col">
-            <GameHeader
-                kicker="Racespel"
-                title="Paardenrace"
-                description="Twee telefoons: de dealer start de race en draait de kaarten, het bord toont de baan."
-            />
-
-            <button
-                type="button"
-                onClick={startRace}
-                disabled={busy}
-                className={cn(optionCardClasses, 'mb-3')}
+        <motion.li
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between rounded-xl bg-white/[0.045] px-3 py-2 ring-1 ring-white/10"
+        >
+            <span className="text-sm font-semibold text-white">
+                {bet.player}
+            </span>
+            <span
+                className={cn(
+                    'inline-flex items-center gap-1 text-sm font-bold',
+                    suitInfo(bet.suit).color,
+                )}
             >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-                    <WalletCards className="size-5" aria-hidden />
-                </span>
-                <span>
-                    <span className="block text-lg font-bold">
-                        Ik ben de dealer
-                    </span>
-                    <span className="block text-sm text-slate-500 dark:text-slate-400">
-                        Start de race, plaats de weddenschappen en draai de
-                        kaarten.
-                    </span>
-                </span>
-            </button>
-
-            <button
-                type="button"
-                onClick={() => setView('join')}
-                className={optionCardClasses}
-            >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-                    <Monitor className="size-5" aria-hidden />
-                </span>
-                <span>
-                    <span className="block text-lg font-bold">
-                        Ik ben het bord
-                    </span>
-                    <span className="block text-sm text-slate-500 dark:text-slate-400">
-                        Toon de baan. Kies de race die de dealer startte.
-                    </span>
-                </span>
-            </button>
-
-            {error && (
-                <p className="mt-4 text-center text-sm text-rose-600 dark:text-rose-400">
-                    {error}
-                </p>
-            )}
-        </div>
+                {suitInfo(bet.suit).symbol} · {bet.sips}
+                <Beer className="size-3.5" aria-hidden />
+            </span>
+        </motion.li>
     );
 }
 
@@ -333,65 +431,112 @@ function BoardScreen({ code }: { code: string }) {
         };
     }, [code]);
 
-    if (gone) {
-        return (
-            <p className="mt-10 text-center text-slate-500 dark:text-slate-400">
-                Deze race bestaat niet meer.
-            </p>
-        );
-    }
+    const phaseKey = gone
+        ? 'gone'
+        : state && (state.phase === 'racing' || state.phase === 'finished')
+          ? 'race'
+          : 'waiting';
 
     return (
         <div className="flex flex-1 flex-col">
             <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
                     Race
                 </span>
-                <span className="rounded-lg bg-white px-3 py-1 text-xl font-bold tracking-[0.3em] text-amber-600 ring-1 ring-slate-200 dark:bg-white/5 dark:text-amber-400 dark:ring-white/10">
+                <span className="rounded-xl bg-white/5 px-3 py-1 font-display text-xl tracking-[0.3em] text-(--glow-strong) ring-1 ring-white/10">
                     {code}
                 </span>
             </div>
 
-            {(!state ||
-                state.phase === 'lobby' ||
-                state.phase === 'betting') && (
-                <div className="mt-10 flex flex-col items-center text-center text-slate-500 dark:text-slate-400">
-                    <span className="mb-4 flex size-20 animate-pulse items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-                        <Rabbit className="size-10" aria-hidden />
-                    </span>
-                    Wachten op de dealer…
-                    {state && state.bets && state.bets.length > 0 && (
-                        <ul className="mx-auto mt-6 w-full max-w-xs space-y-1 text-left text-sm">
-                            {state.bets.map((bet) => (
-                                <li
-                                    key={bet.id}
-                                    className="flex items-center justify-between rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
-                                >
-                                    <span>{bet.player}</span>
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center gap-1 font-bold',
-                                            suitInfo(bet.suit).color,
-                                        )}
-                                    >
-                                        {suitInfo(bet.suit).symbol} · {bet.sips}
-                                        <Beer
-                                            className="size-3.5"
-                                            aria-hidden
-                                        />
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            )}
-
-            {state &&
-                (state.phase === 'racing' || state.phase === 'finished') && (
+            <PhaseTransition phaseKey={phaseKey}>
+                {gone ? (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+                        <IconBadge icon={Rabbit} size="lg" />
+                        <div>
+                            <p className="font-display text-3xl text-white">
+                                Race voorbij
+                            </p>
+                            <p className="mt-2 text-sm text-slate-400">
+                                Deze race bestaat niet meer.
+                            </p>
+                        </div>
+                        <div className="w-full pt-2">
+                            <ActionButton
+                                variant="neutral"
+                                href={horseRace().url}
+                            >
+                                Terug naar start
+                            </ActionButton>
+                        </div>
+                    </div>
+                ) : phaseKey === 'race' && state ? (
                     <Track state={state} />
+                ) : (
+                    <div className="mt-10 flex flex-col items-center gap-4 text-center">
+                        <IconBadge
+                            icon={Rabbit}
+                            size="lg"
+                            className="animate-float"
+                        />
+                        <p className="text-sm text-slate-400">
+                            Wachten op de dealer…
+                        </p>
+                        {state && state.bets && state.bets.length > 0 && (
+                            <ul className="mt-2 w-full max-w-xs space-y-2 text-left">
+                                {state.bets.map((bet) => (
+                                    <BetRow key={bet.id} bet={bet} />
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 )}
+            </PhaseTransition>
         </div>
+    );
+}
+
+/** The payout list after a finish: rows cascade in, sips count up. */
+function PayoutList({ state }: { state: RaceState }) {
+    const reduceMotion = useReducedMotion();
+
+    return (
+        <ul className="w-full space-y-2">
+            {outcomes(state).map((o, index) => (
+                <motion.li
+                    key={o.bet.id}
+                    initial={
+                        reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                        delay: 0.2 + index * 0.12,
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 24,
+                    }}
+                    className="flex items-center justify-between rounded-xl bg-white/[0.045] px-4 py-2.5 ring-1 ring-white/10"
+                >
+                    <span className="text-sm font-semibold text-white">
+                        {o.bet.player}
+                    </span>
+                    <span
+                        className={cn(
+                            'inline-flex items-baseline gap-1.5 text-sm font-bold',
+                            o.won ? 'text-emerald-300' : 'text-rose-400',
+                        )}
+                    >
+                        {o.won ? 'deelt' : 'drinkt'}
+                        <CountUp
+                            value={o.sips}
+                            duration={0.9}
+                            className="font-display text-xl"
+                        />
+                        {o.won && 'uit'}
+                        <Beer className="size-4 self-center" aria-hidden />
+                    </span>
+                </motion.li>
+            ))}
+        </ul>
     );
 }
 
@@ -428,10 +573,11 @@ function Track({ state }: { state: RaceState }) {
                 {state.lastEvent && (
                     <motion.div
                         key={state.lastEvent}
+                        role="status"
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="mb-2 rounded-xl bg-amber-500/10 px-4 py-2 text-center text-sm font-semibold text-amber-700 ring-1 ring-amber-500/30 dark:text-amber-300"
+                        className="mb-2 animate-shake rounded-xl bg-rose-500/15 px-4 py-2 text-center text-sm font-semibold text-rose-300 ring-1 ring-rose-500/40"
                     >
                         {state.lastEvent}
                     </motion.div>
@@ -447,7 +593,7 @@ function Track({ state }: { state: RaceState }) {
                 <div
                     className={cn(
                         horizontal
-                            ? 'flex flex-col justify-around'
+                            ? 'flex flex-col justify-around gap-2'
                             : 'grid grid-cols-4 gap-2',
                     )}
                 >
@@ -458,27 +604,37 @@ function Track({ state }: { state: RaceState }) {
                             <div
                                 key={suit.key}
                                 className={cn(
-                                    'flex items-center justify-center gap-1 rounded-xl px-2 py-1.5 ring-1',
+                                    'flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 ring-1',
                                     horizontal && 'flex-1',
                                     isWinner
-                                        ? 'bg-amber-500/10 ring-amber-500'
-                                        : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
+                                        ? 'bg-(--glow)/12 ring-(--glow)'
+                                        : 'bg-white/[0.045] ring-white/10',
                                 )}
                             >
                                 <span
                                     className={cn(
-                                        'text-xl leading-none',
+                                        'flex items-center gap-1 text-xl leading-none',
                                         suit.color,
                                     )}
                                 >
                                     {suit.symbol}
+                                    {isWinner && (
+                                        <Trophy
+                                            className="size-4 text-(--glow-strong)"
+                                            aria-hidden
+                                        />
+                                    )}
                                 </span>
-                                {isWinner && (
-                                    <Trophy
-                                        className="size-4 text-amber-600 dark:text-amber-400"
-                                        aria-hidden
-                                    />
-                                )}
+                                <span
+                                    className={cn(
+                                        'text-[10px] font-medium',
+                                        isWinner
+                                            ? 'text-(--glow-strong)'
+                                            : 'text-slate-500',
+                                    )}
+                                >
+                                    {suit.label}
+                                </span>
                             </div>
                         );
                     })}
@@ -488,48 +644,16 @@ function Track({ state }: { state: RaceState }) {
             </div>
 
             {state.phase === 'finished' && state.winner && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-                    className="mt-4 rounded-2xl bg-amber-500/10 p-5 text-center ring-1 ring-amber-500/30"
-                >
-                    <span className="mx-auto mb-2 flex size-14 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-                        <Trophy className="size-7" aria-hidden />
-                    </span>
-                    <div
-                        className={cn(
-                            'text-xl font-bold',
-                            suitInfo(state.winner).color,
-                        )}
+                <div className="mt-5">
+                    <CelebrationHeader
+                        icon={Trophy}
+                        tone="win"
+                        title={`${suitInfo(state.winner).symbol} ${suitInfo(state.winner).label} wint!`}
+                        subtitle="Winnaars delen dubbel uit."
                     >
-                        {suitInfo(state.winner).symbol}{' '}
-                        {suitInfo(state.winner).label} wint!
-                    </div>
-                    <ul className="mt-4 space-y-1.5 text-left text-sm">
-                        {outcomes(state).map((o) => (
-                            <li
-                                key={o.bet.id}
-                                className="flex items-center justify-between rounded-lg bg-white px-3 py-1.5 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
-                            >
-                                <span>{o.bet.player}</span>
-                                <span
-                                    className={cn(
-                                        'inline-flex items-center gap-1 font-bold',
-                                        o.won
-                                            ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-rose-600 dark:text-rose-400',
-                                    )}
-                                >
-                                    {o.won
-                                        ? `deelt ${o.sips} uit`
-                                        : `drinkt ${o.sips}`}
-                                    <Beer className="size-4" aria-hidden />
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </motion.div>
+                        <PayoutList state={state} />
+                    </CelebrationHeader>
+                </div>
             )}
         </div>
     );
@@ -549,6 +673,7 @@ function TrackField({
     const { trackLength } = state;
     const containerRef = useRef<HTMLDivElement>(null);
     const [size, setSize] = useState(0);
+    const reduceMotion = useReducedMotion();
 
     useLayoutEffect(() => {
         const el = containerRef.current;
@@ -583,10 +708,17 @@ function TrackField({
     const horsePos = (pos: number): number =>
         (horizontal ? pos : trackLength - pos) * ROW_HEIGHT;
 
+    /** Lane index of the last drawn suit, for the step flash. */
+    const drawnLane = state.drawn
+        ? SUITS.findIndex((s) => s.key === state.drawn)
+        : -1;
+    /** One step from glory: the finish line starts pulsing. */
+    const nearFinish = !state.winner && leadPos === trackLength - 1;
+
     return (
         <div
             ref={containerRef}
-            className="relative flex-1 overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
+            className="relative flex-1 overflow-hidden rounded-2xl bg-white/[0.045] ring-1 ring-white/10"
         >
             <motion.div
                 className="absolute"
@@ -601,7 +733,7 @@ function TrackField({
                 {[1, 2, 3].map((n) => (
                     <div
                         key={n}
-                        className="absolute bg-slate-300 dark:bg-white/10"
+                        className="absolute bg-white/10"
                         style={
                             horizontal
                                 ? {
@@ -620,6 +752,35 @@ function TrackField({
                     />
                 ))}
 
+                {state.drawn && drawnLane >= 0 && (
+                    <motion.div
+                        key={`lane-${state.drawn}-${state.deck.length}`}
+                        aria-hidden
+                        className={cn(
+                            'pointer-events-none absolute',
+                            LANE_FLASH[state.drawn],
+                        )}
+                        style={
+                            horizontal
+                                ? {
+                                      top: `${drawnLane * 25}%`,
+                                      height: '25%',
+                                      left: 0,
+                                      right: 0,
+                                  }
+                                : {
+                                      left: `${drawnLane * 25}%`,
+                                      width: '25%',
+                                      top: 0,
+                                      bottom: 0,
+                                  }
+                        }
+                        initial={{ opacity: 0.7 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                    />
+                )}
+
                 {Array.from({ length: trackLength + 1 }, (_, idx) => {
                     const step = horizontal ? idx : trackLength - idx;
                     const backfire = state.backfires.find(
@@ -633,10 +794,10 @@ function TrackField({
                             className={cn(
                                 'absolute flex items-center justify-center',
                                 horizontal
-                                    ? 'top-0 bottom-0 border-r border-slate-200 dark:border-white/10'
-                                    : 'right-0 left-0 border-b border-slate-200 dark:border-white/10',
-                                isFinish && 'bg-amber-500/5',
-                                backfire?.revealed && 'bg-amber-500/10',
+                                    ? 'top-0 bottom-0 border-r border-white/10'
+                                    : 'right-0 left-0 border-b border-white/10',
+                                isFinish && 'bg-(--glow)/5',
+                                backfire?.revealed && 'bg-rose-500/10',
                             )}
                             style={
                                 horizontal
@@ -651,24 +812,73 @@ function TrackField({
                             }
                         >
                             {isFinish ? (
-                                <span className="flex items-center gap-1 text-xs font-bold tracking-widest text-slate-400 dark:text-slate-500">
-                                    <Flag className="size-4" aria-hidden />
-                                    {!horizontal && 'FINISH'}
-                                </span>
+                                <>
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            'absolute',
+                                            horizontal
+                                                ? 'inset-y-0 left-0 w-2'
+                                                : 'inset-x-0 bottom-0 h-2',
+                                        )}
+                                        style={{
+                                            backgroundImage:
+                                                'repeating-conic-gradient(rgb(255 255 255 / 0.35) 0% 25%, rgb(2 6 23 / 0.7) 0% 50%)',
+                                            backgroundSize: '8px 8px',
+                                        }}
+                                    />
+                                    {nearFinish && (
+                                        <span
+                                            aria-hidden
+                                            className="absolute inset-0 animate-pulse bg-(--glow)/15"
+                                        />
+                                    )}
+                                    <span className="flex items-center gap-1 font-display text-xs tracking-widest text-slate-400">
+                                        <Flag className="size-4" aria-hidden />
+                                        {!horizontal && 'FINISH'}
+                                    </span>
+                                </>
                             ) : backfire ? (
                                 backfire.revealed ? (
-                                    <span
+                                    <motion.span
+                                        initial={
+                                            reduceMotion
+                                                ? { opacity: 0 }
+                                                : {
+                                                      rotateY: 180,
+                                                      scale: 0.5,
+                                                      opacity: 0,
+                                                  }
+                                        }
+                                        animate={
+                                            reduceMotion
+                                                ? { opacity: 1 }
+                                                : {
+                                                      rotateY: 0,
+                                                      scale: 1,
+                                                      opacity: 1,
+                                                  }
+                                        }
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 300,
+                                            damping: 20,
+                                        }}
                                         className={cn(
-                                            'text-2xl',
-                                            suitInfo(backfire.suit).color,
+                                            'flex h-9 w-7 items-center justify-center rounded-md bg-white text-lg font-bold shadow-[0_0_18px_-2px_var(--color-rose-500)] ring-2 ring-rose-500/70',
+                                            SUIT_ON_CARD[backfire.suit],
                                         )}
                                     >
                                         {suitInfo(backfire.suit).symbol}
-                                    </span>
+                                    </motion.span>
                                 ) : (
                                     <span
                                         aria-hidden
-                                        className="h-9 w-7 rounded-md bg-slate-300 ring-1 ring-slate-400/50 dark:bg-slate-700 dark:ring-slate-500/50"
+                                        className="h-9 w-7 rounded-md bg-slate-700 ring-1 ring-slate-500/60"
+                                        style={{
+                                            backgroundImage:
+                                                'repeating-linear-gradient(45deg, rgb(255 255 255 / 0.07) 0 4px, transparent 4px 8px)',
+                                        }}
                                     />
                                 )
                             ) : null}
@@ -707,7 +917,10 @@ function TrackField({
                         }}
                     >
                         <motion.span
-                            className={cn('flex', suit.color)}
+                            className={cn(
+                                'flex drop-shadow-[0_2px_6px_rgba(2,6,23,0.6)]',
+                                suit.color,
+                            )}
                             animate={
                                 state.winner === suit.key
                                     ? { scale: [1, 1.3, 1] }
@@ -724,16 +937,32 @@ function TrackField({
                     </motion.div>
                 ))}
             </motion.div>
+
+            {state.phase === 'racing' && (
+                <motion.div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    transition={{
+                        duration: 2.4,
+                        times: [0, 0.15, 0.75, 1],
+                        delay: 0.2,
+                    }}
+                >
+                    <span className="rounded-2xl bg-slate-950/70 px-6 py-2.5 font-display text-3xl text-(--glow-strong) ring-1 ring-(--glow)/30 backdrop-blur-sm">
+                        Ze zijn los!
+                    </span>
+                </motion.div>
+            )}
         </div>
     );
 }
 
-const stepperButtonClasses =
-    'flex size-10 items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.97] dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10';
-
 function DealerScreen({ code }: { code: string }) {
     const [state, setState] = useState<RaceState>(() => bettingState([]));
     const nextBetId = useRef(1);
+    const reduceMotion = useReducedMotion();
 
     // Keep the board in sync with every change the dealer makes.
     const sync = useCallback(
@@ -764,278 +993,409 @@ function DealerScreen({ code }: { code: string }) {
     const removeBet = (id: number) =>
         sync({ ...state, bets: state.bets.filter((b) => b.id !== id) });
 
-    if (state.phase === 'betting') {
-        return (
-            <div className="flex flex-1 flex-col">
-                <header className="mb-5">
-                    <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
-                        Dealer
-                    </p>
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        Weddenschappen
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Code{' '}
-                        <span className="font-bold text-amber-600 dark:text-amber-400">
-                            {code}
-                        </span>{' '}
-                        · iedereen kiest een paard en zet slokken in.
-                    </p>
-                </header>
-
-                <Panel>
-                    <input
-                        value={player}
-                        onChange={(e) => setPlayer(e.target.value)}
-                        placeholder="Naam"
-                        className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-slate-950 dark:placeholder:text-slate-600"
-                    />
-                    <div className="mb-3 grid grid-cols-4 gap-2">
-                        {SUITS.map((s) => (
-                            <button
-                                key={s.key}
-                                type="button"
-                                onClick={() => setSuit(s.key)}
-                                className={cn(
-                                    'flex flex-col items-center gap-0.5 rounded-xl py-2 ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.97]',
-                                    suit === s.key
-                                        ? 'bg-amber-500/10 ring-amber-500'
-                                        : 'bg-white ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10',
-                                )}
-                            >
-                                <span
-                                    className={cn(
-                                        'text-2xl leading-none',
-                                        s.color,
-                                    )}
-                                >
-                                    {s.symbol}
-                                </span>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                    {s.label}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                    <div className="mb-3 flex items-center justify-center gap-4">
-                        <button
-                            type="button"
-                            onClick={() => setSips((n) => Math.max(1, n - 1))}
-                            aria-label="Minder slokken"
-                            className={stepperButtonClasses}
-                        >
-                            <Minus className="size-4" aria-hidden />
-                        </button>
-                        <span className="flex items-center gap-1.5 text-lg font-bold tabular-nums">
-                            {sips}
-                            <Beer
-                                className="size-4 text-amber-600 dark:text-amber-400"
-                                aria-hidden
-                            />
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setSips((n) => n + 1)}
-                            aria-label="Meer slokken"
-                            className={stepperButtonClasses}
-                        >
-                            <Plus className="size-4" aria-hidden />
-                        </button>
-                    </div>
-                    <ActionButton onClick={addBet} className="h-12 text-sm">
-                        <Plus className="size-4" aria-hidden /> Inzet toevoegen
-                    </ActionButton>
-                </Panel>
-
-                {state.bets.length > 0 && (
-                    <ul className="mt-4 space-y-2">
-                        {state.bets.map((bet) => (
-                            <li
-                                key={bet.id}
-                                className="flex items-center justify-between rounded-xl bg-white px-4 py-2 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
-                            >
-                                <span className="font-semibold">
-                                    {bet.player}
-                                </span>
-                                <span className="flex items-center gap-3">
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center gap-1 font-bold',
-                                            suitInfo(bet.suit).color,
-                                        )}
-                                    >
-                                        {suitInfo(bet.suit).symbol} · {bet.sips}
-                                        <Beer
-                                            className="size-3.5"
-                                            aria-hidden
-                                        />
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeBet(bet.id)}
-                                        aria-label={`Verwijder inzet van ${bet.player}`}
-                                        className="text-slate-400 transition hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-500 dark:hover:text-rose-400"
-                                    >
-                                        <X className="size-4" aria-hidden />
-                                    </button>
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-
-                <div className="mt-6">
-                    <p className="mb-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        Aantal stappen
-                    </p>
-                    <div className="grid grid-cols-5 gap-2">
-                        {STEP_OPTIONS.map((option) => (
-                            <button
-                                key={option}
-                                type="button"
-                                onClick={() => setSteps(option)}
-                                className={cn(
-                                    'rounded-xl py-2 text-sm font-bold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.97]',
-                                    steps === option
-                                        ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                        : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-white/10',
-                                )}
-                            >
-                                {option}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="mt-auto pt-6">
-                    <ActionButton
-                        onClick={() => sync(startRace(state.bets, steps))}
-                        disabled={state.bets.length === 0}
-                        className="text-lg"
-                    >
-                        <Rabbit className="size-5" aria-hidden /> Start de race
-                    </ActionButton>
-                </div>
-            </div>
-        );
-    }
-
     // Racing / finished: tap the big card to flip the next one.
     const canFlip = state.phase === 'racing';
     const drawnSuit = state.drawn ? suitInfo(state.drawn) : null;
+    const deckLayers = Math.min(3, Math.ceil(state.deck.length / 16));
 
     return (
-        <div className="flex flex-1 flex-col">
-            <header className="mb-2 text-center">
-                <h1 className="text-2xl font-bold">Dealer</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {canFlip
-                        ? 'Tik op de kaart om te draaien.'
-                        : 'De race is gereden.'}
-                </p>
-            </header>
-
-            <div className="flex flex-1 flex-col items-center justify-center">
-                <div
-                    className="relative h-80 w-56"
-                    style={{ perspective: 1200 }}
-                >
-                    <AnimatePresence initial={false}>
-                        <motion.div
-                            key={state.drawn ? state.deck.length : 'cover'}
-                            onClick={
-                                canFlip ? () => sync(flip(state)) : undefined
-                            }
-                            initial={{ rotateY: -180, opacity: 0 }}
-                            animate={{ rotateY: 0, opacity: 1 }}
-                            exit={{ rotateY: 180, opacity: 0 }}
-                            transition={{ duration: 0.7, ease: 'easeInOut' }}
-                            style={{
-                                transformStyle: 'preserve-3d',
-                                backfaceVisibility: 'hidden',
-                            }}
-                            className={cn(
-                                'absolute inset-0 flex flex-col items-center justify-center rounded-3xl shadow-lg select-none',
-                                drawnSuit
-                                    ? 'bg-white ring-1 ring-slate-200 dark:ring-white/10'
-                                    : 'bg-amber-500 ring-4 ring-slate-950/10 ring-inset',
-                                canFlip && 'cursor-pointer',
-                            )}
-                        >
-                            {drawnSuit ? (
-                                <>
-                                    <span
-                                        className={cn(
-                                            'absolute top-3 left-4 text-2xl font-bold',
-                                            drawnSuit.color,
-                                        )}
-                                    >
-                                        {drawnSuit.symbol}
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            'text-[7rem] leading-none',
-                                            drawnSuit.color,
-                                        )}
-                                    >
-                                        {drawnSuit.symbol}
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            'absolute right-4 bottom-3 rotate-180 text-2xl font-bold',
-                                            drawnSuit.color,
-                                        )}
-                                    >
-                                        {drawnSuit.symbol}
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <Rabbit
-                                        className="size-20 text-slate-950"
-                                        aria-hidden
-                                    />
-                                    <span className="mt-3 text-sm font-semibold text-slate-950/70">
-                                        Tik om te draaien
-                                    </span>
-                                </>
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-
-                <div className="mt-4 h-6">
-                    {state.lastEvent && (
-                        <p className="text-center text-sm font-semibold text-amber-600 dark:text-amber-400">
-                            {state.lastEvent}
+        <PhaseTransition phaseKey={state.phase}>
+            {state.phase === 'betting' ? (
+                <div className="flex flex-1 flex-col">
+                    <header className="mb-5">
+                        <p className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                            Dealer
                         </p>
-                    )}
-                </div>
+                        <h1 className="mt-1 font-display text-3xl text-white">
+                            Weddenschappen
+                        </h1>
+                        <p className="mt-1 text-sm text-slate-400">
+                            Code{' '}
+                            <span className="font-display text-base tracking-[0.2em] text-(--glow-strong)">
+                                {code}
+                            </span>{' '}
+                            · iedereen kiest een paard en zet slokken in.
+                        </p>
+                    </header>
 
-                <div className="grid w-full grid-cols-4 gap-2">
-                    {SUITS.map((s) => (
-                        <div
-                            key={s.key}
-                            className="flex flex-col items-center rounded-xl bg-white py-2 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
-                        >
-                            <span className={cn('text-lg', s.color)}>
-                                {s.symbol}
-                            </span>
-                            <span className="text-xs font-bold text-slate-600 tabular-nums dark:text-slate-300">
-                                {state.positions[s.key]}/{state.trackLength}
-                            </span>
+                    <Panel>
+                        <input
+                            value={player}
+                            onChange={(e) => setPlayer(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    feel.tap();
+                                    addBet();
+                                }
+                            }}
+                            placeholder="Naam"
+                            className="mb-3 w-full rounded-xl bg-white/5 px-4 py-3 text-white ring-1 ring-white/10 placeholder:text-slate-500 focus:ring-2 focus:ring-(--glow) focus:outline-none"
+                        />
+                        <div className="mb-3 grid grid-cols-4 gap-2">
+                            {SUITS.map((s) => (
+                                <button
+                                    key={s.key}
+                                    type="button"
+                                    aria-pressed={suit === s.key}
+                                    onClick={() => {
+                                        feel.select();
+                                        setSuit(s.key);
+                                    }}
+                                    className={cn(
+                                        'flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow) active:scale-[0.96]',
+                                        suit === s.key
+                                            ? 'bg-(--glow)/12 ring-(--glow)'
+                                            : 'bg-white/5 ring-white/10 hover:bg-white/10',
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            'text-2xl leading-none',
+                                            s.color,
+                                        )}
+                                    >
+                                        {s.symbol}
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            'text-[10px] font-medium',
+                                            suit === s.key
+                                                ? 'text-(--glow-strong)'
+                                                : 'text-slate-400',
+                                        )}
+                                    >
+                                        {s.label}
+                                    </span>
+                                </button>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            </div>
+                        <div className="mb-3">
+                            <Stepper
+                                label="Slokken"
+                                value={sips}
+                                onChange={setSips}
+                                min={1}
+                                max={99}
+                            />
+                        </div>
+                        <ActionButton
+                            onClick={addBet}
+                            variant="neutral"
+                            className="h-12 text-sm"
+                        >
+                            <Plus className="size-4" aria-hidden /> Inzet
+                            toevoegen
+                        </ActionButton>
+                    </Panel>
 
-            {state.phase === 'finished' && (
-                <div className="mt-auto pt-4">
-                    <ActionButton onClick={() => sync(bettingState([]))}>
-                        <RotateCcw className="size-5" aria-hidden /> Nieuw potje
-                    </ActionButton>
+                    {state.bets.length > 0 && (
+                        <ul className="mt-4 space-y-2">
+                            {state.bets.map((bet) => (
+                                <motion.li
+                                    key={bet.id}
+                                    initial={
+                                        reduceMotion
+                                            ? { opacity: 0 }
+                                            : { opacity: 0, y: 8 }
+                                    }
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex items-center justify-between rounded-xl bg-white/[0.045] py-1.5 pr-1.5 pl-4 ring-1 ring-white/10"
+                                >
+                                    <span className="font-semibold text-white">
+                                        {bet.player}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <span
+                                            className={cn(
+                                                'inline-flex items-center gap-1 font-bold',
+                                                suitInfo(bet.suit).color,
+                                            )}
+                                        >
+                                            {suitInfo(bet.suit).symbol} ·{' '}
+                                            {bet.sips}
+                                            <Beer
+                                                className="size-3.5"
+                                                aria-hidden
+                                            />
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                feel.select();
+                                                removeBet(bet.id);
+                                            }}
+                                            aria-label={`Verwijder inzet van ${bet.player}`}
+                                            className="flex size-11 items-center justify-center rounded-xl text-slate-500 transition hover:text-rose-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
+                                        >
+                                            <X className="size-4" aria-hidden />
+                                        </button>
+                                    </span>
+                                </motion.li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <div className="mt-6">
+                        <p className="mb-2 text-sm font-medium text-slate-300">
+                            Aantal stappen
+                        </p>
+                        <div className="grid grid-cols-5 gap-2">
+                            {STEP_OPTIONS.map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    aria-pressed={steps === option}
+                                    onClick={() => {
+                                        feel.select();
+                                        setSteps(option);
+                                    }}
+                                    className={cn(
+                                        'h-11 rounded-xl text-sm font-bold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow) active:scale-[0.96]',
+                                        steps === option
+                                            ? 'bg-(--glow) text-slate-950 ring-(--glow)'
+                                            : 'bg-white/5 text-slate-300 ring-white/10 hover:bg-white/10',
+                                    )}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mt-auto pt-6">
+                        <ActionButton
+                            onClick={() => sync(startRace(state.bets, steps))}
+                            disabled={state.bets.length === 0}
+                            className="text-lg"
+                        >
+                            <Rabbit className="size-5" aria-hidden /> Start de
+                            race
+                        </ActionButton>
+                    </div>
+                </div>
+            ) : state.phase === 'finished' ? (
+                <div className="flex flex-1 flex-col">
+                    <div className="flex flex-1 flex-col justify-center py-6">
+                        <CelebrationHeader
+                            icon={Trophy}
+                            tone="win"
+                            title={
+                                state.winner
+                                    ? `${suitInfo(state.winner).symbol} ${suitInfo(state.winner).label} wint!`
+                                    : 'De race is gereden!'
+                            }
+                            subtitle="Lees de uitslag voor aan de tafel."
+                        >
+                            <PayoutList state={state} />
+                        </CelebrationHeader>
+                    </div>
+                    <div className="mt-auto pt-4">
+                        <ActionButton onClick={() => sync(bettingState([]))}>
+                            <RotateCcw className="size-5" aria-hidden /> Nieuw
+                            potje
+                        </ActionButton>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex flex-1 flex-col">
+                    <header className="mb-2 text-center">
+                        <p className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                            Dealer · race {code}
+                        </p>
+                        <h1 className="mt-1 font-display text-3xl text-white">
+                            Draai de kaarten
+                        </h1>
+                        <p className="mt-1 text-sm text-slate-400">
+                            Tik op de kaart om te draaien.
+                        </p>
+                    </header>
+
+                    <div className="flex flex-1 flex-col items-center justify-center">
+                        <div
+                            className="relative h-80 w-56"
+                            style={{ perspective: 1200 }}
+                        >
+                            {Array.from({ length: deckLayers }, (_, i) => (
+                                <span
+                                    key={i}
+                                    aria-hidden
+                                    className="absolute inset-0 rounded-3xl bg-(--glow-deep)/35 ring-1 ring-white/10"
+                                    style={{
+                                        transform: `translate(${(i + 1) * 5}px, ${(i + 1) * 5}px)`,
+                                    }}
+                                />
+                            ))}
+
+                            {drawnSuit && state.drawn && (
+                                <motion.span
+                                    key={`flash-${state.deck.length}`}
+                                    aria-hidden
+                                    className="pointer-events-none absolute -inset-4 z-20 rounded-[2rem]"
+                                    style={{
+                                        boxShadow: `0 0 80px 14px ${SUIT_FLASH[state.drawn]}`,
+                                    }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: [0, 1, 0] }}
+                                    transition={{
+                                        duration: 1.1,
+                                        times: [0, 0.35, 1],
+                                        delay: 0.2,
+                                    }}
+                                />
+                            )}
+
+                            <AnimatePresence initial={false}>
+                                <motion.button
+                                    key={
+                                        state.drawn
+                                            ? state.deck.length
+                                            : 'cover'
+                                    }
+                                    type="button"
+                                    disabled={!canFlip}
+                                    aria-label={
+                                        drawnSuit
+                                            ? `${drawnSuit.label} gedraaid — tik voor de volgende kaart`
+                                            : 'Draai de eerste kaart'
+                                    }
+                                    onClick={() => {
+                                        if (!canFlip) {
+                                            return;
+                                        }
+
+                                        feel.flip();
+                                        sync(flip(state));
+                                    }}
+                                    initial={{ rotateY: -180, opacity: 0 }}
+                                    animate={{ rotateY: 0, opacity: 1 }}
+                                    exit={{ rotateY: 180, opacity: 0 }}
+                                    transition={
+                                        reduceMotion
+                                            ? { duration: 0 }
+                                            : {
+                                                  duration: 0.7,
+                                                  ease: 'easeInOut',
+                                              }
+                                    }
+                                    style={{
+                                        transformStyle: 'preserve-3d',
+                                        backfaceVisibility: 'hidden',
+                                    }}
+                                    className={cn(
+                                        'absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl shadow-[0_18px_50px_-12px_rgba(2,6,23,0.9)] select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                                        drawnSuit
+                                            ? 'bg-white ring-1 ring-white/10'
+                                            : 'bg-(--glow-deep) ring-1 ring-white/15',
+                                        canFlip && 'cursor-pointer',
+                                    )}
+                                >
+                                    {drawnSuit && state.drawn ? (
+                                        <>
+                                            <span
+                                                className={cn(
+                                                    'absolute top-3 left-4 text-2xl font-bold',
+                                                    SUIT_ON_CARD[state.drawn],
+                                                )}
+                                            >
+                                                {drawnSuit.symbol}
+                                            </span>
+                                            <span
+                                                className={cn(
+                                                    'text-[7rem] leading-none',
+                                                    SUIT_ON_CARD[state.drawn],
+                                                )}
+                                            >
+                                                {drawnSuit.symbol}
+                                            </span>
+                                            <span
+                                                className={cn(
+                                                    'mt-1 font-display text-lg',
+                                                    SUIT_ON_CARD[state.drawn],
+                                                )}
+                                            >
+                                                {drawnSuit.label}
+                                            </span>
+                                            <span
+                                                className={cn(
+                                                    'absolute right-4 bottom-3 rotate-180 text-2xl font-bold',
+                                                    SUIT_ON_CARD[state.drawn],
+                                                )}
+                                            >
+                                                {drawnSuit.symbol}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span
+                                                aria-hidden
+                                                className="pointer-events-none absolute inset-2 rounded-2xl border-2 border-slate-950/20"
+                                            />
+                                            <Rabbit
+                                                className="size-20 text-slate-950"
+                                                aria-hidden
+                                            />
+                                            <span className="mt-3 text-sm font-semibold text-slate-950/70">
+                                                Tik om te draaien
+                                            </span>
+                                        </>
+                                    )}
+                                </motion.button>
+                            </AnimatePresence>
+                        </div>
+
+                        <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-slate-500 tabular-nums">
+                            <Layers className="size-3.5" aria-hidden />
+                            {state.deck.length}{' '}
+                            {state.deck.length === 1 ? 'kaart' : 'kaarten'} in
+                            de stapel
+                        </p>
+
+                        <div
+                            className="mt-2 h-6"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            {state.lastEvent && (
+                                <p
+                                    key={state.deck.length}
+                                    className="animate-shake text-center text-sm font-semibold text-rose-300"
+                                >
+                                    {state.lastEvent}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="grid w-full grid-cols-4 gap-2">
+                            {SUITS.map((s) => (
+                                <div
+                                    key={s.key}
+                                    className={cn(
+                                        'flex flex-col items-center rounded-xl py-2 ring-1 transition',
+                                        state.drawn === s.key
+                                            ? 'bg-(--glow)/10 ring-(--glow)/60'
+                                            : 'bg-white/[0.045] ring-white/10',
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            'text-lg leading-none',
+                                            s.color,
+                                        )}
+                                    >
+                                        {s.symbol}
+                                    </span>
+                                    <span className="mt-0.5 font-display text-base text-white tabular-nums">
+                                        {state.positions[s.key]}
+                                        <span className="text-slate-500">
+                                            /{state.trackLength}
+                                        </span>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
-        </div>
+        </PhaseTransition>
     );
 }
