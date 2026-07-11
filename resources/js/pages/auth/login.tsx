@@ -22,6 +22,15 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Inloggen" />
 
+            {status && (
+                <div
+                    aria-live="polite"
+                    className="mb-6 text-center text-sm font-medium text-emerald-400"
+                >
+                    {status}
+                </div>
+            )}
+
             <PasskeyVerify />
 
             <Form
@@ -101,17 +110,11 @@ export default function Login({ status, canResetPassword }: Props) {
                     </>
                 )}
             </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
         </>
     );
 }
 
 Login.layout = {
-    title: 'Log in op je account',
-    description: 'Vul hieronder je e-mailadres en wachtwoord in',
+    title: 'Log in en speel verder',
+    description: 'Vul je e-mailadres en wachtwoord in',
 };

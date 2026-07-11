@@ -12,7 +12,10 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="E-mail verifiëren" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div
+                    aria-live="polite"
+                    className="mb-4 text-center text-sm font-medium text-emerald-400"
+                >
                     Er is een nieuwe verificatielink gestuurd naar het
                     e-mailadres dat je bij registratie hebt opgegeven.
                 </div>

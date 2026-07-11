@@ -1,26 +1,32 @@
 import { router, usePage } from '@inertiajs/react';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
     ArrowRight,
     Eye,
     EyeOff,
     Megaphone,
-    Minus,
     Play,
-    Plus,
     RotateCcw,
-    ShieldQuestion,
     Skull,
     Trophy,
-    Users,
+    UserX,
+    VenetianMask,
     Vote,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActionButton,
+    CelebrationHeader,
+    FlipCard,
     GameHeader,
     GameShell,
+    IconBadge,
     Panel,
+    PassPhoneGate,
+    PhaseTransition,
+    Stepper,
 } from '@/components/game-ui';
+import { feel } from '@/hooks/use-game-feel';
 import {
     alivePlayers,
     dealRoles,
@@ -95,21 +101,23 @@ export default function Undercover() {
     };
 
     return (
-        <GameShell title="Undercover">
-            {game === null ? (
-                <SetupScreen
-                    resumable={currentGame}
-                    history={history}
-                    onResume={(state) => setGame(state)}
-                    onStart={setGame}
-                />
-            ) : (
-                <PlayScreen
-                    game={game}
-                    setGame={setGame}
-                    onReset={resetToSetup}
-                />
-            )}
+        <GameShell title="Undercover" accent="violet">
+            <PhaseTransition phaseKey={game === null ? 'setup' : game.phase}>
+                {game === null ? (
+                    <SetupScreen
+                        resumable={currentGame}
+                        history={history}
+                        onResume={(state) => setGame(state)}
+                        onStart={setGame}
+                    />
+                ) : (
+                    <PlayScreen
+                        game={game}
+                        setGame={setGame}
+                        onReset={resetToSetup}
+                    />
+                )}
+            </PhaseTransition>
         </GameShell>
     );
 }
@@ -187,35 +195,39 @@ function SetupScreen({
             />
 
             {resumable && (
-                <button
+                <motion.button
                     type="button"
-                    onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10"
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+                    onClick={() => {
+                        feel.select();
+                        onResume(resumable.state);
+                    }}
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-(--glow)/10 px-4 py-3 text-left ring-1 ring-(--glow)/30 transition hover:bg-(--glow)/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
                 >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                        <Play className="size-5" aria-hidden />
+                    <span
+                        aria-hidden
+                        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--glow)/15 text-(--glow-strong)"
+                    >
+                        <Play className="size-5" />
                     </span>
                     <span className="flex-1">
-                        <span className="block text-sm font-bold text-slate-900 dark:text-white">
+                        <span className="block text-sm font-bold text-white">
                             Ga verder
                         </span>
-                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                        <span className="block text-xs text-slate-400">
                             Ronde {resumable.state.round ?? 1} ·{' '}
                             {alivePlayers(resumable.state.players ?? []).length}{' '}
                             spelers over
                         </span>
                     </span>
-                    <ArrowRight
-                        className="size-5 text-slate-400 dark:text-slate-500"
-                        aria-hidden
-                    />
-                </button>
+                    <ArrowRight className="size-5 text-slate-500" aria-hidden />
+                </motion.button>
             )}
 
-            <Panel className="mb-5">
+            <Panel className="mb-5 space-y-3">
                 <Stepper
                     label="Spelers"
-                    icon={<Users className="size-4" aria-hidden />}
                     value={names.length}
                     min={MIN_PLAYERS}
                     max={MAX_PLAYERS}
@@ -223,7 +235,6 @@ function SetupScreen({
                 />
                 <Stepper
                     label="Undercover"
-                    icon={<ShieldQuestion className="size-4" aria-hidden />}
                     value={undercoverCount}
                     min={1}
                     max={Math.max(1, names.length - 2)}
@@ -231,19 +242,23 @@ function SetupScreen({
                 />
                 <button
                     type="button"
-                    onClick={() => setIncludeMrWhite((value) => !value)}
-                    className="mt-2 flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:bg-white/5 dark:hover:bg-white/10"
+                    role="switch"
+                    aria-checked={includeMrWhite}
+                    onClick={() => {
+                        feel.select();
+                        setIncludeMrWhite((value) => !value);
+                    }}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3 text-left transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
                 >
-                    <span className="flex items-center gap-2 text-sm font-medium">
-                        <Skull className="size-4" aria-hidden /> Mr. White
-                        meespelen
+                    <span className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <Skull className="size-4 text-slate-400" aria-hidden />
+                        Mr. White speelt mee
                     </span>
                     <span
+                        aria-hidden
                         className={cn(
-                            'relative h-6 w-11 rounded-full transition',
-                            includeMrWhite
-                                ? 'bg-amber-500'
-                                : 'bg-slate-300 dark:bg-slate-600',
+                            'relative h-6 w-11 shrink-0 rounded-full transition',
+                            includeMrWhite ? 'bg-(--glow)' : 'bg-white/15',
                         )}
                     >
                         <span
@@ -254,7 +269,7 @@ function SetupScreen({
                         />
                     </span>
                 </button>
-                <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                <p className="pt-1 text-center text-xs text-slate-500">
                     {civilianCount} Burger{civilianCount === 1 ? '' : 's'} ·{' '}
                     {undercoverCount} Undercover
                     {includeMrWhite ? ' · 1 Mr. White' : ''}
@@ -262,7 +277,7 @@ function SetupScreen({
             </Panel>
 
             <section className="mb-5 space-y-2">
-                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                <h2 className="px-1 text-xs font-semibold tracking-widest text-slate-500 uppercase">
                     Namen
                 </h2>
                 {names.map((name, index) => (
@@ -273,8 +288,9 @@ function SetupScreen({
                             updateName(index, event.target.value)
                         }
                         maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        aria-label={`Naam van speler ${index + 1}`}
                         placeholder={`Speler ${index + 1}`}
+                        className="w-full rounded-xl bg-white/5 px-4 py-3 text-base text-white ring-1 ring-white/10 placeholder:text-slate-500 focus:ring-2 focus:ring-(--glow) focus:outline-none"
                     />
                 ))}
             </section>
@@ -283,7 +299,10 @@ function SetupScreen({
 
             <div className="mt-auto pt-2">
                 {error && (
-                    <p className="mb-3 text-center text-sm text-rose-600 dark:text-rose-400">
+                    <p
+                        aria-live="polite"
+                        className="mb-3 text-center text-sm text-rose-400"
+                    >
                         {error}
                     </p>
                 )}
@@ -312,7 +331,7 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
 
     return (
         <section className="mb-5">
-            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-widest text-slate-500 uppercase">
                 Recente potjes
             </h2>
             <div className="space-y-2">
@@ -327,25 +346,25 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
                     return (
                         <div
                             key={entry.id}
-                            className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
+                            className="flex items-center justify-between gap-2 rounded-xl bg-white/[0.045] px-4 py-3 text-sm ring-1 ring-white/10"
                         >
-                            <span className="flex items-center gap-2">
+                            <span className="flex min-w-0 items-center gap-2">
                                 <span
                                     className={cn(
-                                        'rounded-full px-2 py-0.5 text-xs font-bold',
+                                        'shrink-0 rounded-full px-2 py-0.5 text-xs font-bold',
                                         civiliansWon && !entry.state.mrWhiteWon
-                                            ? 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-                                            : 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+                                            ? 'bg-emerald-400/15 text-emerald-300'
+                                            : 'bg-rose-400/15 text-rose-300',
                                     )}
                                 >
                                     {result}
                                 </span>
-                                <span className="text-slate-500 dark:text-slate-400">
+                                <span className="truncate text-slate-400">
                                     {entry.state.pair.civilian} /{' '}
                                     {entry.state.pair.undercover}
                                 </span>
                             </span>
-                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                            <span className="shrink-0 text-xs text-slate-500">
                                 {formatDate(entry.finished_at)}
                             </span>
                         </div>
@@ -365,68 +384,6 @@ function formatDate(value: string | null): string {
         day: 'numeric',
         month: 'short',
     });
-}
-
-function Stepper({
-    label,
-    icon,
-    value,
-    min,
-    max,
-    onChange,
-}: {
-    label: string;
-    icon: React.ReactNode;
-    value: number;
-    min: number;
-    max: number;
-    onChange: (value: number) => void;
-}) {
-    return (
-        <div className="flex items-center justify-between py-2">
-            <span className="flex items-center gap-2 text-sm font-medium">
-                {icon} {label}
-            </span>
-            <div className="flex items-center gap-3">
-                <StepperButton
-                    onClick={() => onChange(value - 1)}
-                    disabled={value <= min}
-                >
-                    <Minus className="size-4" aria-hidden />
-                </StepperButton>
-                <span className="w-6 text-center text-lg font-bold tabular-nums">
-                    {value}
-                </span>
-                <StepperButton
-                    onClick={() => onChange(value + 1)}
-                    disabled={value >= max}
-                >
-                    <Plus className="size-4" aria-hidden />
-                </StepperButton>
-            </div>
-        </div>
-    );
-}
-
-function StepperButton({
-    children,
-    onClick,
-    disabled,
-}: {
-    children: React.ReactNode;
-    onClick: () => void;
-    disabled?: boolean;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-        >
-            {children}
-        </button>
-    );
 }
 
 function PlayScreen({
@@ -473,12 +430,20 @@ function RevealScreen({
     game: GameState;
     setGame: (game: GameState) => void;
 }) {
+    const reduceMotion = useReducedMotion();
+    const [claimed, setClaimed] = useState(false);
     const [revealed, setRevealed] = useState(false);
     const player = game.players[game.revealIndex];
     const isLast = game.revealIndex === game.players.length - 1;
 
+    const reveal = () => {
+        feel.flip();
+        setRevealed(true);
+    };
+
     const next = () => {
         setRevealed(false);
+        setClaimed(false);
 
         if (isLast) {
             setGame({
@@ -491,71 +456,137 @@ function RevealScreen({
         }
     };
 
+    const wordFace = (
+        <div className="flex size-full flex-col items-center justify-center gap-3 rounded-3xl bg-(--glow)/10 p-6 text-center shadow-[0_0_60px_-15px_var(--glow)] ring-2 ring-(--glow)/40">
+            <span className="text-sm font-medium text-slate-300">
+                {player.name}, jouw woord is
+            </span>
+            <motion.span
+                initial={
+                    reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }
+                }
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 18,
+                    delay: 0.15,
+                }}
+                className="font-display text-4xl break-words text-white"
+            >
+                {player.word}
+            </motion.span>
+            <span className="text-xs text-slate-400">
+                Onthoud het goed en verberg de kaart
+            </span>
+        </div>
+    );
+
+    const mrWhiteFace = (
+        <div className="flex size-full flex-col items-center justify-center gap-3 rounded-3xl bg-slate-950 p-6 text-center ring-2 ring-white/15">
+            <motion.span
+                aria-hidden
+                initial={
+                    reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }
+                }
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 18,
+                    delay: 0.15,
+                }}
+                className="flex size-16 items-center justify-center rounded-full bg-white/10 text-slate-200"
+            >
+                <Skull className="size-8" />
+            </motion.span>
+            <span className="font-display text-3xl text-white">Mr. White</span>
+            <span className="text-sm text-slate-400">
+                Jij hebt geen woord. Doe alsof en raad het woord van de anderen!
+            </span>
+        </div>
+    );
+
     return (
         <div className="flex flex-1 flex-col">
-            <p className="mb-2 text-center text-sm text-slate-500 dark:text-slate-400">
-                Kaart {game.revealIndex + 1} van {game.players.length}
-            </p>
+            <div className="mb-4 flex flex-col items-center gap-2">
+                <div aria-hidden className="flex items-center gap-1.5">
+                    {game.players.map((dot, index) => (
+                        <span
+                            key={dot.id}
+                            className={cn(
+                                'h-1.5 rounded-full transition-all duration-300',
+                                index < game.revealIndex
+                                    ? 'w-1.5 bg-(--glow)/50'
+                                    : index === game.revealIndex
+                                      ? 'w-5 bg-(--glow)'
+                                      : 'w-1.5 bg-white/15',
+                            )}
+                        />
+                    ))}
+                </div>
+                <p className="text-xs font-medium text-slate-500">
+                    Kaart {game.revealIndex + 1} van {game.players.length}
+                </p>
+            </div>
 
-            <div className="flex flex-1 flex-col items-center justify-center">
-                {!revealed ? (
-                    <button
-                        type="button"
-                        onClick={() => setRevealed(true)}
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-slate-900 p-6 text-center shadow-sm ring-1 ring-white/10 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.98] dark:bg-slate-800"
-                    >
-                        <span className="text-2xl font-bold text-white">
-                            {player.name}
-                        </span>
-                        <span className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90">
-                            <Eye className="size-4" aria-hidden /> Tik om je
-                            woord te zien
-                        </span>
-                        <span className="text-xs text-white/70">
-                            Zorg dat niemand meekijkt
-                        </span>
-                    </button>
+            <PhaseTransition
+                phaseKey={`${player.id}-${claimed ? 'kaart' : 'gate'}`}
+            >
+                {!claimed ? (
+                    <PassPhoneGate
+                        name={player.name}
+                        onReady={() => setClaimed(true)}
+                    />
                 ) : (
-                    <div className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200">
-                        <span className="text-sm font-medium text-slate-500">
-                            {player.name}, jouw woord is
-                        </span>
-                        {player.word ? (
-                            <span className="text-4xl font-bold break-words text-slate-900">
-                                {player.word}
-                            </span>
-                        ) : (
-                            <div className="flex flex-col items-center gap-2">
-                                <span className="flex size-16 items-center justify-center rounded-full bg-slate-500/15 text-slate-700">
-                                    <Skull className="size-8" aria-hidden />
-                                </span>
-                                <span className="text-3xl font-bold text-slate-900">
-                                    Mr. White
-                                </span>
-                                <span className="text-sm text-slate-500">
-                                    Jij hebt geen woord. Doe alsof en raad het
-                                    woord van de anderen!
-                                </span>
-                            </div>
-                        )}
+                    <div className="flex flex-1 flex-col">
+                        <div className="flex flex-1 items-center justify-center py-2">
+                            <FlipCard
+                                key={player.id}
+                                revealed={revealed}
+                                className="aspect-[3/4] w-full max-w-xs"
+                                front={
+                                    <motion.button
+                                        type="button"
+                                        whileTap={{ scale: 0.97 }}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 400,
+                                            damping: 24,
+                                        }}
+                                        onClick={reveal}
+                                        className="flex size-full flex-col items-center justify-center gap-4 rounded-3xl bg-slate-900 p-6 text-center shadow-[0_0_40px_-18px_var(--glow)] ring-1 ring-(--glow)/30 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
+                                    >
+                                        <IconBadge icon={Eye} />
+                                        <span className="font-display text-3xl break-words text-white">
+                                            {player.name}
+                                        </span>
+                                        <span className="rounded-full bg-white/10 px-4 py-2 text-sm text-slate-300">
+                                            Tik om je woord te zien
+                                        </span>
+                                    </motion.button>
+                                }
+                                back={player.word ? wordFace : mrWhiteFace}
+                            />
+                        </div>
+
+                        <div className="mt-auto pt-4">
+                            {revealed ? (
+                                <ActionButton onClick={next}>
+                                    <EyeOff className="size-5" aria-hidden />
+                                    {isLast
+                                        ? 'Klaar — begin de ronde'
+                                        : 'Verberg & geef door'}
+                                </ActionButton>
+                            ) : (
+                                <p className="flex h-14 items-center justify-center text-sm text-slate-500">
+                                    Zorg dat niemand meekijkt
+                                </p>
+                            )}
+                        </div>
                     </div>
                 )}
-            </div>
-
-            <div className="mt-auto pt-4">
-                {revealed ? (
-                    <ActionButton onClick={next} className="text-lg">
-                        <EyeOff className="size-5" aria-hidden />
-                        {isLast
-                            ? 'Klaar — begin de ronde'
-                            : 'Verberg & geef door'}
-                    </ActionButton>
-                ) : (
-                    <p className="text-center text-sm text-slate-400 dark:text-slate-500">
-                        Geef de telefoon aan {player.name}
-                    </p>
-                )}
-            </div>
+            </PhaseTransition>
         </div>
     );
 }
@@ -569,71 +600,147 @@ function DiscussScreen({
     setGame: (game: GameState) => void;
     onReset: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const order = orderFromStarter(game.players, game.starterId);
     const starter = order[0];
+    const eliminated =
+        game.players.find((player) => player.id === game.lastEliminatedId) ??
+        null;
+    const soundPlayed = useRef(false);
+
+    useEffect(() => {
+        if (soundPlayed.current) {
+            return;
+        }
+
+        soundPlayed.current = true;
+
+        if (eliminated) {
+            feel.fail();
+        } else {
+            feel.select();
+        }
+    }, [eliminated]);
+
+    const spotlightDelay = eliminated ? 0.35 : 0.1;
 
     return (
         <div className="flex flex-1 flex-col">
-            <Header round={game.round} onReset={onReset} />
+            <RoundHeader round={game.round} onReset={onReset} />
 
             <div className="flex flex-1 flex-col">
-                <h2 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">
+                <h2 className="mb-1 text-2xl font-bold text-white">
                     Beschrijf je woord
                 </h2>
-                <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mb-4 text-sm text-slate-400">
                     Om de beurt zegt elke speler{' '}
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="font-semibold text-slate-200">
                         één woord
                     </span>{' '}
                     dat naar het geheime woord hint — zonder het te zeggen. Stem
                     daarna iemand weg.
                 </p>
 
-                {starter && (
-                    <div className="mb-4 flex items-center gap-3 rounded-2xl bg-amber-500/15 px-4 py-3 ring-1 ring-amber-400/40 dark:bg-amber-500/10">
-                        <Megaphone
-                            className="size-5 shrink-0 text-amber-600 dark:text-amber-400"
+                {eliminated && (
+                    <motion.div
+                        aria-live="polite"
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: -10, scale: 0.96 }
+                        }
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 320,
+                            damping: 22,
+                        }}
+                        className="mb-3 flex items-center gap-3 rounded-2xl bg-rose-500/10 px-4 py-3 ring-1 ring-rose-400/30"
+                    >
+                        <UserX
+                            className="size-5 shrink-0 text-rose-300"
                             aria-hidden
                         />
-                        <p className="text-sm text-slate-800 dark:text-slate-200">
-                            <span className="font-bold text-slate-900 dark:text-white">
+                        <p className="text-sm text-slate-300">
+                            <span className="font-display text-lg text-rose-300">
+                                {eliminated.name}
+                            </span>{' '}
+                            is weggestemd.
+                        </p>
+                    </motion.div>
+                )}
+
+                {starter && (
+                    <motion.div
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, scale: 0.9 }
+                        }
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 320,
+                            damping: 20,
+                            delay: spotlightDelay,
+                        }}
+                        className="mb-4 flex items-center gap-3 rounded-2xl bg-(--glow)/10 px-4 py-3 ring-1 ring-(--glow)/30"
+                    >
+                        <Megaphone
+                            className="size-5 shrink-0 text-(--glow-strong)"
+                            aria-hidden
+                        />
+                        <p className="text-sm text-slate-300">
+                            <span className="font-display text-xl text-white">
                                 {starter.name}
                             </span>{' '}
-                            begint deze ronde, daarna verder op volgorde.
+                            begint deze ronde.
                         </p>
-                    </div>
+                    </motion.div>
                 )}
 
                 <div className="space-y-2">
                     {order.map((player, index) => (
-                        <div
+                        <motion.div
                             key={player.id}
+                            initial={
+                                reduceMotion
+                                    ? { opacity: 0 }
+                                    : { opacity: 0, x: -14 }
+                            }
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 300,
+                                damping: 26,
+                                delay: spotlightDelay + 0.1 + index * 0.05,
+                            }}
                             className={cn(
                                 'flex items-center gap-3 rounded-xl px-4 py-3 ring-1',
                                 index === 0
-                                    ? 'bg-amber-500/15 ring-amber-400/50 dark:bg-amber-500/10'
-                                    : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
+                                    ? 'bg-(--glow)/10 ring-(--glow)/40'
+                                    : 'bg-white/[0.045] ring-white/10',
                             )}
                         >
                             <span
                                 className={cn(
                                     'flex size-7 items-center justify-center rounded-full text-xs font-bold',
                                     index === 0
-                                        ? 'bg-amber-500 text-slate-950'
-                                        : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+                                        ? 'bg-(--glow) text-slate-950'
+                                        : 'bg-white/10 text-slate-300',
                                 )}
                             >
                                 {index + 1}
                             </span>
-                            <span className="text-base font-medium text-slate-900 dark:text-white">
+                            <span className="text-base font-medium text-white">
                                 {player.name}
                             </span>
                             {index === 0 && (
-                                <span className="ml-auto text-xs font-semibold tracking-wide text-amber-600 uppercase dark:text-amber-400">
+                                <span className="ml-auto text-xs font-semibold tracking-wide text-(--glow-strong) uppercase">
                                     Begint
                                 </span>
                             )}
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>
@@ -641,7 +748,6 @@ function DiscussScreen({
             <div className="mt-auto pt-4">
                 <ActionButton
                     onClick={() => setGame({ ...game, phase: 'vote' })}
-                    className="text-lg"
                 >
                     <Vote className="size-5" aria-hidden /> Naar de stemming
                 </ActionButton>
@@ -657,6 +763,7 @@ function VoteScreen({
     game: GameState;
     setGame: (game: GameState) => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const alive = alivePlayers(game.players);
 
@@ -687,30 +794,54 @@ function VoteScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <Header round={game.round} />
+            <RoundHeader round={game.round} />
 
-            <h2 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">
+            <h2 className="mb-1 text-2xl font-bold text-white">
                 Stem iemand weg
             </h2>
-            <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
-                Tik op de speler die je verdenkt van Undercover.
+            <p className="mb-5 text-sm text-slate-400">
+                Overleg samen en tik op de speler die jullie verdenken.
             </p>
 
             <div className="grid grid-cols-2 gap-3">
-                {alive.map((player) => (
-                    <button
+                {alive.map((player, index) => (
+                    <motion.button
                         key={player.id}
                         type="button"
-                        onClick={() => setSelectedId(player.id)}
+                        aria-pressed={selectedId === player.id}
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 10 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        whileTap={{
+                            scale: 0.95,
+                            transition: {
+                                type: 'spring',
+                                stiffness: 450,
+                                damping: 25,
+                            },
+                        }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 24,
+                            delay: index * 0.04,
+                        }}
+                        onClick={() => {
+                            feel.select();
+                            setSelectedId(player.id);
+                        }}
                         className={cn(
-                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.98]',
+                            'min-h-16 rounded-2xl px-4 py-5 text-center text-base font-semibold break-words ring-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
                             selectedId === player.id
-                                ? 'bg-rose-600 text-white ring-rose-600'
-                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                ? 'bg-rose-500 text-white shadow-[0_10px_32px_-12px_var(--color-rose-500)] ring-rose-400'
+                                : 'bg-white/[0.045] text-white ring-white/10 hover:bg-white/10',
                         )}
                     >
                         {player.name}
-                    </button>
+                    </motion.button>
                 ))}
             </div>
 
@@ -719,7 +850,6 @@ function VoteScreen({
                     variant="danger"
                     onClick={confirmVote}
                     disabled={selectedId === null}
-                    className="text-lg"
                 >
                     Wegstemmen
                 </ActionButton>
@@ -769,10 +899,21 @@ function MrWhiteScreen({
     game: GameState;
     setGame: (game: GameState) => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const [guess, setGuess] = useState('');
     const mrWhite = game.players.find(
         (player) => player.id === game.lastEliminatedId,
     );
+    const soundPlayed = useRef(false);
+
+    useEffect(() => {
+        if (soundPlayed.current) {
+            return;
+        }
+
+        soundPlayed.current = true;
+        feel.fail();
+    }, []);
 
     const submitGuess = () => {
         if (guess.trim() === '') {
@@ -803,31 +944,76 @@ function MrWhiteScreen({
     return (
         <div className="flex flex-1 flex-col">
             <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <span className="mb-4 flex size-20 items-center justify-center rounded-full bg-slate-500/15 text-slate-600 dark:bg-white/10 dark:text-slate-300">
-                    <Skull className="size-10" aria-hidden />
-                </span>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {mrWhite?.name} was Mr. White!
-                </h2>
-                <p className="mt-2 mb-6 text-sm text-slate-500 dark:text-slate-400">
-                    Laatste kans: raad het geheime woord van de Burgers om
-                    alsnog te winnen.
-                </p>
+                <motion.span
+                    aria-hidden
+                    initial={
+                        reduceMotion
+                            ? { opacity: 0 }
+                            : { scale: 0, rotate: -14, opacity: 0 }
+                    }
+                    animate={
+                        reduceMotion
+                            ? { opacity: 1 }
+                            : { scale: 1, rotate: 0, opacity: 1 }
+                    }
+                    transition={{ type: 'spring', stiffness: 300, damping: 16 }}
+                    className="mb-4 flex size-20 items-center justify-center rounded-3xl bg-white/10 text-slate-200 ring-1 ring-white/15"
+                >
+                    <Skull className="size-10" />
+                </motion.span>
+                <motion.h2
+                    aria-live="polite"
+                    initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 22,
+                        delay: 0.12,
+                    }}
+                    className="font-display text-4xl text-white"
+                >
+                    Betrapt!
+                </motion.h2>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.25 }}
+                    className="mt-2 mb-6 text-sm text-slate-400"
+                >
+                    <span className="font-semibold text-slate-200">
+                        {mrWhite?.name}
+                    </span>{' '}
+                    was Mr. White. Laatste kans: raad het geheime woord van de
+                    Burgers om alsnog te winnen.
+                </motion.p>
 
-                <input
-                    value={guess}
-                    onChange={(event) => setGuess(event.target.value)}
-                    autoFocus
-                    className="w-full max-w-xs rounded-xl border border-slate-200 bg-white px-4 py-4 text-center text-xl font-semibold text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
-                    placeholder="Jouw gok"
-                />
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.35 }}
+                    className="w-full max-w-xs"
+                >
+                    <input
+                        value={guess}
+                        onChange={(event) => setGuess(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                                submitGuess();
+                            }
+                        }}
+                        autoFocus
+                        aria-label="Jouw gok"
+                        placeholder="Jouw gok"
+                        className="w-full rounded-2xl bg-white/5 px-4 py-4 text-center text-xl font-semibold text-white ring-1 ring-white/10 placeholder:text-slate-500 focus:ring-2 focus:ring-(--glow) focus:outline-none"
+                    />
+                </motion.div>
             </div>
 
             <div className="mt-auto pt-4">
                 <ActionButton
                     onClick={submitGuess}
                     disabled={guess.trim() === ''}
-                    className="text-lg"
                 >
                     Gok indienen
                 </ActionButton>
@@ -845,7 +1031,32 @@ function GameOverScreen({
     setGame: (game: GameState) => void;
     onReset: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const civiliansWon = game.winner === 'civilians';
+    // The game only ever ends straight after the Mr. White guess screen when
+    // the last eliminated player is Mr. White — that arrival earns a beat of
+    // suspense before the verdict lands.
+    const fromMrWhiteGuess =
+        game.players.find((player) => player.id === game.lastEliminatedId)
+            ?.role === 'mrwhite';
+    const [suspense, setSuspense] = useState(
+        () => fromMrWhiteGuess && !reduceMotion,
+    );
+
+    useEffect(() => {
+        if (!suspense) {
+            return;
+        }
+
+        const timers = [
+            setTimeout(() => feel.tick(), 350),
+            setTimeout(() => feel.tick(), 800),
+            setTimeout(() => feel.tick(), 1250),
+            setTimeout(() => setSuspense(false), 1600),
+        ];
+
+        return () => timers.forEach(clearTimeout);
+    }, [suspense]);
 
     const title = game.mrWhiteWon
         ? 'Mr. White wint alsnog!'
@@ -879,82 +1090,122 @@ function GameOverScreen({
         });
     };
 
+    if (suspense) {
+        return (
+            <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
+                <span
+                    aria-hidden
+                    className="flex size-20 items-center justify-center rounded-3xl bg-white/10 text-slate-200 ring-1 ring-white/15"
+                >
+                    <Skull className="size-10" />
+                </span>
+                <p className="font-display text-3xl text-white">
+                    Was de gok juist?
+                </p>
+                <span aria-hidden className="flex items-center gap-1.5">
+                    {[0, 150, 300].map((delay) => (
+                        <span
+                            key={delay}
+                            className="size-2 animate-bounce rounded-full bg-(--glow)"
+                            style={{ animationDelay: `${delay}ms` }}
+                        />
+                    ))}
+                </span>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mt-6 mb-6 text-center">
-                <span
-                    className={cn(
-                        'mx-auto mb-3 flex size-20 items-center justify-center rounded-full',
-                        civiliansWon
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
-                            : 'bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
-                    )}
-                >
-                    <Trophy className="size-10" aria-hidden />
-                </span>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                    {title}
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    De woorden waren{' '}
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {game.pair.civilian}
-                    </span>{' '}
-                    /{' '}
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {game.pair.undercover}
-                    </span>
-                </p>
+            <div
+                className="mt-4 mb-6"
+                data-accent={
+                    game.mrWhiteWon
+                        ? undefined
+                        : civiliansWon
+                          ? 'emerald'
+                          : 'rose'
+                }
+            >
+                <CelebrationHeader
+                    icon={
+                        game.mrWhiteWon
+                            ? Skull
+                            : civiliansWon
+                              ? Trophy
+                              : VenetianMask
+                    }
+                    title={title}
+                    tone="win"
+                    subtitle={
+                        <>
+                            De woorden waren{' '}
+                            <span className="font-semibold text-slate-200">
+                                {game.pair.civilian}
+                            </span>{' '}
+                            /{' '}
+                            <span className="font-semibold text-slate-200">
+                                {game.pair.undercover}
+                            </span>
+                        </>
+                    }
+                />
             </div>
 
             <div className="space-y-2">
-                {game.players.map((player) => (
-                    <div
+                {game.players.map((player, index) => (
+                    <motion.div
                         key={player.id}
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 14 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 24,
+                            delay: 0.45 + index * 0.09,
+                        }}
                         className={cn(
-                            'flex items-center justify-between rounded-xl px-4 py-3 ring-1',
-                            player.eliminated
-                                ? 'bg-white opacity-60 ring-slate-200 dark:bg-white/5 dark:ring-white/5'
-                                : 'bg-white ring-slate-200 dark:bg-white/5 dark:ring-white/10',
+                            'flex items-center justify-between gap-2 rounded-xl bg-white/[0.045] px-4 py-3 ring-1 ring-white/10',
+                            player.eliminated && 'opacity-60',
                         )}
                     >
-                        <span className="flex items-center gap-2 text-base font-medium text-slate-900 dark:text-white">
-                            {player.name}
+                        <span className="flex min-w-0 items-center gap-2 text-base font-medium text-white">
+                            <span className="truncate">{player.name}</span>
                             {player.eliminated && (
                                 <Skull
-                                    className="size-4 text-slate-400 dark:text-slate-500"
+                                    className="size-4 shrink-0 text-slate-500"
                                     aria-hidden
                                 />
                             )}
                         </span>
                         <span
                             className={cn(
-                                'rounded-full px-3 py-1 text-xs font-bold',
+                                'shrink-0 rounded-full px-3 py-1 text-xs font-bold',
                                 player.role === 'civilian' &&
-                                    'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+                                    'bg-emerald-400/15 text-emerald-300',
                                 player.role === 'undercover' &&
-                                    'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+                                    'bg-rose-400/15 text-rose-300',
                                 player.role === 'mrwhite' &&
-                                    'bg-slate-400/20 text-slate-700 dark:text-slate-200',
+                                    'bg-white/10 text-slate-200',
                             )}
                         >
                             {ROLE_LABEL[player.role]}
                             {player.word ? ` · ${player.word}` : ''}
                         </span>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 
             <div className="mt-auto space-y-3 pt-6">
-                <ActionButton onClick={playAgain} className="text-lg">
+                <ActionButton onClick={playAgain}>
                     <RotateCcw className="size-5" aria-hidden /> Opnieuw —
                     zelfde spelers
                 </ActionButton>
-                <ActionButton
-                    variant="neutral"
-                    onClick={onReset}
-                    className="h-12"
-                >
+                <ActionButton variant="neutral" onClick={onReset}>
                     Nieuw spel
                 </ActionButton>
             </div>
@@ -962,19 +1213,51 @@ function GameOverScreen({
     );
 }
 
-function Header({ round, onReset }: { round: number; onReset?: () => void }) {
+function RoundHeader({
+    round,
+    onReset,
+}: {
+    round: number;
+    onReset?: () => void;
+}) {
+    const [armed, setArmed] = useState(false);
+
+    useEffect(() => {
+        if (!armed) {
+            return;
+        }
+
+        const timeout = setTimeout(() => setArmed(false), 3000);
+
+        return () => clearTimeout(timeout);
+    }, [armed]);
+
     return (
         <div className="mb-5 flex items-center justify-between">
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
+            <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold tracking-widest text-slate-300 uppercase ring-1 ring-white/10">
                 Ronde {round}
             </span>
             {onReset && (
                 <button
                     type="button"
-                    onClick={onReset}
-                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-200"
+                    onClick={() => {
+                        if (armed) {
+                            feel.tap();
+                            onReset();
+                        } else {
+                            feel.select();
+                            setArmed(true);
+                        }
+                    }}
+                    className={cn(
+                        'flex h-9 items-center gap-1.5 rounded-full px-3 text-xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                        armed
+                            ? 'bg-rose-500/15 font-semibold text-rose-300 ring-1 ring-rose-400/40'
+                            : 'font-medium text-slate-400 hover:text-white',
+                    )}
                 >
-                    <RotateCcw className="size-3.5" aria-hidden /> Nieuw spel
+                    <RotateCcw className="size-3.5" aria-hidden />
+                    {armed ? 'Zeker weten?' : 'Nieuw spel'}
                 </button>
             )}
         </div>

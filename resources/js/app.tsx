@@ -20,6 +20,7 @@ createInertiaApp({
             case name === 'pim-pam-pet':
             case name === 'wie-in-de-groep':
             case name === 'horse-race':
+            case name === 'mexen':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
@@ -39,7 +40,7 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#fbbf24',
     },
 });
 

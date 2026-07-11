@@ -2,6 +2,7 @@ import { Form } from '@inertiajs/react';
 import { TriangleAlert } from 'lucide-react';
 import { useRef } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import { Panel } from '@/components/game-ui';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
@@ -15,59 +16,69 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { feel } from '@/hooks/use-game-feel';
 
-const darkDialog =
-    'border-slate-200 bg-white text-slate-900 ring-1 ring-slate-200 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100 dark:ring-white/10';
+const nightDialog =
+    'border-white/10 bg-popover text-slate-100 ring-1 ring-white/10';
 
-const darkPasswordInput =
-    'h-auto rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-11 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500';
+const nightPasswordInput =
+    'h-auto rounded-xl border-white/10 bg-white/5 py-3 pl-4 pr-11 text-base text-white placeholder:text-slate-500 focus-visible:border-rose-400 focus-visible:ring-2 focus-visible:ring-rose-400/40';
 
-const roseButton =
-    'rounded-2xl bg-rose-500 px-5 font-bold text-white hover:bg-rose-400';
+const dangerCta =
+    'h-14 w-full rounded-2xl bg-rose-500 text-base font-semibold text-white shadow-[0_10px_32px_-12px_var(--color-rose-500)] transition hover:bg-rose-400 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-rose-400';
+
+const dialogCancelButton =
+    'h-12 rounded-xl bg-white/5 px-5 font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-white/10 hover:text-white';
+
+const dialogDangerButton =
+    'h-12 rounded-xl bg-rose-500 px-5 font-semibold text-white hover:bg-rose-400';
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
 
     return (
-        <section className="space-y-4 rounded-2xl bg-rose-500/10 p-5 ring-1 ring-rose-500/30">
-            <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Account verwijderen
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Verwijder je account en alle bijbehorende gegevens.
-                </p>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl bg-rose-500/10 p-4 ring-1 ring-rose-500/20">
-                <TriangleAlert
-                    className="size-5 shrink-0 text-rose-600 dark:text-rose-300"
+        <Panel className="space-y-4 bg-rose-500/10 p-5 ring-rose-500/30">
+            <div className="flex items-start gap-3">
+                <span
                     aria-hidden
-                />
-                <div className="space-y-0.5 text-rose-900 dark:text-rose-100">
-                    <p className="font-semibold">Let op</p>
-                    <p className="text-sm text-rose-700 dark:text-rose-200/80">
-                        Ga voorzichtig te werk, dit kan niet ongedaan worden
-                        gemaakt.
+                    className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/12 text-rose-300 ring-1 ring-rose-500/25"
+                >
+                    <TriangleAlert className="size-5" />
+                </span>
+                <div>
+                    <h2 className="text-lg font-bold text-white">
+                        Account verwijderen
+                    </h2>
+                    <p className="mt-0.5 text-sm text-slate-400">
+                        Verwijder je account en alle bijbehorende gegevens.
                     </p>
                 </div>
+            </div>
+
+            <div className="rounded-xl bg-rose-500/10 p-4 ring-1 ring-rose-500/20">
+                <p className="font-semibold text-rose-100">Let op</p>
+                <p className="mt-0.5 text-sm text-rose-200/80">
+                    Ga voorzichtig te werk, dit kan niet ongedaan worden
+                    gemaakt.
+                </p>
             </div>
 
             <Dialog>
                 <DialogTrigger asChild>
                     <Button
                         variant="destructive"
-                        className={roseButton}
+                        className={dangerCta}
                         data-test="delete-user-button"
+                        onClick={() => feel.tap()}
                     >
                         Account verwijderen
                     </Button>
                 </DialogTrigger>
-                <DialogContent className={darkDialog}>
-                    <DialogTitle className="text-slate-900 dark:text-white">
+                <DialogContent className={nightDialog}>
+                    <DialogTitle className="text-white">
                         Weet je zeker dat je je account wilt verwijderen?
                     </DialogTitle>
-                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                    <DialogDescription className="text-slate-400">
                         Zodra je account is verwijderd, worden alle bijbehorende
                         gegevens permanent gewist. Voer je wachtwoord in om te
                         bevestigen dat je je account definitief wilt
@@ -99,20 +110,17 @@ export default function DeleteUser() {
                                         ref={passwordInput}
                                         placeholder="Wachtwoord"
                                         autoComplete="current-password"
-                                        className={darkPasswordInput}
+                                        className={nightPasswordInput}
                                     />
 
-                                    <InputError
-                                        className="text-rose-600 dark:text-rose-400"
-                                        message={errors.password}
-                                    />
+                                    <InputError message={errors.password} />
                                 </div>
 
                                 <DialogFooter className="gap-2">
                                     <DialogClose asChild>
                                         <Button
                                             variant="secondary"
-                                            className="rounded-2xl bg-slate-100 px-5 font-semibold text-slate-800 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                                            className={dialogCancelButton}
                                             onClick={() =>
                                                 resetAndClearErrors()
                                             }
@@ -123,7 +131,7 @@ export default function DeleteUser() {
 
                                     <Button
                                         variant="destructive"
-                                        className={roseButton}
+                                        className={dialogDangerButton}
                                         disabled={processing}
                                         asChild
                                     >
@@ -140,6 +148,6 @@ export default function DeleteUser() {
                     </Form>
                 </DialogContent>
             </Dialog>
-        </section>
+        </Panel>
     );
 }

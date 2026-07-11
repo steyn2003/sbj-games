@@ -1,26 +1,31 @@
 import { router, usePage } from '@inertiajs/react';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
     ArrowRight,
     Eye,
     EyeOff,
     MapPin,
-    Minus,
     Play,
-    Plus,
     RotateCcw,
     Timer,
     Trophy,
-    Users,
     VenetianMask,
     Vote,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActionButton,
+    CelebrationHeader,
+    FlipCard,
     GameHeader,
     GameShell,
     Panel,
+    PassPhoneGate,
+    PhaseTransition,
+    Stepper,
+    TimerRing,
 } from '@/components/game-ui';
+import { feel } from '@/hooks/use-game-feel';
 import {
     dealSpyLocation,
     isLocationGuessCorrect,
@@ -87,21 +92,23 @@ export default function SpyLocation() {
     };
 
     return (
-        <GameShell title="Spion">
-            {game === null ? (
-                <SetupScreen
-                    resumable={currentGame}
-                    history={history}
-                    onResume={(state) => setGame(state)}
-                    onStart={setGame}
-                />
-            ) : (
-                <PlayScreen
-                    game={game}
-                    setGame={setGame}
-                    onReset={resetToSetup}
-                />
-            )}
+        <GameShell title="Spion" accent="cyan">
+            <PhaseTransition phaseKey={game === null ? 'setup' : game.phase}>
+                {game === null ? (
+                    <SetupScreen
+                        resumable={currentGame}
+                        history={history}
+                        onResume={(state) => setGame(state)}
+                        onStart={setGame}
+                    />
+                ) : (
+                    <PlayScreen
+                        game={game}
+                        setGame={setGame}
+                        onReset={resetToSetup}
+                    />
+                )}
+            </PhaseTransition>
         </GameShell>
     );
 }
@@ -178,33 +185,33 @@ function SetupScreen({
             />
 
             {resumable && (
-                <button
+                <motion.button
                     type="button"
-                    onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-white/5 dark:shadow-none dark:ring-white/10 dark:hover:bg-white/10"
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                        feel.tap();
+                        onResume(resumable.state);
+                    }}
+                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-white/[0.045] px-4 py-3 text-left ring-1 ring-white/10 transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
                 >
-                    <span className="flex size-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <span className="flex size-10 items-center justify-center rounded-xl bg-(--glow)/12 text-(--glow-strong) ring-1 ring-(--glow)/25">
                         <Play className="size-5" aria-hidden />
                     </span>
                     <span className="flex-1">
-                        <span className="block text-sm font-bold text-slate-900 dark:text-white">
+                        <span className="block text-sm font-bold text-white">
                             Ga verder
                         </span>
-                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                        <span className="block text-xs text-slate-400">
                             {resumable.state.players?.length ?? 0} spelers
                         </span>
                     </span>
-                    <ArrowRight
-                        className="size-5 text-slate-400 dark:text-slate-500"
-                        aria-hidden
-                    />
-                </button>
+                    <ArrowRight className="size-5 text-slate-500" aria-hidden />
+                </motion.button>
             )}
 
-            <Panel className="mb-5">
+            <Panel className="mb-5 space-y-3">
                 <Stepper
                     label="Spelers"
-                    icon={<Users className="size-4" aria-hidden />}
                     value={names.length}
                     min={MIN_PLAYERS}
                     max={MAX_PLAYERS}
@@ -212,7 +219,6 @@ function SetupScreen({
                 />
                 <Stepper
                     label="Spionnen"
-                    icon={<VenetianMask className="size-4" aria-hidden />}
                     value={spyCount}
                     min={1}
                     max={Math.max(1, names.length - 2)}
@@ -228,32 +234,36 @@ function SetupScreen({
             </Panel>
 
             <Panel className="mb-5">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-300">
                     <Timer className="size-4" aria-hidden /> Tijd om te
                     overleggen
                 </h2>
                 <div className="grid grid-cols-3 gap-3">
                     {TIMER_MINUTES_OPTIONS.map((option) => (
-                        <button
+                        <motion.button
                             key={option}
                             type="button"
-                            onClick={() => setMinutes(option)}
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => {
+                                feel.select();
+                                setMinutes(option);
+                            }}
                             aria-pressed={minutes === option}
                             className={cn(
-                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.98]',
+                                'rounded-xl py-3 text-base font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
                                 minutes === option
-                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-(--glow) text-slate-950 shadow-[0_0_24px_-8px_var(--glow)]'
+                                    : 'bg-white/5 text-white ring-1 ring-white/10 hover:bg-white/10',
                             )}
                         >
                             {option} min
-                        </button>
+                        </motion.button>
                     ))}
                 </div>
             </Panel>
 
             <section className="mb-5 space-y-2">
-                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                     Namen
                 </h2>
                 {names.map((name, index) => (
@@ -264,7 +274,7 @@ function SetupScreen({
                             updateName(index, event.target.value)
                         }
                         maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        className="w-full rounded-xl bg-white/5 px-4 py-3 text-base text-white ring-1 ring-white/10 placeholder:text-slate-500 focus:ring-2 focus:ring-(--glow) focus:outline-none"
                         placeholder={`Speler ${index + 1}`}
                     />
                 ))}
@@ -274,7 +284,7 @@ function SetupScreen({
 
             <div className="mt-auto pt-2">
                 {error && (
-                    <p className="mb-3 text-center text-sm text-rose-600 dark:text-rose-400">
+                    <p className="mb-3 text-center text-sm text-rose-400">
                         {error}
                     </p>
                 )}
@@ -302,7 +312,7 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
 
     return (
         <section className="mb-5">
-            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                 Recente potjes
             </h2>
             <div className="space-y-2">
@@ -312,26 +322,26 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
                     return (
                         <div
                             key={entry.id}
-                            className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
+                            className="flex items-center justify-between rounded-xl bg-white/[0.045] px-4 py-3 text-sm ring-1 ring-white/10"
                         >
                             <span className="flex items-center gap-2">
                                 <span
                                     className={cn(
                                         'rounded-full px-2 py-0.5 text-xs font-bold',
                                         playersWon
-                                            ? 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-                                            : 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+                                            ? 'bg-emerald-400/15 text-emerald-300'
+                                            : 'bg-rose-400/15 text-rose-300',
                                     )}
                                 >
                                     {playersWon
                                         ? 'Spelers wonnen'
                                         : 'Spion won'}
                                 </span>
-                                <span className="text-slate-500 dark:text-slate-400">
+                                <span className="text-slate-400">
                                     {entry.state.location}
                                 </span>
                             </span>
-                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                            <span className="text-xs text-slate-500">
                                 {formatDate(entry.finished_at)}
                             </span>
                         </div>
@@ -353,89 +363,55 @@ function formatDate(value: string | null): string {
     });
 }
 
-function Stepper({
-    label,
-    icon,
-    value,
-    min,
-    max,
-    onChange,
-}: {
-    label: string;
-    icon: React.ReactNode;
-    value: number;
-    min: number;
-    max: number;
-    onChange: (value: number) => void;
-}) {
-    return (
-        <div className="flex items-center justify-between py-2">
-            <span className="flex items-center gap-2 text-sm font-medium">
-                {icon} {label}
-            </span>
-            <div className="flex items-center gap-3">
-                <StepperButton
-                    onClick={() => onChange(value - 1)}
-                    disabled={value <= min}
-                >
-                    <Minus className="size-4" />
-                </StepperButton>
-                <span className="w-6 text-center text-lg font-bold tabular-nums">
-                    {value}
-                </span>
-                <StepperButton
-                    onClick={() => onChange(value + 1)}
-                    disabled={value >= max}
-                >
-                    <Plus className="size-4" />
-                </StepperButton>
-            </div>
-        </div>
-    );
-}
+/**
+ * Mid-game "Nieuw spel" escape hatch with an inline arm-confirm: the first
+ * tap arms it for three seconds, the second tap actually abandons the round.
+ */
+function ResetLink({ onReset }: { onReset: () => void }) {
+    const [armed, setArmed] = useState(false);
 
-function StepperButton({
-    children,
-    onClick,
-    disabled,
-}: {
-    children: React.ReactNode;
-    onClick: () => void;
-    disabled?: boolean;
-}) {
+    useEffect(() => {
+        if (!armed) {
+            return;
+        }
+
+        const id = window.setTimeout(() => setArmed(false), 3000);
+
+        return () => window.clearTimeout(id);
+    }, [armed]);
+
     return (
         <button
             type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+            onClick={() => {
+                if (armed) {
+                    feel.tap();
+                    onReset();
+                } else {
+                    feel.select();
+                    setArmed(true);
+                }
+            }}
+            className={cn(
+                'flex h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                armed
+                    ? 'bg-rose-500/15 text-rose-300 ring-1 ring-rose-400/40'
+                    : 'text-slate-400 hover:text-white',
+            )}
         >
-            {children}
+            <RotateCcw className="size-3.5" aria-hidden />
+            {armed ? 'Zeker weten?' : 'Nieuw spel'}
         </button>
     );
 }
 
-function PhaseHeader({
-    label,
-    onReset,
-}: {
-    label: string;
-    onReset?: () => void;
-}) {
+function PhaseTop({ label, onReset }: { label: string; onReset: () => void }) {
     return (
         <div className="mb-4 flex items-center justify-between">
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
+            <span className="rounded-full bg-(--glow)/10 px-3 py-1 text-xs font-semibold tracking-widest text-(--glow-strong) uppercase ring-1 ring-(--glow)/20">
                 {label}
             </span>
-            {onReset && (
-                <button
-                    type="button"
-                    onClick={onReset}
-                    className="flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                    <RotateCcw className="size-3.5" aria-hidden /> Nieuw spel
-                </button>
-            )}
+            <ResetLink onReset={onReset} />
         </div>
     );
 }
@@ -485,6 +461,122 @@ function PlayScreen({
     }
 }
 
+function SpyCardBack() {
+    const reduceMotion = useReducedMotion();
+
+    return (
+        <div
+            role="status"
+            aria-live="polite"
+            className="flex size-full flex-col items-center justify-center gap-4 rounded-3xl bg-rose-500/10 p-6 text-center shadow-[0_0_60px_-18px_var(--color-rose-500)] ring-1 ring-rose-400/30"
+        >
+            <motion.span
+                aria-hidden
+                initial={
+                    reduceMotion
+                        ? { opacity: 0 }
+                        : { scale: 0, rotate: -14, opacity: 0 }
+                }
+                animate={
+                    reduceMotion
+                        ? { opacity: 1 }
+                        : { scale: 1, rotate: 0, opacity: 1 }
+                }
+                transition={{
+                    delay: 0.18,
+                    type: 'spring',
+                    stiffness: 320,
+                    damping: 18,
+                }}
+                className="flex size-20 items-center justify-center rounded-3xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30"
+            >
+                <VenetianMask className="size-10" />
+            </motion.span>
+            <motion.span
+                initial={
+                    reduceMotion ? { opacity: 0 } : { scale: 1.7, opacity: 0 }
+                }
+                animate={
+                    reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }
+                }
+                transition={{
+                    delay: 0.32,
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20,
+                }}
+                className="font-display text-4xl text-rose-300"
+            >
+                Spion
+            </motion.span>
+            <p className="text-sm text-slate-300">
+                Jij kent de locatie niet. Stel slimme vragen en raad hem!
+            </p>
+        </div>
+    );
+}
+
+function LocationCardBack({
+    playerName,
+    location,
+}: {
+    playerName: string;
+    location: string;
+}) {
+    const reduceMotion = useReducedMotion();
+
+    return (
+        <div
+            role="status"
+            aria-live="polite"
+            className="flex size-full flex-col items-center justify-center gap-4 rounded-3xl bg-emerald-500/10 p-6 text-center shadow-[0_0_60px_-18px_var(--color-emerald-500)] ring-1 ring-emerald-400/30"
+        >
+            <p className="text-sm font-medium text-slate-300">
+                {playerName}, de locatie is
+            </p>
+            <motion.span
+                aria-hidden
+                initial={
+                    reduceMotion
+                        ? { opacity: 0 }
+                        : { scale: 0, rotate: 12, opacity: 0 }
+                }
+                animate={
+                    reduceMotion
+                        ? { opacity: 1 }
+                        : { scale: 1, rotate: 0, opacity: 1 }
+                }
+                transition={{
+                    delay: 0.18,
+                    type: 'spring',
+                    stiffness: 320,
+                    damping: 18,
+                }}
+                className="flex size-16 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30"
+            >
+                <MapPin className="size-8" />
+            </motion.span>
+            <motion.span
+                initial={
+                    reduceMotion ? { opacity: 0 } : { scale: 1.6, opacity: 0 }
+                }
+                animate={
+                    reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }
+                }
+                transition={{
+                    delay: 0.32,
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20,
+                }}
+                className="font-display text-4xl break-words text-white"
+            >
+                {location}
+            </motion.span>
+        </div>
+    );
+}
+
 function RevealScreen({
     game,
     setGame,
@@ -492,12 +584,24 @@ function RevealScreen({
     game: GameState;
     setGame: (game: GameState) => void;
 }) {
+    const [claimed, setClaimed] = useState(false);
     const [revealed, setRevealed] = useState(false);
     const player = game.players[game.revealIndex];
     const isLast = game.revealIndex === game.players.length - 1;
 
+    const reveal = () => {
+        if (revealed) {
+            return;
+        }
+
+        feel.flip();
+        setRevealed(true);
+    };
+
     const next = () => {
+        // Hide first, so the next card can never render face-up.
         setRevealed(false);
+        setClaimed(false);
 
         if (isLast) {
             setGame({ ...game, phase: 'discuss' });
@@ -508,81 +612,107 @@ function RevealScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <p className="mb-2 text-center text-sm text-slate-500 dark:text-slate-400">
-                Kaart {game.revealIndex + 1} van {game.players.length}
-            </p>
-
-            <div className="flex flex-1 flex-col items-center justify-center">
-                {!revealed ? (
-                    <button
-                        type="button"
-                        onClick={() => setRevealed(true)}
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-slate-900 p-6 text-center shadow-sm ring-1 ring-slate-800 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.98] dark:ring-white/10"
-                    >
-                        <span className="text-2xl font-bold text-white">
-                            {player.name}
-                        </span>
-                        <span className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90">
-                            <Eye className="size-4" aria-hidden /> Tik om je
-                            kaart te zien
-                        </span>
-                        <span className="text-xs text-white/60">
-                            Zorg dat niemand meekijkt
-                        </span>
-                    </button>
-                ) : (
-                    <div
-                        role="status"
-                        aria-live="polite"
-                        className="flex aspect-[3/4] w-full max-w-xs flex-col items-center justify-center gap-4 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
-                    >
-                        {player.isSpy ? (
-                            <div className="flex flex-col items-center gap-3">
-                                <span className="flex size-20 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
-                                    <VenetianMask
-                                        className="size-10"
-                                        aria-hidden
-                                    />
-                                </span>
-                                <span className="text-3xl font-bold text-slate-900 dark:text-white">
-                                    Spion
-                                </span>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                    Jij kent de locatie niet. Stel slimme vragen
-                                    en raad hem!
-                                </span>
-                            </div>
-                        ) : (
-                            <>
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                                    {player.name}, de locatie is
-                                </span>
-                                <span className="flex size-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
-                                    <MapPin className="size-8" aria-hidden />
-                                </span>
-                                <span className="text-4xl font-bold break-words text-slate-900 dark:text-white">
-                                    {game.location}
-                                </span>
-                            </>
-                        )}
-                    </div>
-                )}
+            <div className="mb-2 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                    {game.players.map((dot, index) => (
+                        <span
+                            key={dot.id}
+                            aria-hidden
+                            className={cn(
+                                'h-1.5 rounded-full transition-all',
+                                index < game.revealIndex
+                                    ? 'w-1.5 bg-(--glow)/60'
+                                    : index === game.revealIndex
+                                      ? 'w-5 bg-(--glow)'
+                                      : 'w-1.5 bg-white/15',
+                            )}
+                        />
+                    ))}
+                </div>
+                <p className="text-xs font-medium text-slate-500">
+                    Kaart {game.revealIndex + 1} van {game.players.length}
+                </p>
             </div>
 
-            <div className="mt-auto pt-4">
-                {revealed ? (
-                    <ActionButton onClick={next} className="text-lg">
-                        <EyeOff className="size-5" aria-hidden />
-                        {isLast
-                            ? 'Klaar — start het overleg'
-                            : 'Verberg & geef door'}
-                    </ActionButton>
+            <PhaseTransition
+                phaseKey={`${player.id}:${claimed ? 'card' : 'gate'}`}
+            >
+                {!claimed ? (
+                    <PassPhoneGate
+                        name={player.name}
+                        instruction="Geef de telefoon aan"
+                        onReady={() => setClaimed(true)}
+                    >
+                        <p className="text-xs text-slate-500">
+                            Zorg dat niemand anders meekijkt.
+                        </p>
+                    </PassPhoneGate>
                 ) : (
-                    <p className="text-center text-sm text-slate-600 dark:text-slate-300">
-                        Geef de telefoon aan {player.name}
-                    </p>
+                    <>
+                        <div className="flex flex-1 items-center justify-center py-4">
+                            <FlipCard
+                                revealed={revealed}
+                                className="aspect-[3/4] w-full max-w-xs"
+                                front={
+                                    <button
+                                        type="button"
+                                        onClick={reveal}
+                                        className="relative flex size-full flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl bg-white/[0.045] p-6 text-center ring-1 ring-white/10 transition hover:bg-white/[0.07] focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
+                                    >
+                                        <VenetianMask
+                                            aria-hidden
+                                            className="pointer-events-none absolute -top-5 -right-5 size-28 rotate-12 text-white/[0.05]"
+                                        />
+                                        <span className="text-[11px] font-semibold tracking-widest text-(--glow-strong) uppercase">
+                                            Geheime kaart
+                                        </span>
+                                        <span className="font-display text-3xl break-words text-white">
+                                            {player.name}
+                                        </span>
+                                        <span className="flex items-center gap-2 rounded-full bg-(--glow)/12 px-4 py-2 text-sm font-medium text-(--glow-strong) ring-1 ring-(--glow)/25">
+                                            <Eye
+                                                className="size-4"
+                                                aria-hidden
+                                            />{' '}
+                                            Tik om je kaart te zien
+                                        </span>
+                                        <span className="text-xs text-slate-500">
+                                            Zorg dat niemand meekijkt
+                                        </span>
+                                    </button>
+                                }
+                                back={
+                                    player.isSpy ? (
+                                        <SpyCardBack />
+                                    ) : (
+                                        <LocationCardBack
+                                            playerName={player.name}
+                                            location={game.location}
+                                        />
+                                    )
+                                }
+                            />
+                        </div>
+                        <div className="mt-auto pt-4">
+                            {revealed ? (
+                                <ActionButton
+                                    onClick={next}
+                                    className="text-lg"
+                                >
+                                    <EyeOff className="size-5" aria-hidden />
+                                    {isLast
+                                        ? 'Klaar — start het overleg'
+                                        : 'Verberg & geef door'}
+                                </ActionButton>
+                            ) : (
+                                <p className="text-center text-sm text-slate-400">
+                                    Tik op de kaart om je geheime rol te zien.
+                                </p>
+                            )}
+                        </div>
+                    </>
                 )}
-            </div>
+            </PhaseTransition>
         </div>
     );
 }
@@ -597,6 +727,7 @@ function DiscussScreen({
     onReset: () => void;
 }) {
     const [secondsLeft, setSecondsLeft] = useState(game.timerSeconds);
+    const reduceMotion = useReducedMotion();
 
     useEffect(() => {
         const id = window.setInterval(() => {
@@ -606,64 +737,86 @@ function DiscussScreen({
         return () => window.clearInterval(id);
     }, []);
 
-    const minutes = Math.floor(secondsLeft / 60);
-    const seconds = secondsLeft % 60;
+    useEffect(() => {
+        if (secondsLeft === 0) {
+            feel.fail();
+        } else if (secondsLeft <= 10) {
+            feel.tick();
+        }
+    }, [secondsLeft]);
+
     const timeUp = secondsLeft === 0;
-    const urgent = secondsLeft <= 30;
 
     return (
         <div className="flex flex-1 flex-col">
-            <PhaseHeader label="Overleg" onReset={onReset} />
+            <PhaseTop label="Overleg" onReset={onReset} />
 
-            <div
-                className={cn(
-                    'mb-5 rounded-2xl py-4 text-center ring-1 transition',
-                    urgent
-                        ? 'bg-rose-500/15 ring-rose-400/50'
-                        : 'bg-white shadow-sm ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10',
-                )}
-            >
-                <span
-                    className={cn(
-                        'text-4xl font-bold tabular-nums',
-                        urgent
-                            ? 'text-rose-600 dark:text-rose-300'
-                            : 'text-slate-900 dark:text-white',
-                    )}
-                >
-                    {minutes}:{seconds.toString().padStart(2, '0')}
-                </span>
-                {timeUp && (
-                    <p
+            <div className="mb-4 flex flex-col items-center">
+                <TimerRing
+                    seconds={secondsLeft}
+                    total={game.timerSeconds}
+                    size={160}
+                />
+                {timeUp ? (
+                    <motion.div
                         role="status"
-                        aria-live="polite"
-                        className="mt-1 text-sm font-semibold text-rose-600 dark:text-rose-300"
+                        aria-live="assertive"
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { scale: 1.5, opacity: 0 }
+                        }
+                        animate={
+                            reduceMotion
+                                ? { opacity: 1 }
+                                : { scale: 1, opacity: 1 }
+                        }
+                        transition={{
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 18,
+                        }}
+                        className="mt-3 text-center"
                     >
-                        Tijd is om — ga stemmen
+                        <p className="font-display text-4xl text-rose-400">
+                            Tijd is om!
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400">
+                            Ga stemmen.
+                        </p>
+                    </motion.div>
+                ) : (
+                    <p className="mt-3 text-center text-sm text-slate-400">
+                        Stel elkaar vragen over de locatie. De Spion bluft mee
+                        en probeert de plek te raden.
                     </p>
                 )}
             </div>
 
-            <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-                Stel elkaar om de beurt vragen over de locatie. De Spion
-                probeert te bluffen en de plek te raden. Stem als de tijd om is.
-            </p>
-
-            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
-                Mogelijke locaties
-            </h2>
-            <div className="grid grid-cols-2 gap-1.5">
-                {LOCATIONS.map((location) => (
-                    <span
-                        key={location}
-                        className="rounded-lg bg-white px-3 py-1.5 text-center text-xs font-medium text-slate-600 ring-1 ring-slate-200 dark:bg-white/5 dark:text-slate-300 dark:ring-white/5"
-                    >
-                        {location}
+            <Panel className="flex min-h-32 flex-1 flex-col overflow-hidden p-0">
+                <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                    <h2 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                        Mogelijke locaties
+                    </h2>
+                    <span className="text-xs text-slate-500">
+                        {LOCATIONS.length}
                     </span>
-                ))}
-            </div>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+                    <div className="grid grid-cols-2 gap-1.5">
+                        {LOCATIONS.map((location) => (
+                            <span
+                                key={location}
+                                className="rounded-lg bg-white/5 px-3 py-2 text-center text-xs font-medium text-slate-300 ring-1 ring-white/10"
+                            >
+                                {location}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </Panel>
 
-            <div className="mt-auto pt-4">
+            <div className="pt-4">
                 <ActionButton
                     onClick={() => setGame({ ...game, phase: 'vote' })}
                     className="text-lg"
@@ -715,31 +868,35 @@ function VoteScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <PhaseHeader label="Stemming" onReset={onReset} />
+            <PhaseTop label="Stemming" onReset={onReset} />
 
-            <h2 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">
+            <h2 className="mb-1 font-display text-3xl text-white">
                 Wie is de Spion?
             </h2>
-            <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mb-5 text-sm text-slate-400">
                 Overleg en tik samen op de verdachte.
             </p>
 
             <div className="grid grid-cols-2 gap-3">
                 {game.players.map((player) => (
-                    <button
+                    <motion.button
                         key={player.id}
                         type="button"
-                        onClick={() => setSelectedId(player.id)}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => {
+                            feel.select();
+                            setSelectedId(player.id);
+                        }}
                         aria-pressed={selectedId === player.id}
                         className={cn(
-                            'rounded-2xl px-4 py-5 text-center text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.98]',
+                            'min-h-16 rounded-2xl px-4 py-5 text-center text-base font-semibold break-words transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
                             selectedId === player.id
-                                ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                ? 'bg-(--glow)/15 text-white shadow-[0_0_32px_-10px_var(--glow)] ring-2 ring-(--glow)'
+                                : 'bg-white/5 text-white ring-1 ring-white/10 hover:bg-white/10',
                         )}
                     >
                         {player.name}
-                    </button>
+                    </motion.button>
                 ))}
             </div>
 
@@ -769,7 +926,20 @@ function SpyGuessScreen({
     const [selectedLocation, setSelectedLocation] = useState<string | null>(
         null,
     );
+    const reduceMotion = useReducedMotion();
+    const played = useRef(false);
     const caughtSpy = game.players.find((player) => player.id === game.votedId);
+
+    useEffect(() => {
+        const id = window.setTimeout(() => {
+            if (!played.current) {
+                played.current = true;
+                feel.success();
+            }
+        }, 700);
+
+        return () => window.clearTimeout(id);
+    }, []);
 
     const confirmGuess = () => {
         if (selectedLocation === null) {
@@ -788,47 +958,97 @@ function SpyGuessScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <PhaseHeader label="Spion ontmaskerd" onReset={onReset} />
+            <PhaseTop label="Spion ontmaskerd" onReset={onReset} />
 
             <div
                 role="status"
                 aria-live="polite"
                 className="mb-4 flex flex-col items-center text-center"
             >
-                <span className="mb-3 flex size-16 items-center justify-center rounded-full bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
-                    <VenetianMask className="size-8" aria-hidden />
-                </span>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {caughtSpy?.name} was de Spion!
-                </h2>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="font-display text-3xl text-white"
+                >
+                    {caughtSpy?.name}
+                </motion.p>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.25 }}
+                    className="mt-1 text-sm text-slate-400"
+                >
+                    was de hele tijd…
+                </motion.p>
+                <motion.div
+                    initial={
+                        reduceMotion
+                            ? { opacity: 0 }
+                            : { scale: 2.1, opacity: 0 }
+                    }
+                    animate={
+                        reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }
+                    }
+                    transition={{
+                        delay: 0.7,
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 18,
+                    }}
+                    className="mt-2 flex items-center gap-3"
+                >
+                    <span
+                        aria-hidden
+                        className="flex size-12 items-center justify-center rounded-2xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30"
+                    >
+                        <VenetianMask className="size-6" />
+                    </span>
+                    <span className="font-display text-5xl text-rose-400">
+                        SPION!
+                    </span>
+                </motion.div>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.3 }}
+                    className="mt-3 text-sm text-slate-400"
+                >
                     Laatste kans: raad de geheime locatie om alsnog te winnen.
-                </p>
+                </motion.p>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="min-h-0 flex-1 overflow-y-auto"
+            >
                 <div className="grid grid-cols-2 gap-2 pb-2">
                     {LOCATIONS.map((location) => (
                         <button
                             key={location}
                             type="button"
-                            onClick={() => setSelectedLocation(location)}
+                            onClick={() => {
+                                feel.select();
+                                setSelectedLocation(location);
+                            }}
                             aria-pressed={selectedLocation === location}
                             className={cn(
-                                'rounded-xl px-3 py-3 text-center text-sm font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.98]',
+                                'min-h-12 rounded-xl px-3 py-3 text-center text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow) active:scale-[0.97]',
                                 selectedLocation === location
-                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
+                                    ? 'bg-(--glow)/15 text-white shadow-[0_0_28px_-8px_var(--glow)] ring-2 ring-(--glow)'
+                                    : 'bg-white/5 text-slate-200 ring-1 ring-white/10 hover:bg-white/10',
                             )}
                         >
                             {location}
                         </button>
                     ))}
                 </div>
-            </div>
+            </motion.div>
 
             <div className="pt-4">
                 <ActionButton
+                    variant="danger"
                     onClick={confirmGuess}
                     disabled={selectedLocation === null}
                     className="text-lg"
@@ -849,8 +1069,25 @@ function GameOverScreen({
     setGame: (game: GameState) => void;
     onReset: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const playersWon = game.winner === 'players';
     const spyNames = spies(game.players).map((player) => player.name);
+    const accused =
+        game.votedId === null
+            ? undefined
+            : game.players.find((player) => player.id === game.votedId);
+    const showInnocentPrelude = Boolean(accused && !accused.isSpy);
+    const [verdictDone, setVerdictDone] = useState(!showInnocentPrelude);
+
+    useEffect(() => {
+        if (verdictDone) {
+            return;
+        }
+
+        const id = window.setTimeout(() => setVerdictDone(true), 2100);
+
+        return () => window.clearTimeout(id);
+    }, [verdictDone]);
 
     const title = playersWon
         ? 'De spelers winnen!'
@@ -867,56 +1104,114 @@ function GameOverScreen({
         setGame(startGame(settings, game.timerSeconds));
     };
 
+    if (!verdictDone) {
+        return (
+            <div
+                role="status"
+                aria-live="polite"
+                className="flex flex-1 flex-col items-center justify-center text-center"
+            >
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm text-slate-400"
+                >
+                    De beschuldigde…
+                </motion.p>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-1 font-display text-4xl break-words text-white"
+                >
+                    {accused?.name}
+                </motion.p>
+                <motion.p
+                    initial={
+                        reduceMotion ? { opacity: 0 } : { scale: 2, opacity: 0 }
+                    }
+                    animate={
+                        reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }
+                    }
+                    transition={{
+                        delay: 0.9,
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 18,
+                    }}
+                    className="mt-4 font-display text-5xl text-emerald-300"
+                >
+                    Onschuldig…
+                </motion.p>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.6 }}
+                    className="mt-4 text-sm text-slate-400"
+                >
+                    De echte Spion glipt weg.
+                </motion.p>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mt-6 mb-6 flex flex-col items-center text-center">
-                <span
-                    className={cn(
-                        'mb-3 flex size-20 items-center justify-center rounded-full',
-                        playersWon
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
-                            : 'bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
-                    )}
-                >
-                    <Trophy className="size-10" aria-hidden />
-                </span>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                    {title}
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    De locatie was{' '}
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {game.location}
-                    </span>
-                </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {spyNames.length === 1 ? 'Spion: ' : 'Spionnen: '}
-                    <span className="font-semibold text-rose-600 dark:text-rose-300">
-                        {spyNames.join(', ')}
-                    </span>
-                </p>
-            </div>
+            <CelebrationHeader
+                icon={playersWon ? Trophy : VenetianMask}
+                tone={playersWon ? 'win' : 'lose'}
+                title={title}
+                subtitle={
+                    <>
+                        <p>
+                            De locatie was{' '}
+                            <span className="font-semibold text-emerald-300">
+                                {game.location}
+                            </span>
+                        </p>
+                        <p className="mt-1">
+                            {spyNames.length === 1 ? 'Spion: ' : 'Spionnen: '}
+                            <span className="font-semibold text-rose-300">
+                                {spyNames.join(', ')}
+                            </span>
+                        </p>
+                    </>
+                }
+                className="mt-6 mb-6"
+            />
 
             <div className="space-y-2">
-                {game.players.map((player) => (
-                    <div
+                {game.players.map((player, index) => (
+                    <motion.div
                         key={player.id}
-                        className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 14 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            delay: 0.35 + index * 0.07,
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 24,
+                        }}
+                        className="flex items-center justify-between rounded-xl bg-white/[0.045] px-4 py-3 ring-1 ring-white/10"
                     >
-                        <span className="text-base font-medium text-slate-900 dark:text-white">
+                        <span className="text-base font-medium text-white">
                             {player.name}
                         </span>
                         <span
                             className={cn(
                                 'rounded-full px-3 py-1 text-xs font-bold',
                                 player.isSpy
-                                    ? 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300'
-                                    : 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+                                    ? 'bg-rose-400/15 text-rose-300'
+                                    : 'bg-emerald-400/15 text-emerald-300',
                             )}
                         >
                             {player.isSpy ? 'Spion' : 'Speler'}
                         </span>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 

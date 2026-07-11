@@ -1,24 +1,32 @@
 import { router, usePage } from '@inertiajs/react';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
     ArrowRight,
     Ban,
     Check,
-    Minus,
+    Crown,
     Play,
-    Plus,
+    Repeat,
     RotateCcw,
     Timer,
+    TimerOff,
     Trophy,
-    Users,
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
     ActionButton,
+    CelebrationHeader,
+    CountUp,
     GameHeader,
     GameShell,
     Panel,
+    PassPhoneGate,
+    PhaseTransition,
+    Stepper,
+    TimerRing,
 } from '@/components/game-ui';
+import { feel } from '@/hooks/use-game-feel';
 import {
     MAX_PLAYERS,
     MIN_PLAYERS,
@@ -64,6 +72,23 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+/** One Goed/Fout tap; the id retriggers the card's feedback animation. */
+interface TapFeedback {
+    kind: 'good' | 'foul';
+    id: number;
+}
+
+const CARD_FLASH: Record<TapFeedback['kind'], { from: string; to: string }> = {
+    good: {
+        from: '0 0 0 4px rgba(52, 211, 153, 0.65), 0 0 48px -6px rgba(52, 211, 153, 0.5)',
+        to: '0 0 0 0px rgba(52, 211, 153, 0), 0 0 0px 0px rgba(52, 211, 153, 0)',
+    },
+    foul: {
+        from: '0 0 0 4px rgba(244, 63, 94, 0.65), 0 0 48px -6px rgba(244, 63, 94, 0.5)',
+        to: '0 0 0 0px rgba(244, 63, 94, 0), 0 0 0px 0px rgba(244, 63, 94, 0)',
+    },
+};
+
 function defaultNames(count: number): string[] {
     return Array.from({ length: count }, (_, i) => `Speler ${i + 1}`);
 }
@@ -83,31 +108,40 @@ export default function ForbiddenWord() {
         router.reload({ only: ['currentGame', 'history'] });
     };
 
+    const phaseKey =
+        game === null
+            ? 'setup'
+            : game.phase === 'play'
+              ? `play-${game.round}-${game.currentPlayer}`
+              : game.phase;
+
     return (
-        <GameShell title="Verboden Woord">
-            {game === null ? (
-                <SetupScreen
-                    resumable={currentGame}
-                    history={history}
-                    onResume={(state) => setGame(state)}
-                    onStart={setGame}
-                />
-            ) : game.phase === 'play' ? (
-                <PlayScreen
-                    key={`${game.round}-${game.currentPlayer}`}
-                    game={game}
-                    setGame={setGame}
-                    onReset={resetToSetup}
-                />
-            ) : game.phase === 'turnover' ? (
-                <TurnoverScreen game={game} setGame={setGame} />
-            ) : (
-                <GameOverScreen
-                    game={game}
-                    setGame={setGame}
-                    onReset={resetToSetup}
-                />
-            )}
+        <GameShell title="Verboden Woord" accent="rose">
+            <PhaseTransition phaseKey={phaseKey}>
+                {game === null ? (
+                    <SetupScreen
+                        resumable={currentGame}
+                        history={history}
+                        onResume={(state) => setGame(state)}
+                        onStart={setGame}
+                    />
+                ) : game.phase === 'play' ? (
+                    <PlayScreen
+                        key={`${game.round}-${game.currentPlayer}`}
+                        game={game}
+                        setGame={setGame}
+                        onReset={resetToSetup}
+                    />
+                ) : game.phase === 'turnover' ? (
+                    <TurnoverScreen game={game} setGame={setGame} />
+                ) : (
+                    <GameOverScreen
+                        game={game}
+                        setGame={setGame}
+                        onReset={resetToSetup}
+                    />
+                )}
+            </PhaseTransition>
         </GameShell>
     );
 }
@@ -176,6 +210,9 @@ function SetupScreen({
         onStart(startGame(names, seconds, rounds));
     };
 
+    const resumeName =
+        resumable?.state.names?.[resumable.state.currentPlayer] ?? null;
+
     return (
         <div className="flex flex-1 flex-col">
             <GameHeader
@@ -185,89 +222,77 @@ function SetupScreen({
             />
 
             {resumable && (
-                <button
+                <motion.button
                     type="button"
-                    onClick={() => onResume(resumable.state)}
-                    className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-left ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.99] dark:bg-emerald-500/15 dark:hover:bg-emerald-500/20"
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                        feel.tap();
+                        onResume(resumable.state);
+                    }}
+                    className="mb-5 flex w-full items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-left ring-1 ring-emerald-400/30 transition hover:bg-emerald-500/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                 >
-                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300">
                         <Play className="size-5" aria-hidden />
                     </span>
-                    <span className="flex-1">
-                        <span className="block text-sm font-bold text-slate-900 dark:text-white">
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-white">
                             Ga verder
                         </span>
-                        <span className="block text-xs text-emerald-700 dark:text-emerald-300/80">
+                        <span className="block truncate text-xs text-emerald-300/80">
                             Ronde {resumable.state.round ?? 1}
+                            {resumeName && ` · ${resumeName} is aan de beurt`}
                         </span>
                     </span>
                     <ArrowRight
-                        className="size-5 text-emerald-600 dark:text-emerald-300"
+                        className="size-5 shrink-0 text-emerald-300"
                         aria-hidden
                     />
-                </button>
+                </motion.button>
             )}
 
-            <Panel className="mb-5">
+            <Panel className="mb-5 space-y-4">
                 <Stepper
                     label="Spelers"
-                    icon={<Users className="size-4" aria-hidden />}
                     value={names.length}
                     min={MIN_PLAYERS}
                     max={MAX_PLAYERS}
                     onChange={setPlayerCount}
                 />
-            </Panel>
 
-            <Panel className="mb-4">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                    <Timer className="size-4" aria-hidden /> Tijd per beurt
-                </h2>
-                <div className="grid grid-cols-3 gap-3">
-                    {TURN_SECONDS_OPTIONS.map((option) => (
-                        <button
-                            key={option}
-                            type="button"
-                            onClick={() => setSeconds(option)}
-                            className={cn(
-                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
-                                seconds === option
-                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
-                            )}
-                        >
-                            {option}s
-                        </button>
-                    ))}
+                <div className="border-t border-white/10 pt-4">
+                    <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <Timer
+                            className="size-4 text-(--glow-strong)"
+                            aria-hidden
+                        />
+                        Tijd per beurt
+                    </h2>
+                    <ChoiceChips
+                        options={TURN_SECONDS_OPTIONS}
+                        value={seconds}
+                        onSelect={setSeconds}
+                        format={(option) => `${option}s`}
+                    />
                 </div>
-            </Panel>
 
-            <Panel className="mb-5">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                    <RotateCcw className="size-4" aria-hidden /> Beurten per
-                    speler
-                </h2>
-                <div className="grid grid-cols-3 gap-3">
-                    {ROUNDS_OPTIONS.map((option) => (
-                        <button
-                            key={option}
-                            type="button"
-                            onClick={() => setRounds(option)}
-                            className={cn(
-                                'rounded-xl py-3 text-base font-semibold ring-1 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none active:scale-[0.97]',
-                                rounds === option
-                                    ? 'bg-amber-500 text-slate-950 ring-amber-500'
-                                    : 'bg-white text-slate-900 ring-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10',
-                            )}
-                        >
-                            {option}
-                        </button>
-                    ))}
+                <div className="border-t border-white/10 pt-4">
+                    <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <Repeat
+                            className="size-4 text-(--glow-strong)"
+                            aria-hidden
+                        />
+                        Beurten per speler
+                    </h2>
+                    <ChoiceChips
+                        options={ROUNDS_OPTIONS}
+                        value={rounds}
+                        onSelect={setRounds}
+                    />
                 </div>
             </Panel>
 
             <section className="mb-5 space-y-2">
-                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                <h2 className="px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Namen
                 </h2>
                 {names.map((name, index) => (
@@ -278,7 +303,12 @@ function SetupScreen({
                             updateName(index, event.target.value)
                         }
                         maxLength={20}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        className={cn(
+                            'w-full rounded-xl bg-white/5 px-4 py-3 text-base text-white ring-1 transition placeholder:text-slate-500 focus:ring-2 focus:ring-(--glow) focus:outline-none',
+                            name.trim() === ''
+                                ? 'ring-rose-500/40'
+                                : 'ring-white/10',
+                        )}
                         placeholder={`Speler ${index + 1}`}
                     />
                 ))}
@@ -288,7 +318,10 @@ function SetupScreen({
 
             <div className="mt-auto pt-2">
                 {error && (
-                    <p className="mb-3 text-center text-sm text-rose-600 dark:text-rose-400">
+                    <p
+                        aria-live="polite"
+                        className="mb-3 text-center text-sm text-rose-400"
+                    >
                         {error}
                     </p>
                 )}
@@ -305,6 +338,49 @@ function SetupScreen({
     );
 }
 
+function ChoiceChips({
+    options,
+    value,
+    onSelect,
+    format = String,
+}: {
+    options: readonly number[];
+    value: number;
+    onSelect: (value: number) => void;
+    format?: (value: number) => string;
+}) {
+    return (
+        <div className="grid grid-cols-3 gap-2">
+            {options.map((option) => {
+                const selected = option === value;
+
+                return (
+                    <motion.button
+                        key={option}
+                        type="button"
+                        aria-pressed={selected}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                            if (!selected) {
+                                feel.select();
+                                onSelect(option);
+                            }
+                        }}
+                        className={cn(
+                            'h-12 rounded-xl text-base font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                            selected
+                                ? 'bg-(--glow) text-slate-950 shadow-[0_8px_24px_-10px_var(--glow)]'
+                                : 'bg-white/5 text-white ring-1 ring-white/10 hover:bg-white/10',
+                        )}
+                    >
+                        {format(option)}
+                    </motion.button>
+                );
+            })}
+        </div>
+    );
+}
+
 function HistoryList({ history }: { history: HistoryEntry[] }) {
     const entries = history.filter(
         (entry) => entry.state?.names && entry.state.scores,
@@ -316,7 +392,7 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
 
     return (
         <section className="mb-5">
-            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                 Recente potjes
             </h2>
             <div className="space-y-2">
@@ -329,18 +405,18 @@ function HistoryList({ history }: { history: HistoryEntry[] }) {
                     return (
                         <div
                             key={entry.id}
-                            className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
+                            className="flex items-center justify-between rounded-xl bg-white/[0.045] px-4 py-3 text-sm ring-1 ring-white/10"
                         >
-                            <span className="flex items-center gap-2">
+                            <span className="flex min-w-0 items-center gap-2">
                                 <Trophy
-                                    className="size-4 text-amber-600 dark:text-amber-400"
+                                    className="size-4 shrink-0 text-amber-400"
                                     aria-hidden
                                 />
-                                <span className="font-medium text-slate-900 dark:text-white">
+                                <span className="truncate font-medium text-white">
                                     {winner.names.join(' & ')}
                                 </span>
                             </span>
-                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                            <span className="shrink-0 text-xs text-slate-500">
                                 {winner.score} pt ·{' '}
                                 {formatDate(entry.finished_at)}
                             </span>
@@ -375,48 +451,54 @@ function formatDate(value: string | null): string {
     });
 }
 
-function Stepper({
-    label,
-    icon,
-    value,
-    min,
-    max,
-    onChange,
+/**
+ * Mid-game reset with a tiny inline confirm: the first tap arms it ("Zeker
+ * weten?" for 3 seconds), the second tap actually abandons the game.
+ */
+function ArmedReset({
+    onReset,
+    compact = false,
 }: {
-    label: string;
-    icon: React.ReactNode;
-    value: number;
-    min: number;
-    max: number;
-    onChange: (value: number) => void;
+    onReset: () => void;
+    compact?: boolean;
 }) {
+    const [armed, setArmed] = useState(false);
+
+    useEffect(() => {
+        if (!armed) {
+            return;
+        }
+
+        const id = window.setTimeout(() => setArmed(false), 3000);
+
+        return () => window.clearTimeout(id);
+    }, [armed]);
+
     return (
-        <div className="flex items-center justify-between py-2">
-            <span className="flex items-center gap-2 text-sm font-medium">
-                {icon} {label}
-            </span>
-            <div className="flex items-center gap-3">
-                <button
-                    type="button"
-                    onClick={() => onChange(value - 1)}
-                    disabled={value <= min}
-                    className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-                >
-                    <Minus className="size-4" aria-hidden />
-                </button>
-                <span className="w-6 text-center text-lg font-bold tabular-nums">
-                    {value}
-                </span>
-                <button
-                    type="button"
-                    onClick={() => onChange(value + 1)}
-                    disabled={value >= max}
-                    className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-                >
-                    <Plus className="size-4" aria-hidden />
-                </button>
-            </div>
-        </div>
+        <motion.button
+            type="button"
+            whileTap={{ scale: 0.95 }}
+            aria-label={armed ? 'Bevestig: nieuw spel starten' : 'Nieuw spel'}
+            onClick={() => {
+                if (armed) {
+                    feel.tap();
+                    onReset();
+                } else {
+                    feel.select();
+                    setArmed(true);
+                }
+            }}
+            className={cn(
+                'inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)',
+                armed
+                    ? 'bg-rose-500/15 px-4 text-rose-300 ring-1 ring-rose-400/40'
+                    : 'bg-white/5 text-slate-400 ring-1 ring-white/10 hover:bg-white/10 hover:text-white',
+                compact && !armed ? 'w-11' : 'px-4',
+            )}
+        >
+            <RotateCcw className="size-4" aria-hidden />
+            {(!compact || armed) && (armed ? 'Zeker weten?' : 'Nieuw spel')}
+        </motion.button>
     );
 }
 
@@ -429,10 +511,12 @@ function PlayScreen({
     setGame: (game: GameState) => void;
     onReset: () => void;
 }) {
+    const reduceMotion = useReducedMotion();
     const [started, setStarted] = useState(false);
     const [secondsLeft, setSecondsLeft] = useState(game.seconds);
     const [turnScore, setTurnScore] = useState(0);
     const [card, setCard] = useState<ForbiddenCard>(game.currentCard);
+    const [feedback, setFeedback] = useState<TapFeedback | null>(null);
 
     const player = game.names[game.currentPlayer];
 
@@ -470,149 +554,309 @@ function PlayScreen({
         return () => window.clearInterval(id);
     }, [started]);
 
+    // Tension ticks in the final stretch — pure feedback, never gating logic.
+    useEffect(() => {
+        if (started && secondsLeft <= 10 && secondsLeft > 0) {
+            feel.tick();
+        }
+    }, [started, secondsLeft]);
+
     const nextCard = () => setCard((current) => pickCard(current));
 
     const correct = () => {
+        feel.success();
         setTurnScore((value) => value + 1);
+        setFeedback((current) => ({
+            kind: 'good',
+            id: (current?.id ?? 0) + 1,
+        }));
         nextCard();
     };
 
     const foul = () => {
+        feel.fail();
         setTurnScore((value) => value - 1);
+        setFeedback((current) => ({
+            kind: 'foul',
+            id: (current?.id ?? 0) + 1,
+        }));
         nextCard();
     };
 
     if (!started) {
         return (
             <div className="flex flex-1 flex-col">
-                <div className="mb-4 flex items-center justify-between">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                    <span className="inline-flex h-11 items-center rounded-full bg-white/5 px-4 text-xs font-semibold tracking-wide text-slate-300 uppercase ring-1 ring-white/10">
                         Ronde {game.round} / {game.totalRounds}
                     </span>
-                    <button
-                        type="button"
-                        onClick={onReset}
-                        className="flex items-center gap-1 rounded text-xs text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 dark:text-slate-400 dark:hover:text-slate-200"
-                    >
-                        <RotateCcw className="size-3.5" aria-hidden /> Nieuw
-                        spel
-                    </button>
+                    <ArmedReset onReset={onReset} />
                 </div>
 
-                <div className="flex flex-1 flex-col items-center justify-center text-center">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Aan de beurt
-                    </p>
-                    <h1 className="mt-2 text-4xl font-bold text-slate-900 dark:text-white">
-                        {player}
-                    </h1>
-                    <p className="mt-4 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+                <PassPhoneGate
+                    name={player}
+                    instruction="Geef de telefoon aan"
+                    buttonLabel={`Start beurt (${game.seconds}s)`}
+                    onReady={() => setStarted(true)}
+                >
+                    <p className="max-w-xs text-sm leading-relaxed text-slate-400">
                         Houd de telefoon zo dat alleen jij hem ziet. Laat de
                         groep het woord raden zonder de verboden woorden te
                         zeggen.
                     </p>
-                </div>
-
-                <div className="mt-auto pt-4">
-                    <ActionButton
-                        onClick={() => setStarted(true)}
-                        className="text-lg"
-                    >
-                        Start beurt ({game.seconds}s)
-                    </ActionButton>
-                </div>
+                </PassPhoneGate>
             </div>
         );
     }
 
-    const urgent = secondsLeft <= 10;
-
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mb-4 flex items-center justify-between gap-2">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-900 dark:bg-white/10 dark:text-white">
+            <div className="mb-3 flex items-center justify-between gap-2">
+                <span className="flex h-11 min-w-0 items-center truncate rounded-full bg-(--glow)/12 px-4 text-sm font-semibold text-white ring-1 ring-(--glow)/25">
                     {player}
                 </span>
-                <span
-                    role="timer"
-                    aria-live="polite"
-                    aria-atomic="true"
-                    className={cn(
-                        'flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums ring-1',
-                        urgent
-                            ? 'animate-pulse bg-rose-500/15 text-rose-700 ring-rose-400/50 dark:bg-rose-500/20 dark:text-rose-300'
-                            : 'bg-white text-slate-900 ring-slate-200 dark:bg-white/5 dark:text-white dark:ring-white/10',
-                    )}
-                >
-                    <Timer className="size-4" aria-hidden />
-                    <span aria-hidden="true">{secondsLeft}s</span>
-                    <span className="sr-only">nog {secondsLeft} seconden</span>
-                </span>
-                <span className="rounded-full bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-700 tabular-nums dark:bg-amber-500/20 dark:text-amber-300">
-                    {turnScore} pt
-                </span>
-                <button
-                    type="button"
-                    onClick={onReset}
-                    aria-label="Nieuw spel"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 active:scale-[0.97] dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20"
-                >
-                    <RotateCcw className="size-4" aria-hidden />
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                    <span
+                        aria-live="polite"
+                        className="relative flex h-11 items-center gap-1 rounded-full bg-white/5 px-4 text-sm font-bold tabular-nums ring-1 ring-white/10"
+                    >
+                        <span
+                            className={
+                                turnScore < 0 ? 'text-rose-300' : 'text-white'
+                            }
+                        >
+                            {turnScore}
+                        </span>
+                        <span className="font-medium text-slate-400">pt</span>
+                        {feedback && (
+                            <motion.span
+                                key={feedback.id}
+                                aria-hidden
+                                initial={{
+                                    opacity: 0,
+                                    y: reduceMotion ? 0 : 8,
+                                }}
+                                animate={{
+                                    opacity: [0, 1, 1, 0],
+                                    y: reduceMotion ? 0 : [8, -12, -16, -20],
+                                }}
+                                transition={{
+                                    duration: 0.9,
+                                    times: [0, 0.15, 0.6, 1],
+                                    ease: 'easeOut',
+                                }}
+                                className={cn(
+                                    'pointer-events-none absolute -top-4 right-3 font-display text-lg',
+                                    feedback.kind === 'good'
+                                        ? 'text-emerald-400'
+                                        : 'text-rose-400',
+                                )}
+                            >
+                                {feedback.kind === 'good' ? '+1' : '-1'}
+                            </motion.span>
+                        )}
+                    </span>
+                    <ArmedReset onReset={onReset} compact />
+                </div>
             </div>
 
             <div className="flex flex-1 flex-col items-center justify-center">
-                <Panel className="w-full p-6 text-center">
-                    <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase dark:text-amber-400">
-                        Jouw woord
-                    </p>
-                    <h1 className="mt-2 mb-5 text-4xl font-bold break-words text-slate-900 dark:text-white">
-                        {card.word}
-                    </h1>
-                    <div className="space-y-1.5 border-t border-slate-200 pt-4 dark:border-white/10">
-                        <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-bold tracking-wide text-rose-600 uppercase dark:text-rose-400">
+                <div
+                    role="timer"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className="mb-4"
+                >
+                    <div aria-hidden="true">
+                        <TimerRing
+                            seconds={secondsLeft}
+                            total={game.seconds}
+                            size={120}
+                        />
+                    </div>
+                    <span className="sr-only">nog {secondsLeft} seconden</span>
+                </div>
+
+                <motion.div
+                    key={feedback?.id ?? 'deal'}
+                    initial={
+                        reduceMotion
+                            ? { opacity: 1 }
+                            : feedback === null
+                              ? { opacity: 0, y: 18, scale: 0.97 }
+                              : feedback.kind === 'good'
+                                ? {
+                                      scale: 0.95,
+                                      boxShadow: CARD_FLASH.good.from,
+                                  }
+                                : { boxShadow: CARD_FLASH.foul.from }
+                    }
+                    animate={
+                        feedback && !reduceMotion
+                            ? {
+                                  opacity: 1,
+                                  y: 0,
+                                  scale: 1,
+                                  boxShadow: CARD_FLASH[feedback.kind].to,
+                              }
+                            : { opacity: 1, y: 0, scale: 1 }
+                    }
+                    transition={{
+                        type: 'spring',
+                        stiffness: 320,
+                        damping: 24,
+                        boxShadow: { duration: 0.6, ease: 'easeOut' },
+                    }}
+                    className={cn(
+                        'w-full rounded-2xl',
+                        feedback?.kind === 'foul' &&
+                            !reduceMotion &&
+                            'animate-shake',
+                    )}
+                >
+                    <Panel className="p-6 text-center">
+                        <p className="text-xs font-semibold tracking-widest text-(--glow-strong) uppercase">
+                            Jouw woord
+                        </p>
+                        <h1 className="mt-2 mb-5 font-display text-4xl break-words text-white">
+                            {card.word}
+                        </h1>
+                        <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-bold tracking-widest text-rose-400 uppercase">
                             <Ban className="size-3.5" aria-hidden /> Verboden
                         </p>
-                        {card.forbidden.map((word) => (
-                            <p
-                                key={word}
-                                className="text-lg font-semibold text-slate-700 dark:text-slate-300"
-                            >
-                                {word}
-                            </p>
-                        ))}
-                    </div>
-                </Panel>
-
-                <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                    <div
-                        className={cn(
-                            'h-full rounded-full transition-[width] duration-1000 ease-linear',
-                            urgent ? 'bg-rose-500' : 'bg-amber-500',
-                        )}
-                        style={{
-                            width: `${(secondsLeft / game.seconds) * 100}%`,
-                        }}
-                    />
-                </div>
+                        <ul className="space-y-1.5">
+                            {card.forbidden.map((word) => (
+                                <li
+                                    key={word}
+                                    className="flex items-center justify-center gap-2 rounded-xl bg-rose-500/10 px-3 py-2 ring-1 ring-rose-500/25"
+                                >
+                                    <Ban
+                                        className="size-3.5 shrink-0 text-rose-400"
+                                        aria-hidden
+                                    />
+                                    <span className="text-base font-semibold text-rose-100">
+                                        {word}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </Panel>
+                </motion.div>
             </div>
 
             <div className="mt-auto grid grid-cols-2 gap-3 pt-4">
                 <ActionButton
                     variant="danger"
+                    silent
                     onClick={foul}
                     className="h-16 text-lg"
                 >
                     <X className="size-5" aria-hidden /> Fout
                 </ActionButton>
                 <ActionButton
+                    variant="success"
+                    silent
                     onClick={correct}
-                    className="h-16 bg-emerald-600 text-lg text-white hover:bg-emerald-500"
+                    className="h-16 text-lg"
                 >
                     <Check className="size-5" aria-hidden /> Goed
                 </ActionButton>
             </div>
         </div>
+    );
+}
+
+function ScoreBoard({
+    names,
+    scores,
+    final = false,
+}: {
+    names: string[];
+    scores: number[];
+    final?: boolean;
+}) {
+    const reduceMotion = useReducedMotion();
+
+    const ranked = names
+        .map((name, index) => ({ name, score: scores[index] }))
+        .sort((a, b) => b.score - a.score);
+
+    const topScore = ranked.length > 0 ? ranked[0].score : 0;
+    const delayBase = final ? 0.35 : 0.2;
+
+    return (
+        <ol className="space-y-2">
+            {ranked.map((entry, index) => {
+                const crowned =
+                    entry.score === topScore && (final || topScore > 0);
+
+                return (
+                    <motion.li
+                        key={entry.name}
+                        initial={
+                            reduceMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 14 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            delay: delayBase + index * 0.07,
+                            type: 'spring',
+                            stiffness: 320,
+                            damping: 26,
+                        }}
+                        className={cn(
+                            'flex items-center justify-between rounded-xl px-4 ring-1',
+                            final && crowned
+                                ? 'bg-(--glow)/12 py-4 shadow-[0_0_36px_-12px_var(--glow)] ring-(--glow)/45'
+                                : crowned
+                                  ? 'bg-white/[0.045] py-3 ring-(--glow)/30'
+                                  : 'bg-white/[0.045] py-3 ring-white/10',
+                        )}
+                    >
+                        <span className="flex min-w-0 items-center gap-3">
+                            <span className="flex w-6 shrink-0 justify-center">
+                                {crowned ? (
+                                    <>
+                                        <Crown
+                                            className="size-4 text-amber-400"
+                                            aria-hidden
+                                        />
+                                        <span className="sr-only">
+                                            koploper
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-sm font-bold text-slate-500 tabular-nums">
+                                        {index + 1}
+                                    </span>
+                                )}
+                            </span>
+                            <span
+                                className={cn(
+                                    'truncate',
+                                    final && crowned
+                                        ? 'font-display text-xl text-white'
+                                        : 'text-base font-medium text-white',
+                                )}
+                            >
+                                {entry.name}
+                            </span>
+                        </span>
+                        <span
+                            className={cn(
+                                'shrink-0 text-sm font-bold tabular-nums',
+                                crowned
+                                    ? 'text-(--glow-strong)'
+                                    : 'text-slate-300',
+                            )}
+                        >
+                            <CountUp value={entry.score} /> pt
+                        </span>
+                    </motion.li>
+                );
+            })}
+        </ol>
     );
 }
 
@@ -650,50 +894,49 @@ function TurnoverScreen({
         });
     };
 
-    const ranked = game.names
-        .map((name, index) => ({ name, score: game.scores[index] }))
-        .sort((a, b) => b.score - a.score);
-
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mt-6 mb-6 text-center">
-                <span className="mx-auto flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                    <Timer className="size-10" aria-hidden />
-                </span>
-                <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
-                    Tijd voorbij!
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                        {player}
-                    </span>{' '}
-                    haalde{' '}
-                    <span className="font-bold text-amber-600 dark:text-amber-400">
-                        {game.turnScore}
-                    </span>{' '}
-                    {Math.abs(game.turnScore) === 1 ? 'punt' : 'punten'} deze
-                    beurt.
-                </p>
-            </div>
+            <CelebrationHeader
+                icon={TimerOff}
+                tone="lose"
+                title="Tijd is om!"
+                subtitle={
+                    <span>
+                        <span className="font-semibold text-slate-200">
+                            {player}
+                        </span>{' '}
+                        haalde deze beurt
+                    </span>
+                }
+                className="mt-4 mb-7"
+            >
+                <div
+                    aria-live="polite"
+                    className="flex items-baseline justify-center gap-2"
+                >
+                    <span
+                        className={cn(
+                            'font-display text-5xl tabular-nums',
+                            game.turnScore > 0
+                                ? 'text-emerald-400'
+                                : game.turnScore < 0
+                                  ? 'text-rose-400'
+                                  : 'text-slate-300',
+                        )}
+                    >
+                        {game.turnScore > 0 && '+'}
+                        <CountUp value={game.turnScore} />
+                    </span>
+                    <span className="text-sm text-slate-400">
+                        {Math.abs(game.turnScore) === 1 ? 'punt' : 'punten'}
+                    </span>
+                </div>
+            </CelebrationHeader>
 
-            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                 Tussenstand
             </h2>
-            <div className="space-y-2">
-                {ranked.map((entry) => (
-                    <div
-                        key={entry.name}
-                        className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10"
-                    >
-                        <span className="text-base font-medium text-slate-900 dark:text-white">
-                            {entry.name}
-                        </span>
-                        <span className="text-sm font-bold text-amber-600 tabular-nums dark:text-amber-400">
-                            {entry.score} pt
-                        </span>
-                    </div>
-                ))}
-            </div>
+            <ScoreBoard names={game.names} scores={game.scores} />
 
             <div className="mt-auto pt-6">
                 <ActionButton onClick={advance} className="text-lg">
@@ -714,11 +957,7 @@ function GameOverScreen({
     setGame: (game: GameState) => void;
     onReset: () => void;
 }) {
-    const ranked = game.names
-        .map((name, index) => ({ name, score: game.scores[index] }))
-        .sort((a, b) => b.score - a.score);
-
-    const topScore = ranked.length > 0 ? ranked[0].score : 0;
+    const winner = winnerOf(game.names, game.scores);
 
     const playAgain = () => {
         setGame(startGame(game.names, game.seconds, game.totalRounds));
@@ -726,45 +965,26 @@ function GameOverScreen({
 
     return (
         <div className="flex flex-1 flex-col">
-            <div className="mt-6 mb-6 text-center">
-                <span className="mx-auto mb-3 flex size-20 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                    <Trophy className="size-10" aria-hidden />
-                </span>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                    {ranked
-                        .filter((entry) => entry.score === topScore)
-                        .map((entry) => entry.name)
-                        .join(' & ')}{' '}
-                    wint!
-                </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    {topScore} punten
-                </p>
-            </div>
+            <CelebrationHeader
+                icon={Trophy}
+                tone="win"
+                title={`${winner.names.join(' & ')} wint!`}
+                subtitle={
+                    <span>
+                        <CountUp
+                            value={winner.score}
+                            className="font-semibold text-(--glow-strong)"
+                        />{' '}
+                        punten
+                    </span>
+                }
+                className="mt-4 mb-8"
+            />
 
-            <div className="space-y-2">
-                {ranked.map((entry, index) => (
-                    <div
-                        key={entry.name}
-                        className={cn(
-                            'flex items-center justify-between rounded-xl px-4 py-3 ring-1',
-                            entry.score === topScore
-                                ? 'bg-amber-500/15 ring-amber-400/40'
-                                : 'bg-white shadow-sm ring-slate-200 dark:bg-white/5 dark:shadow-none dark:ring-white/10',
-                        )}
-                    >
-                        <span className="flex items-center gap-3 text-base font-medium text-slate-900 dark:text-white">
-                            <span className="w-5 text-center text-sm font-bold text-slate-500 tabular-nums dark:text-slate-400">
-                                {index + 1}
-                            </span>
-                            {entry.name}
-                        </span>
-                        <span className="text-sm font-bold text-amber-600 tabular-nums dark:text-amber-400">
-                            {entry.score} pt
-                        </span>
-                    </div>
-                ))}
-            </div>
+            <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                Eindstand
+            </h2>
+            <ScoreBoard names={game.names} scores={game.scores} final />
 
             <div className="mt-auto space-y-3 pt-6">
                 <ActionButton onClick={playAgain} className="text-lg">

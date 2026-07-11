@@ -1,5 +1,6 @@
 import { usePasskeyRegister } from '@laravel/passkeys/react';
 import { useState } from 'react';
+import { ActionButton } from '@/components/game-ui';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,7 +51,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
 
     if (!isSupported) {
         return (
-            <div className="text-sm text-slate-500 dark:text-slate-400">
+            <div className="text-sm text-slate-500">
                 Toegangssleutels worden niet ondersteund in deze browser.
             </div>
         );
@@ -58,25 +59,21 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
 
     if (!showForm) {
         return (
-            <Button
-                variant="outline"
-                className="rounded-2xl border-slate-200 bg-white px-5 font-semibold text-slate-800 hover:bg-slate-200 hover:text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white"
-                onClick={() => setShowForm(true)}
-            >
+            <ActionButton variant="neutral" onClick={() => setShowForm(true)}>
                 Toegangssleutel toevoegen
-            </Button>
+            </ActionButton>
         );
     }
 
     return (
         <form
             onSubmit={handleSubmit}
-            className="space-y-4 rounded-xl bg-white p-4 ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10"
+            className="space-y-4 rounded-xl bg-white/5 p-4 ring-1 ring-white/10"
         >
             <div className="grid gap-2">
                 <Label
                     htmlFor="passkey-name"
-                    className="text-sm font-medium text-slate-800 dark:text-slate-200"
+                    className="text-sm font-medium text-slate-300"
                 >
                     Naam toegangssleutel
                 </Label>
@@ -86,35 +83,30 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="bijv. MacBook Pro, iPhone"
-                    className="h-auto rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                    className="h-auto rounded-xl border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-slate-500 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/40"
                     autoFocus
                 />
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-slate-500">
                     Met een naam herken je deze toegangssleutel later.
                 </p>
             </div>
 
-            {error && (
-                <InputError
-                    className="text-rose-600 dark:text-rose-400"
-                    message={error}
-                />
-            )}
+            {error && <InputError message={error} />}
 
-            <div className="flex gap-2">
-                <Button
+            <div className="flex items-center gap-3">
+                <ActionButton
                     type="submit"
-                    className="rounded-2xl bg-amber-500 px-5 font-semibold text-slate-950 hover:bg-amber-400"
+                    className="flex-1"
                     disabled={isLoading || !name.trim()}
                 >
                     {isLoading
                         ? 'Registreren...'
                         : 'Toegangssleutel registreren'}
-                </Button>
+                </ActionButton>
                 <Button
                     type="button"
                     variant="ghost"
-                    className="rounded-2xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                    className="h-14 rounded-2xl px-5 font-semibold text-slate-400 hover:bg-white/5 hover:text-white"
                     onClick={handleCancel}
                 >
                     Annuleren
