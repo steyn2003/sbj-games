@@ -201,6 +201,8 @@ function Rule({ n, text }: { n: string; text: string }) {
 
 type NormaalPhase = 'setup' | 'turn' | 'result';
 
+const PRINCE_KEY = 'mexen-prince';
+
 function NormaalMexen() {
     const [phase, setPhase] = useState<NormaalPhase>('setup');
     const [playerCount, setPlayerCount] = useState(4);
@@ -209,10 +211,44 @@ function NormaalMexen() {
     const [turn, setTurn] = useState(0);
     const [throwLimit, setThrowLimit] = useState(MAX_THROWS);
     const [results, setResults] = useState<(Call | null)[]>([]);
+    // The Prince: whoever rolls 1-1 drinks on EVERY double until someone else
+    // rolls 1-1. The crown outlives rounds, games and reloads (localStorage).
+    const [prince, setPrince] = useState<number | null>(() => {
+        if (typeof localStorage === 'undefined') {
+            return null;
+        }
+
+        const stored = localStorage.getItem(PRINCE_KEY);
+
+        return stored === null ? null : Number(stored);
+    });
 
     const currentPlayer = (startIndex + turn) % playerCount;
 
+    const crown = (player: number | null) => {
+        setPrince(player);
+
+        if (player === null) {
+            localStorage.removeItem(PRINCE_KEY);
+        } else {
+            localStorage.setItem(PRINCE_KEY, String(player));
+        }
+    };
+
+    // Fires when open dice settle: 1-1 crowns (or re-confirms) the Prince.
+    const handleRollSettled = (call: Call) => {
+        if (call.code === 11 && prince !== currentPlayer) {
+            feel.success();
+            crown(currentPlayer);
+        }
+    };
+
     const beginRound = (firstPlayer: number) => {
+        // A remembered Prince from a bigger group doesn't exist in this one.
+        if (prince !== null && prince >= playerCount) {
+            crown(null);
+        }
+
         setStartIndex(firstPlayer);
         setResults(new Array(playerCount).fill(null));
         setTurn(0);
@@ -261,17 +297,20 @@ function NormaalMexen() {
                 <NormaalTurnScreen
                     key={`${startIndex}-${turn}`}
                     player={currentPlayer}
+                    prince={prince}
                     isFirst={turn === 0}
                     isLast={turn + 1 >= playerCount}
                     throwLimit={throwLimit}
                     rolledSoFar={rolledSoFar}
                     onStand={stand}
+                    onRollSettled={handleRollSettled}
                 />
             )}
             {phase === 'result' && (
                 <NormaalResultScreen
                     startIndex={startIndex}
                     calls={results as Call[]}
+                    prince={prince}
                     onNext={beginRound}
                 />
             )}
@@ -313,6 +352,10 @@ function NormaalSetupScreen({
                     n="4"
                     text="De laagste worp van de ronde drinkt. Elke Mex op tafel verdubbelt de slokken!"
                 />
+                <Rule
+                    n="5"
+                    text="Rol je 1-1 (100)? Dan ben jij de Prins: je drinkt bij élke dubbel die valt — tot iemand anders 1-1 rolt."
+                />
             </Panel>
 
             <Panel className="mb-5">
@@ -335,18 +378,22 @@ function NormaalSetupScreen({
 /** One player's open turn: claim the phone, roll, optionally re-roll, stand. */
 function NormaalTurnScreen({
     player,
+    prince,
     isFirst,
     isLast,
     throwLimit,
     rolledSoFar,
     onStand,
+    onRollSettled,
 }: {
     player: number;
+    prince: number | null;
     isFirst: boolean;
     isLast: boolean;
     throwLimit: number;
     rolledSoFar: { player: number; call: Call }[];
     onStand: (call: Call, throwsUsed: number) => void;
+    onRollSettled: (call: Call) => void;
 }) {
     const [roll, setRoll] = useState<DiePair | null>(null);
     const [throwsUsed, setThrowsUsed] = useState(0);
@@ -373,6 +420,7 @@ function NormaalTurnScreen({
                             ? ` Jij opent de ronde: je mag tot ${MAX_THROWS} keer rollen en bepaalt zo het aantal worpen voor de rest.`
                             : ` Je mag ${throwLimit === 1 ? 'één keer' : `tot ${throwLimit} keer`} rollen.`}
                     </p>
+                    <PrinceBadge prince={prince} className="mt-4" />
                     <RolledSoFar rolledSoFar={rolledSoFar} />
                 </div>
             </PassPhoneGate>
@@ -392,7 +440,10 @@ function NormaalTurnScreen({
                     <RollingDice
                         key={throwsUsed}
                         roll={roll}
-                        onSettled={() => setRolling(false)}
+                        onSettled={() => {
+                            setRolling(false);
+                            onRollSettled(call);
+                        }}
                     />
                 </div>
                 <div
@@ -403,19 +454,33 @@ function NormaalTurnScreen({
                         <p className="text-sm text-slate-500">
                             De stenen rollen…
                         </p>
-                    ) : call.isMax ? (
-                        <MexJackpot />
                     ) : (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center"
-                        >
-                            <p className="text-sm text-slate-400">Dat is</p>
-                            <p className="mt-1 font-display text-6xl text-white">
-                                {call.label}
-                            </p>
-                        </motion.div>
+                        <>
+                            {call.isMax ? (
+                                <MexJackpot />
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-col items-center"
+                                >
+                                    <p className="text-sm text-slate-400">
+                                        Dat is
+                                    </p>
+                                    <p className="mt-1 font-display text-6xl text-white">
+                                        {call.label}
+                                    </p>
+                                </motion.div>
+                            )}
+                            {call.isDouble &&
+                                (call.code === 11 || prince !== null) && (
+                                    <PrinceDrinks
+                                        call={call}
+                                        prince={prince}
+                                        player={player}
+                                    />
+                                )}
+                        </>
                     )}
                 </div>
             </div>
@@ -467,6 +532,63 @@ function MexJackpot() {
     );
 }
 
+/** Persistent crown chip naming the current Prince. */
+function PrinceBadge({
+    prince,
+    className,
+}: {
+    prince: number | null;
+    className?: string;
+}) {
+    if (prince === null) {
+        return null;
+    }
+
+    return (
+        <p
+            className={cn(
+                'inline-flex items-center gap-1.5 rounded-full bg-(--glow)/10 px-3 py-1 text-xs font-bold text-(--glow-strong) ring-1 ring-(--glow)/25',
+                className,
+            )}
+        >
+            <Crown className="size-3.5" aria-hidden />
+            Speler {prince + 1} is de Prins — drinkt bij elke dubbel
+        </p>
+    );
+}
+
+/** The Prince verdict under a settled double: crowning or a forced sip. */
+function PrinceDrinks({
+    call,
+    prince,
+    player,
+}: {
+    call: Call;
+    prince: number | null;
+    player: number;
+}) {
+    const crowned = call.code === 11;
+
+    return (
+        <motion.p
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+                delay: 0.25,
+                type: 'spring',
+                stiffness: 300,
+                damping: 20,
+            }}
+            className="mt-4 flex items-center gap-2 rounded-full bg-(--glow)/12 px-4 py-2 text-sm font-bold text-(--glow-strong) ring-1 ring-(--glow)/30"
+        >
+            <Crown className="size-4" aria-hidden />
+            {crowned
+                ? `Speler ${player + 1} is de Prins — en drinkt!`
+                : `Dubbel! De Prins drinkt — Speler ${(prince ?? 0) + 1}!`}
+        </motion.p>
+    );
+}
+
 /** Compact strip of the open rolls earlier in the round. */
 function RolledSoFar({
     rolledSoFar,
@@ -513,10 +635,12 @@ function RolledSoFar({
 function NormaalResultScreen({
     startIndex,
     calls,
+    prince,
     onNext,
 }: {
     startIndex: number;
     calls: Call[];
+    prince: number | null;
     onNext: (firstPlayer: number) => void;
 }) {
     const reduceMotion = useReducedMotion();
@@ -723,6 +847,12 @@ function NormaalResultScreen({
                     </motion.div>
                 ))}
             </div>
+
+            {prince !== null && (
+                <div className="mt-4 flex justify-center">
+                    <PrinceBadge prince={prince} />
+                </div>
+            )}
 
             <div className="mt-auto pt-6">
                 <ActionButton onClick={() => onNext(loserIndices[0])}>
