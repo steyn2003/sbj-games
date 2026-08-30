@@ -12,12 +12,14 @@ Route::get('races/{code}', [RaceController::class, 'show'])->name('races.show');
 Route::put('races/{code}', [RaceController::class, 'update'])->name('races.update');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/', [GameController::class, 'index'])->name('home');
+    Route::inertia('/', 'dashboard')->name('home');
     Route::post('games', [GameController::class, 'store'])->name('games.store');
     Route::put('games/{game}', [GameController::class, 'update'])->name('games.update');
 
+    Route::get('undercover', [GameController::class, 'undercover'])->name('undercover');
     Route::get('spy-location', [GameController::class, 'spyLocation'])->name('spy-location');
     Route::get('forbidden-word', [GameController::class, 'forbiddenWord'])->name('forbidden-word');
+    Route::get('charades', [GameController::class, 'charades'])->name('charades');
 
     Route::inertia('pim-pam-pet', 'pim-pam-pet')->name('pim-pam-pet');
     Route::inertia('wie-in-de-groep', 'wie-in-de-groep')->name('wie-in-de-groep');

@@ -7,16 +7,6 @@ export interface ForbiddenCard {
     forbidden: string[];
 }
 
-/** Inclusive bounds for the number of players. */
-export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 12;
-
-/** Turn lengths offered in setup, in seconds. */
-export const TURN_SECONDS_OPTIONS = [30, 60, 90] as const;
-
-/** How many turns each player gets, offered in setup. */
-export const ROUNDS_OPTIONS = [2, 3, 4] as const;
-
 export const CARDS: ForbiddenCard[] = [
     { word: 'Strand', forbidden: ['Zee', 'Zand', 'Zon', 'Vakantie'] },
     { word: 'Voetbal', forbidden: ['Bal', 'Doel', 'Sport', 'Veld'] },
@@ -244,19 +234,880 @@ export const CARDS: ForbiddenCard[] = [
         word: 'Geheim',
         forbidden: ['Stil', 'Niemand', 'Verbergen', 'Fluisteren'],
     },
+
+    {
+        word: 'Astronaut',
+        forbidden: ['Ruimte', 'Raket', 'Maan', 'Zwaartekracht'],
+    },
+    { word: 'Rechter', forbidden: ['Toga', 'Hamer', 'Vonnis', 'Schuldig'] },
+    { word: 'Kok', forbidden: ['Keuken', 'Restaurant', 'Eten', 'Recept'] },
+    { word: 'Loodgieter', forbidden: ['Kraan', 'Lekkage', 'Buis', 'Wc'] },
+    {
+        word: 'Journalist',
+        forbidden: ['Krant', 'Nieuws', 'Interview', 'Artikel'],
+    },
+    {
+        word: 'Buschauffeur',
+        forbidden: ['Halte', 'Passagiers', 'Stuur', 'Kaartje'],
+    },
+    { word: 'Acteur', forbidden: ['Film', 'Toneel', 'Rol', 'Oscar'] },
+    {
+        word: 'Postbode',
+        forbidden: ['Brieven', 'Pakketje', 'Bezorgen', 'Brievenbus'],
+    },
+    { word: 'Architect', forbidden: ['Gebouw', 'Ontwerp', 'Tekening', 'Huis'] },
+    { word: 'Dierenarts', forbidden: ['Hond', 'Kat', 'Praktijk', 'Ziek'] },
+    {
+        word: 'Stewardess',
+        forbidden: ['Vliegtuig', 'Passagiers', 'Veiligheidsgordel', 'Drankje'],
+    },
+    { word: 'Fotograaf', forbidden: ['Camera', 'Lens', 'Kiekje', 'Flits'] },
+    { word: 'DJ', forbidden: ['Muziek', 'Draaien', 'Feest', 'Platen'] },
+    {
+        word: 'Burgemeester',
+        forbidden: ['Gemeente', 'Stad', 'Ambtsketen', 'Raad'],
+    },
+    {
+        word: 'Tolk',
+        forbidden: ['Vertalen', 'Taal', 'Woorden', 'Buitenlander'],
+    },
+    {
+        word: 'Monteur',
+        forbidden: ['Auto', 'Garage', 'Reparatie', 'Gereedschap'],
+    },
+    { word: 'Timmerman', forbidden: ['Hout', 'Hamer', 'Spijker', 'Zaag'] },
+    {
+        word: 'Elektricien',
+        forbidden: ['Stroom', 'Stopcontact', 'Kabels', 'Meterkast'],
+    },
+    {
+        word: 'Beveiliger',
+        forbidden: ['Bewaken', 'Uitsmijter', 'Camera', 'Discotheek'],
+    },
+    {
+        word: 'Ober',
+        forbidden: ['Restaurant', 'Bestellen', 'Fooi', 'Serveren'],
+    },
+    {
+        word: 'Apotheker',
+        forbidden: ['Medicijnen', 'Recept', 'Pillen', 'Balie'],
+    },
+    { word: 'Clown', forbidden: ['Circus', 'Rode neus', 'Grappig', 'Schmink'] },
+    {
+        word: 'Boswachter',
+        forbidden: ['Natuur', 'Bomen', 'Herten', 'Verrekijker'],
+    },
+    { word: 'Zanger', forbidden: ['Microfoon', 'Podium', 'Liedje', 'Stem'] },
+    { word: 'Gevangenis', forbidden: ['Cel', 'Boef', 'Tralies', 'Straf'] },
+    { word: 'Vliegveld', forbidden: ['Schiphol', 'Landen', 'Koffer', 'Gate'] },
+    { word: 'Restaurant', forbidden: ['Eten', 'Menu', 'Ober', 'Rekening'] },
+    { word: 'Hotel', forbidden: ['Slapen', 'Kamer', 'Receptie', 'Vakantie'] },
+    {
+        word: 'Camping',
+        forbidden: ['Tent', 'Caravan', 'Frankrijk', 'Sanitair'],
+    },
+    { word: 'Bibliotheek', forbidden: ['Boeken', 'Lenen', 'Stil', 'Pasje'] },
+    { word: 'Dierentuin', forbidden: ['Apen', 'Kooi', 'Blijdorp', 'Leeuw'] },
+    {
+        word: 'Pretpark',
+        forbidden: ['Achtbaan', 'Efteling', 'Kaartje', 'Attractie'],
+    },
+    { word: 'Benzinestation', forbidden: ['Tanken', 'Auto', 'Pomp', 'Shell'] },
+    {
+        word: 'Kantoor',
+        forbidden: ['Bureau', 'Werk', 'Collega', 'Vergadering'],
+    },
+    {
+        word: 'Sportschool',
+        forbidden: ['Fitness', 'Gewichten', 'Abonnement', 'Spieren'],
+    },
+    { word: 'Café', forbidden: ['Bier', 'Kroeg', 'Tap', 'Borrel'] },
+    { word: 'Strandtent', forbidden: ['Zee', 'Zand', 'Cocktail', 'Terras'] },
+    { word: 'Eiland', forbidden: ['Zee', 'Omringd', 'Texel', 'Palmboom'] },
+    { word: 'Jungle', forbidden: ['Oerwoud', 'Apen', 'Tarzan', 'Slangen'] },
+    { word: 'Noordpool', forbidden: ['IJs', 'Kou', 'IJsbeer', 'Eskimo'] },
+    {
+        word: 'Stadion',
+        forbidden: ['Voetbal', 'Publiek', 'Tribune', 'Wedstrijd'],
+    },
+    {
+        word: 'Fabriek',
+        forbidden: ['Machines', 'Productie', 'Schoorsteen', 'Arbeiders'],
+    },
+    { word: 'Zolder', forbidden: ['Boven', 'Dozen', 'Dak', 'Trap'] },
+    { word: 'Kelder', forbidden: ['Onder', 'Donker', 'Wijn', 'Trap'] },
+    {
+        word: 'Balkon',
+        forbidden: ['Buiten', 'Appartement', 'Plantjes', 'Reling'],
+    },
+    { word: 'Lift', forbidden: ['Knopje', 'Etage', 'Omhoog', 'Trap'] },
+    { word: 'Toren', forbidden: ['Hoog', 'Kerk', 'Klokken', 'Uitkijken'] },
+    {
+        word: 'Postkantoor',
+        forbidden: ['Brieven', 'Pakket', 'Verzenden', 'Loket'],
+    },
+    { word: 'Taxi', forbidden: ['Chauffeur', 'Meter', 'Geel', 'Ritje'] },
+    { word: 'Bus', forbidden: ['Halte', 'Chauffeur', 'Ov', 'Passagiers'] },
+    {
+        word: 'Metro',
+        forbidden: ['Ondergronds', 'Rotterdam', 'Tunnel', 'Kaartje'],
+    },
+    { word: 'Cruiseschip', forbidden: ['Zee', 'Vakantie', 'Hut', 'Buffet'] },
+    {
+        word: 'Raket',
+        forbidden: ['Ruimte', 'Lanceren', 'Astronaut', 'Vuurpijl'],
+    },
+    { word: 'Kano', forbidden: ['Peddel', 'Water', 'Bootje', 'Omslaan'] },
+    { word: 'Step', forbidden: ['Duwen', 'Stuur', 'Wieltjes', 'Afzetten'] },
+    {
+        word: 'Skateboard',
+        forbidden: ['Plank', 'Wieltjes', 'Trucjes', 'Halfpipe'],
+    },
+    { word: 'Paspoort', forbidden: ['Reizen', 'Douane', 'Foto', 'Identiteit'] },
+    {
+        word: 'Koffer',
+        forbidden: ['Inpakken', 'Vakantie', 'Wieltjes', 'Bagage'],
+    },
+    { word: 'Tent', forbidden: ['Camping', 'Haringen', 'Slapen', 'Opzetten'] },
+    { word: 'File', forbidden: ['Snelweg', 'Stilstaan', 'Auto', 'Spits'] },
+    { word: 'Rotonde', forbidden: ['Rond', 'Kruispunt', 'Voorrang', 'Afslag'] },
+    { word: 'Stoplicht', forbidden: ['Rood', 'Groen', 'Oranje', 'Kruispunt'] },
+    {
+        word: 'Snelweg',
+        forbidden: ['Auto', 'File', 'Vluchtstrook', 'Rijstrook'],
+    },
+    { word: 'Veerpont', forbidden: ['Overzetten', 'Rivier', 'Auto', 'Water'] },
+    { word: 'Zeilboot', forbidden: ['Wind', 'Mast', 'Water', 'Roer'] },
+    {
+        word: 'Rugzak',
+        forbidden: ['Schouders', 'Wandelen', 'Dragen', 'School'],
+    },
+    { word: 'Landkaart', forbidden: ['Route', 'Navigatie', 'Vouwen', 'Weg'] },
+    {
+        word: 'Souvenir',
+        forbidden: ['Vakantie', 'Cadeautje', 'Meenemen', 'Toerist'],
+    },
+    { word: 'Parkeerplaats', forbidden: ['Auto', 'Vak', 'Meter', 'Zoeken'] },
+    {
+        word: 'Vrachtwagen',
+        forbidden: ['Chauffeur', 'Lading', 'Truck', 'Snelweg'],
+    },
+    {
+        word: 'Ambulance',
+        forbidden: ['Sirene', 'Ziekenhuis', 'Spoed', 'Brancard'],
+    },
+    {
+        word: 'Frankrijk',
+        forbidden: ['Parijs', 'Baguette', 'Wijn', 'Eiffeltoren'],
+    },
+    { word: 'Italië', forbidden: ['Pizza', 'Pasta', 'Rome', 'Laars'] },
+    {
+        word: 'Amsterdam',
+        forbidden: ['Hoofdstad', 'Grachten', 'Ajax', 'Wallen'],
+    },
+    {
+        word: 'Parijs',
+        forbidden: ['Eiffeltoren', 'Frankrijk', 'Liefde', 'Hoofdstad'],
+    },
+    {
+        word: 'Eiffeltoren',
+        forbidden: ['Parijs', 'Frankrijk', 'IJzer', 'Uitzicht'],
+    },
+    {
+        word: 'Piramide',
+        forbidden: ['Egypte', 'Farao', 'Driehoek', 'Woestijn'],
+    },
+    {
+        word: 'Australië',
+        forbidden: ['Kangoeroe', 'Sydney', 'Koala', 'Down under'],
+    },
+    { word: 'China', forbidden: ['Muur', 'Rijst', 'Peking', 'Miljard'] },
+    {
+        word: 'Texel',
+        forbidden: ['Waddeneiland', 'Boot', 'Schapen', 'Den Helder'],
+    },
+    {
+        word: 'Rotterdam',
+        forbidden: ['Haven', 'Feyenoord', 'Erasmusbrug', 'Kubuswoningen'],
+    },
+    {
+        word: 'Efteling',
+        forbidden: ['Pretpark', 'Sprookjes', 'Python', 'Kaatsheuvel'],
+    },
+    {
+        word: 'Zaanse Schans',
+        forbidden: ['Molens', 'Zaandam', 'Toeristen', 'Klompen'],
+    },
+    {
+        word: 'Spanje',
+        forbidden: ['Paella', 'Zon', 'Madrid', 'Stierenvechten'],
+    },
+    {
+        word: 'Japan',
+        forbidden: ['Sushi', 'Tokio', 'Samoerai', 'Kersenbloesem'],
+    },
+    {
+        word: 'Londen',
+        forbidden: ['Engeland', 'Big Ben', 'Rode bus', 'Theems'],
+    },
+    {
+        word: 'Berlijn',
+        forbidden: ['Duitsland', 'Muur', 'Hoofdstad', 'Brandenburger Tor'],
+    },
+    { word: 'Egypte', forbidden: ['Piramide', 'Farao', 'Nijl', 'Sfinx'] },
+    {
+        word: 'Amerika',
+        forbidden: ['New York', 'Vlag', 'Hamburger', 'President'],
+    },
+    { word: 'Brazilië', forbidden: ['Rio', 'Carnaval', 'Voetbal', 'Amazone'] },
+    { word: 'Venetië', forbidden: ['Gondel', 'Italië', 'Water', 'Kanalen'] },
+    {
+        word: 'Utrecht',
+        forbidden: ['Domtoren', 'Provincie', 'Studentenstad', 'Centraal'],
+    },
+    {
+        word: 'Maastricht',
+        forbidden: ['Limburg', 'Vlaai', 'Zuiden', 'Verdrag'],
+    },
+    {
+        word: 'Griekenland',
+        forbidden: ['Feta', 'Eilanden', 'Athene', 'Olympische Spelen'],
+    },
+    { word: 'Onweer', forbidden: ['Bliksem', 'Donder', 'Regen', 'Buien'] },
+    { word: 'Regenboog', forbidden: ['Kleuren', 'Zeven', 'Bui', 'Lucht'] },
+    {
+        word: 'Aardbeving',
+        forbidden: ['Schokken', 'Richter', 'Scheuren', 'Grond'],
+    },
+    { word: 'Tsunami', forbidden: ['Golf', 'Zee', 'Aardbeving', 'Ramp'] },
+    { word: 'Ster', forbidden: ['Nacht', 'Fonkelen', 'Heelal', 'Punten'] },
+    { word: 'Planeet', forbidden: ['Mars', 'Aarde', 'Zonnestelsel', 'Ruimte'] },
+    { word: 'Komeet', forbidden: ['Staart', 'Ruimte', 'Halley', 'IJs'] },
+    {
+        word: 'Zonsverduistering',
+        forbidden: ['Maan', 'Donker', 'Schaduw', 'Brilletje'],
+    },
+    { word: 'Waterval', forbidden: ['Niagara', 'Rivier', 'Beneden', 'Ruisen'] },
+    {
+        word: 'Grot',
+        forbidden: ['Donker', 'Berg', 'Vleermuizen', 'Druipsteen'],
+    },
+    { word: 'Duinen', forbidden: ['Zand', 'Strand', 'Helmgras', 'Wandelen'] },
+    { word: 'Vulkaan', forbidden: ['Lava', 'Uitbarsting', 'Berg', 'As'] },
+    { word: 'Mist', forbidden: ['Zicht', 'Wolk', 'Grijs', 'Herfst'] },
+    { word: 'Hagel', forbidden: ['Bui', 'IJs', 'Korrels', 'Kletteren'] },
+    { word: 'Orkaan', forbidden: ['Storm', 'Wind', 'Verwoesting', 'Naam'] },
+    { word: 'Lente', forbidden: ['Voorjaar', 'Bloemen', 'Maart', 'Lammetjes'] },
+    { word: 'Herfst', forbidden: ['Bladeren', 'Wind', 'Oktober', 'Storm'] },
+    { word: 'Woestijn', forbidden: ['Zand', 'Kameel', 'Sahara', 'Dorst'] },
+    {
+        word: 'Heelal',
+        forbidden: ['Ruimte', 'Sterren', 'Oneindig', 'Planeten'],
+    },
+    { word: 'Bosbrand', forbidden: ['Vuur', 'Bomen', 'Blussen', 'Rook'] },
+    { word: 'IJsberg', forbidden: ['Titanic', 'Water', 'Drijven', 'Kou'] },
+    {
+        word: 'Zonsondergang',
+        forbidden: ['Horizon', 'Avond', 'Oranje', 'Romantisch'],
+    },
+    { word: 'Modder', forbidden: ['Nat', 'Laarzen', 'Vies', 'Regen'] },
+    { word: 'Klompen', forbidden: ['Hout', 'Boer', 'Schoenen', 'Volendam'] },
+    { word: 'Tulp', forbidden: ['Keukenhof', 'Bloem', 'Bol', 'Lisse'] },
+    { word: 'Gracht', forbidden: ['Amsterdam', 'Water', 'Rondvaart', 'Boot'] },
+    { word: 'Bitterbal', forbidden: ['Borrel', 'Mosterd', 'Rond', 'Frituur'] },
+    {
+        word: 'Hagelslag',
+        forbidden: ['Boterham', 'Chocolade', 'Ontbijt', 'Strooien'],
+    },
+    { word: 'Drop', forbidden: ['Zwart', 'Snoep', 'Zout', 'Muntje'] },
+    {
+        word: 'Oranje',
+        forbidden: ['Koningsdag', 'Kleur', 'Elftal', 'Nederland'],
+    },
+    {
+        word: 'Windmolen',
+        forbidden: ['Wieken', 'Zaanse Schans', 'Draaien', 'Koren'],
+    },
+    { word: 'Polder', forbidden: ['Vlak', 'Water', 'Flevoland', 'Koeien'] },
+    {
+        word: 'Dijk',
+        forbidden: ['Water', 'Overstroming', 'Deltawerken', 'Beschermen'],
+    },
+    {
+        word: 'Kaasmarkt',
+        forbidden: ['Alkmaar', 'Dragers', 'Gouda', 'Toeristen'],
+    },
+    {
+        word: 'Gezellig',
+        forbidden: ['Sfeer', 'Samen', 'Kaarsjes', 'Onvertaalbaar'],
+    },
+    {
+        word: 'Beschuit met muisjes',
+        forbidden: ['Geboorte', 'Baby', 'Roze', 'Kraamvisite'],
+    },
+    {
+        word: 'Oliebol',
+        forbidden: ['Oudjaar', 'Poedersuiker', 'Kraam', 'Frituren'],
+    },
+    {
+        word: 'Poffertjes',
+        forbidden: ['Klein', 'Boter', 'Poedersuiker', 'Pan'],
+    },
+    {
+        word: 'Frikandel',
+        forbidden: ['Snackbar', 'Speciaal', 'Lang', 'Frituur'],
+    },
+    { word: 'Kroket', forbidden: ['Snackbar', 'Broodje', 'Ragout', 'Muur'] },
+    {
+        word: 'Boerenkool',
+        forbidden: ['Stamppot', 'Worst', 'Winter', 'Groente'],
+    },
+    {
+        word: 'Erwtensoep',
+        forbidden: ['Snert', 'Winter', 'Rookworst', 'Schaatsen'],
+    },
+    {
+        word: 'Sinterklaasjournaal',
+        forbidden: ['Pakjesboot', 'Nieuws', 'Kinderen', 'Pieten'],
+    },
+    {
+        word: 'Pepernoot',
+        forbidden: ['Strooien', 'Kruidnoten', 'Zak', 'December'],
+    },
+    { word: 'Fietspad', forbidden: ['Rood', 'Trappen', 'Bel', 'Nederland'] },
+    {
+        word: 'Spaghetti',
+        forbidden: ['Pasta', 'Italiaans', 'Tomatensaus', 'Slierten'],
+    },
+    { word: 'Sushi', forbidden: ['Japan', 'Rijst', 'Vis', 'Zeewier'] },
+    {
+        word: 'Hamburger',
+        forbidden: ["McDonald's", 'Broodje', 'Vlees', 'Fastfood'],
+    },
+    { word: 'Taco', forbidden: ['Mexicaans', 'Tortilla', 'Gehakt', 'Wrap'] },
+    { word: 'Popcorn', forbidden: ['Mais', 'Film', 'Zout', 'Zoet'] },
+    { word: 'Wortel', forbidden: ['Oranje', 'Konijn', 'Groente', 'Knabbelen'] },
+    { word: 'Komkommer', forbidden: ['Groen', 'Salade', 'Groente', 'Water'] },
+    { word: 'Tomaat', forbidden: ['Rood', 'Ketchup', 'Groente', 'Saus'] },
+    { word: 'Knoflook', forbidden: ['Vampier', 'Stinken', 'Teen', 'Adem'] },
+    { word: 'Watermeloen', forbidden: ['Rood', 'Pitjes', 'Zomer', 'Zwaar'] },
+    { word: 'Ananas', forbidden: ['Tropisch', 'Pizza', 'Geel', 'Stekelig'] },
+    { word: 'Bier', forbidden: ['Heineken', 'Kroeg', 'Pils', 'Alcohol'] },
+    { word: 'Wijn', forbidden: ['Rood', 'Wit', 'Druiven', 'Fles'] },
+    {
+        word: 'Champagne',
+        forbidden: ['Bubbels', 'Frankrijk', 'Proosten', 'Kurk'],
+    },
+    { word: 'Cola', forbidden: ['Frisdrank', 'Zwart', 'Bruisend', 'Pepsi'] },
+    { word: 'Yoghurt', forbidden: ['Zuivel', 'Lepel', 'Muesli', 'Wit'] },
+    { word: 'Pindakaas', forbidden: ['Boterham', 'Calvé', 'Smeren', 'Bruin'] },
+    { word: 'Spruitjes', forbidden: ['Groente', 'Kool', 'Vies', 'Kerstdiner'] },
+    {
+        word: 'Taart',
+        forbidden: ['Verjaardag', 'Slagroom', 'Kaarsjes', 'Bakken'],
+    },
+    {
+        word: 'Stofzuiger',
+        forbidden: ['Schoonmaken', 'Kruimels', 'Vloer', 'Apparaat'],
+    },
+    {
+        word: 'Wasmachine',
+        forbidden: ['Kleding', 'Trommel', 'Draaien', 'Schoon'],
+    },
+    { word: 'Koelkast', forbidden: ['Melk', 'Koud', 'Keuken', 'Deur'] },
+    {
+        word: 'Magnetron',
+        forbidden: ['Opwarmen', 'Piep', 'Keuken', 'Straling'],
+    },
+    {
+        word: 'Tandenborstel',
+        forbidden: ['Poetsen', 'Mond', 'Badkamer', 'Elektrisch'],
+    },
+    { word: 'Douche', forbidden: ['Badkamer', 'Water', 'Wassen', 'Nat'] },
+    { word: 'Kaars', forbidden: ['Vlam', 'Aansteken', 'Romantisch', 'Was'] },
+    { word: 'Prullenbak', forbidden: ['Afval', 'Weggooien', 'Papier', 'Vol'] },
+    { word: 'Ladder', forbidden: ['Klimmen', 'Hoog', 'Treden', 'Zolder'] },
+    {
+        word: 'Hamer',
+        forbidden: ['Spijker', 'Timmeren', 'Slaan', 'Gereedschap'],
+    },
+    { word: 'Schaar', forbidden: ['Knippen', 'Papier', 'Scherp', 'Kapper'] },
+    { word: 'Potlood', forbidden: ['Schrijven', 'Gum', 'Grijs', 'Punt'] },
+    { word: 'Envelop', forbidden: ['Brief', 'Postbode', 'Plakken', 'Adres'] },
+    {
+        word: 'Postzegel',
+        forbidden: ['Brief', 'Plakken', 'Verzamelen', 'Koning'],
+    },
+    { word: 'Portemonnee', forbidden: ['Geld', 'Pinpas', 'Broekzak', 'Kwijt'] },
+    {
+        word: 'Batterij',
+        forbidden: ['AA', 'Leeg', 'Opladen', 'Afstandsbediening'],
+    },
+    {
+        word: 'Afstandsbediening',
+        forbidden: ['Televisie', 'Zappen', 'Knoppen', 'Bank'],
+    },
+    { word: 'Rietje', forbidden: ['Drinken', 'Zuigen', 'Plastic', 'Cocktail'] },
+    {
+        word: 'Weegschaal',
+        forbidden: ['Kilo', 'Gewicht', 'Badkamer', 'Afvallen'],
+    },
+    { word: 'Trui', forbidden: ['Wol', 'Warm', 'Winter', 'Aantrekken'] },
+    { word: 'Rok', forbidden: ['Vrouw', 'Benen', 'Kort', 'Dragen'] },
+    { word: 'Jurk', forbidden: ['Vrouw', 'Bruid', 'Feest', 'Aantrekken'] },
+    { word: 'Bikini', forbidden: ['Vrouw', 'Strand', 'Zwemmen', 'Tweedelig'] },
+    { word: 'Zwembroek', forbidden: ['Man', 'Zwembad', 'Zomer', 'Nat'] },
+    { word: 'Pyjama', forbidden: ['Slapen', 'Bed', 'Nacht', 'Zacht'] },
+    { word: 'Laarzen', forbidden: ['Regen', 'Voeten', 'Hoog', 'Modder'] },
+    { word: 'Slippers', forbidden: ['Zomer', 'Teen', 'Strand', 'Voeten'] },
+    { word: 'Pet', forbidden: ['Hoofd', 'Klep', 'Zon', 'Honkbal'] },
+    { word: 'Riem', forbidden: ['Broek', 'Gesp', 'Middel', 'Ophouden'] },
+    { word: 'Stropdas', forbidden: ['Pak', 'Hals', 'Knoop', 'Formeel'] },
+    { word: 'Ketting', forbidden: ['Hals', 'Goud', 'Sieraad', 'Hanger'] },
+    { word: 'Ring', forbidden: ['Vinger', 'Goud', 'Trouwen', 'Sieraad'] },
+    { word: 'Horloge', forbidden: ['Pols', 'Tijd', 'Klok', 'Rolex'] },
+    {
+        word: 'Oorbel',
+        forbidden: ['Gaatje', 'Sieraad', 'Piercing', 'Juwelier'],
+    },
+    { word: 'Tattoo', forbidden: ['Inkt', 'Naald', 'Huid', 'Permanent'] },
+    { word: 'Baard', forbidden: ['Kin', 'Scheren', 'Man', 'Kerstman'] },
+    { word: 'Snor', forbidden: ['Bovenlip', 'Scheren', 'Man', 'Gezicht'] },
+    { word: 'Lippenstift', forbidden: ['Rood', 'Mond', 'Make-up', 'Kus'] },
+    { word: 'Parfum', forbidden: ['Ruiken', 'Flesje', 'Spuiten', 'Lekker'] },
+    { word: 'Hart', forbidden: ['Kloppen', 'Bloed', 'Liefde', 'Borst'] },
+    { word: 'Longen', forbidden: ['Ademen', 'Zuurstof', 'Roken', 'Borstkas'] },
+    { word: 'Hersenen', forbidden: ['Denken', 'Hoofd', 'Slim', 'Schedel'] },
+    { word: 'Skelet', forbidden: ['Botten', 'Halloween', 'Lichaam', 'Dood'] },
+    { word: 'Knie', forbidden: ['Been', 'Buigen', 'Vallen', 'Gewricht'] },
+    { word: 'Elleboog', forbidden: ['Arm', 'Buigen', 'Punt', 'Stoten'] },
+    { word: 'Duim', forbidden: ['Vinger', 'Omhoog', 'Liften', 'Zuigen'] },
+    { word: 'Nagel', forbidden: ['Vinger', 'Knippen', 'Lakken', 'Bijten'] },
+    { word: 'Tong', forbidden: ['Mond', 'Proeven', 'Likken', 'Smaak'] },
+    {
+        word: 'Wenkbrauw',
+        forbidden: ['Voorhoofd', 'Optrekken', 'Epileren', 'Gezicht'],
+    },
+    { word: 'Buik', forbidden: ['Maag', 'Navel', 'Dik', 'Pijn'] },
+    { word: 'Griep', forbidden: ['Ziek', 'Bed', 'Koorts', 'Virus'] },
+    { word: 'Hoesten', forbidden: ['Keel', 'Ziek', 'Kuchen', 'Verkoudheid'] },
+    { word: 'Niezen', forbidden: ['Neus', 'Hatsjie', 'Gezondheid', 'Stof'] },
+    { word: 'Koorts', forbidden: ['Thermometer', 'Ziek', 'Graden', 'Warm'] },
+    { word: 'Pleister', forbidden: ['Wond', 'Plakken', 'Bloed', 'Knie'] },
+    { word: 'Injectie', forbidden: ['Naald', 'Prik', 'Arts', 'Vaccin'] },
+    {
+        word: 'Apotheek',
+        forbidden: ['Medicijnen', 'Recept', 'Pillen', 'Winkel'],
+    },
+    { word: 'Zonnebrand', forbidden: ['Factor', 'Smeren', 'Strand', 'Huid'] },
+    { word: 'Hik', forbidden: ['Schrikken', 'Water', 'Adem', 'Geluidje'] },
+    { word: 'Kat', forbidden: ['Miauw', 'Poes', 'Muis', 'Huisdier'] },
+    { word: 'Paard', forbidden: ['Rijden', 'Manege', 'Hoefijzer', 'Hinniken'] },
+    { word: 'Koe', forbidden: ['Melk', 'Weiland', 'Boe', 'Vlekken'] },
+    { word: 'Varken', forbidden: ['Roze', 'Modder', 'Knor', 'Spek'] },
+    { word: 'Schaap', forbidden: ['Wol', 'Blaten', 'Weide', 'Herder'] },
+    { word: 'Konijn', forbidden: ['Wortel', 'Oren', 'Hok', 'Springen'] },
+    { word: 'Muis', forbidden: ['Kaas', 'Klein', 'Val', 'Piepen'] },
+    { word: 'Leeuw', forbidden: ['Koning', 'Manen', 'Brullen', 'Afrika'] },
+    { word: 'Tijger', forbidden: ['Strepen', 'Oranje', 'Jungle', 'Kat'] },
+    { word: 'Aap', forbidden: ['Banaan', 'Boom', 'Slingeren', 'Dierentuin'] },
+    { word: 'Zebra', forbidden: ['Strepen', 'Zwart', 'Wit', 'Afrika'] },
+    {
+        word: 'Neushoorn',
+        forbidden: ['Afrika', 'Grijs', 'Dikke huid', 'Savanne'],
+    },
+    { word: 'Nijlpaard', forbidden: ['Water', 'Afrika', 'Dik', 'Mond'] },
+    { word: 'Slang', forbidden: ['Kruipen', 'Gif', 'Sissen', 'Poten'] },
+    { word: 'Schildpad', forbidden: ['Langzaam', 'Pantser', 'Water', 'Oud'] },
+    { word: 'Kikker', forbidden: ['Groen', 'Kwaken', 'Springen', 'Vijver'] },
+    { word: 'Haai', forbidden: ['Tanden', 'Zee', 'Vin', 'Jaws'] },
+    { word: 'Walvis', forbidden: ['Zee', 'Groot', 'Spuiten', 'Oceaan'] },
+    { word: 'Octopus', forbidden: ['Acht', 'Armen', 'Zee', 'Inkt'] },
+    { word: 'Spin', forbidden: ['Web', 'Poten', 'Eng', 'Insect'] },
+    { word: 'Luier', forbidden: ['Baby', 'Poep', 'Verschonen', 'Billen'] },
+    { word: 'Fopspeen', forbidden: ['Baby', 'Mond', 'Zuigen', 'Sussen'] },
+    { word: 'Kinderwagen', forbidden: ['Baby', 'Duwen', 'Wielen', 'Wandelen'] },
+    { word: 'Wieg', forbidden: ['Baby', 'Slapen', 'Schommelen', 'Houten'] },
+    { word: 'Opa', forbidden: ['Grootvader', 'Oud', 'Kleinkind', 'Man'] },
+    { word: 'Oma', forbidden: ['Grootmoeder', 'Oud', 'Kleinkind', 'Breien'] },
+    {
+        word: 'Zwanger',
+        forbidden: ['Buik', 'Baby', 'Negen maanden', 'Bevallen'],
+    },
+    {
+        word: 'Speeltuin',
+        forbidden: ['Kinderen', 'Schommel', 'Glijbaan', 'Buiten'],
+    },
+    {
+        word: 'Schommel',
+        forbidden: ['Heen en weer', 'Touw', 'Speeltuin', 'Duwen'],
+    },
+    {
+        word: 'Glijbaan',
+        forbidden: ['Naar beneden', 'Speeltuin', 'Zwembad', 'Klimmen'],
+    },
+    { word: 'Knuffel', forbidden: ['Beer', 'Zacht', 'Kind', 'Omhelzen'] },
+    {
+        word: 'Lego',
+        forbidden: ['Blokjes', 'Bouwen', 'Denemarken', 'Steentjes'],
+    },
+    { word: 'Puzzel', forbidden: ['Stukjes', 'Leggen', 'Plaatje', 'Duizend'] },
+    {
+        word: 'Verstoppertje',
+        forbidden: ['Zoeken', 'Tellen', 'Kinderspel', 'Kast'],
+    },
+    {
+        word: 'Tikkertje',
+        forbidden: ['Rennen', 'Vangen', 'Jij bent hem', 'Schoolplein'],
+    },
+    { word: 'Zandbak', forbidden: ['Schepje', 'Emmertje', 'Speeltuin', 'Kat'] },
+    {
+        word: 'Kinderfeestje',
+        forbidden: ['Taart', 'Cadeautjes', 'Spelletjes', 'Jarig'],
+    },
+    {
+        word: 'Sprookje',
+        forbidden: ['Roodkapje', 'Prinses', 'Verhaal', 'Heks'],
+    },
+    {
+        word: 'Peuter',
+        forbidden: ['Dreumes', 'Kleuter', 'Twee jaar', 'Waggelen'],
+    },
+    { word: 'Piano', forbidden: ['Toetsen', 'Zwart', 'Wit', 'Vleugel'] },
+    { word: 'Drums', forbidden: ['Slaan', 'Stokjes', 'Ritme', 'Band'] },
+    { word: 'Viool', forbidden: ['Strijkstok', 'Snaren', 'Klassiek', 'Kin'] },
+    { word: 'Trompet', forbidden: ['Blazen', 'Koper', 'Jazz', 'Mondstuk'] },
+    { word: 'Saxofoon', forbidden: ['Blazen', 'Jazz', 'Koper', 'Riet'] },
+    {
+        word: 'Microfoon',
+        forbidden: ['Zingen', 'Podium', 'Geluid', 'Versterken'],
+    },
+    { word: 'Koor', forbidden: ['Zingen', 'Samen', 'Kerk', 'Stemmen'] },
+    {
+        word: 'Rapper',
+        forbidden: ['Hiphop', 'Snel praten', 'Rijmen', 'Ketting'],
+    },
+    {
+        word: 'Volkslied',
+        forbidden: ['Wilhelmus', 'Nederland', 'Staan', 'Wedstrijd'],
+    },
+    {
+        word: 'Refrein',
+        forbidden: ['Liedje', 'Herhalen', 'Couplet', 'Meezingen'],
+    },
+    {
+        word: 'Playlist',
+        forbidden: ['Spotify', 'Nummers', 'Afspelen', 'Rijtje'],
+    },
+    { word: 'Ukelele', forbidden: ['Klein', 'Snaren', 'Hawaii', 'Gitaar'] },
+    { word: 'Fluit', forbidden: ['Blazen', 'Gaatjes', 'Vingers', 'Hoog'] },
+    { word: 'Harp', forbidden: ['Snaren', 'Groot', 'Engel', 'Tokkelen'] },
+    {
+        word: 'Accordeon',
+        forbidden: ['Trekken', 'Balg', 'Volksmuziek', 'Knoppen'],
+    },
+    { word: 'Opera', forbidden: ['Zingen', 'Italiaans', 'Theater', 'Sopraan'] },
+    { word: 'Dirigent', forbidden: ['Stokje', 'Orkest', 'Zwaaien', 'Voorop'] },
+    { word: 'Applaus', forbidden: ['Klappen', 'Handen', 'Publiek', 'Einde'] },
+    { word: 'Slapen', forbidden: ['Bed', 'Nacht', 'Moe', 'Dromen'] },
+    { word: 'Lachen', forbidden: ['Grappig', 'Humor', 'Blij', 'Grap'] },
+    { word: 'Huilen', forbidden: ['Tranen', 'Verdriet', 'Ogen', 'Zielig'] },
+    { word: 'Fluisteren', forbidden: ['Zacht', 'Stil', 'Praten', 'Oor'] },
+    { word: 'Schreeuwen', forbidden: ['Hard', 'Roepen', 'Stem', 'Keel'] },
+    { word: 'Rennen', forbidden: ['Snel', 'Hardlopen', 'Benen', 'Sprinten'] },
+    { word: 'Springen', forbidden: ['Omhoog', 'Trampoline', 'Hoog', 'Benen'] },
+    { word: 'Klimmen', forbidden: ['Omhoog', 'Ladder', 'Berg', 'Touw'] },
+    { word: 'Zwaaien', forbidden: ['Hand', 'Afscheid', 'Dag', 'Groeten'] },
+    { word: 'Knipogen', forbidden: ['Oog', 'Flirten', 'Dicht', 'Wenkbrauw'] },
+    { word: 'Zoenen', forbidden: ['Lippen', 'Mond', 'Kus', 'Verliefd'] },
+    { word: 'Knuffelen', forbidden: ['Armen', 'Omhelzen', 'Beer', 'Warm'] },
+    {
+        word: 'Stofzuigen',
+        forbidden: ['Apparaat', 'Schoonmaken', 'Vloer', 'Kruimels'],
+    },
+    { word: 'Afwassen', forbidden: ['Borden', 'Sop', 'Keuken', 'Vies'] },
+    { word: 'Strijken', forbidden: ['IJzer', 'Kreukels', 'Overhemd', 'Plank'] },
+    { word: 'Verhuizen', forbidden: ['Dozen', 'Huis', 'Vrachtwagen', 'Nieuw'] },
+    { word: 'Verdwalen', forbidden: ['Kwijt', 'Weg', 'Kaart', 'Richting'] },
+    { word: 'Winkelen', forbidden: ['Kleren', 'Kopen', 'Stad', 'Shoppen'] },
+    { word: 'Solliciteren', forbidden: ['Baan', 'Gesprek', 'Brief', 'Werk'] },
+    { word: 'Trouwen', forbidden: ['Ringen', 'Bruiloft', 'Jurk', 'Huwelijk'] },
+    { word: 'Badminton', forbidden: ['Shuttle', 'Racket', 'Net', 'Veertjes'] },
+    {
+        word: 'Tafeltennis',
+        forbidden: ['Pingpong', 'Batje', 'Balletje', 'Net'],
+    },
+    { word: 'Darts', forbidden: ['Pijltjes', 'Bord', 'Gooien', 'Kroeg'] },
+    { word: 'Bowlen', forbidden: ['Kegels', 'Bal', 'Baan', 'Strike'] },
+    { word: 'Judo', forbidden: ['Band', 'Worp', 'Mat', 'Japan'] },
+    { word: 'Turnen', forbidden: ['Toestel', 'Salto', 'Brug', 'Gymzaal'] },
+    { word: 'Paardrijden', forbidden: ['Zadel', 'Manege', 'Galop', 'Pony'] },
+    { word: 'Surfen', forbidden: ['Golven', 'Plank', 'Zee', 'Hawaii'] },
+    {
+        word: 'Duiken',
+        forbidden: ['Water', 'Zuurstoffles', 'Diep', 'Onderwater'],
+    },
+    {
+        word: 'Scheidsrechter',
+        forbidden: ['Fluit', 'Kaart', 'Wedstrijd', 'Regels'],
+    },
+    {
+        word: 'Penalty',
+        forbidden: ['Strafschop', 'Stip', 'Keeper', 'Schieten'],
+    },
+    {
+        word: 'Olympische Spelen',
+        forbidden: ['Medaille', 'Ringen', 'Sporters', 'Vlam'],
+    },
+    { word: 'Monopoly', forbidden: ['Bordspel', 'Geld', 'Straten', 'Hotel'] },
+    { word: 'Bingo', forbidden: ['Getallen', 'Kaart', 'Prijs', 'Ouderen'] },
+    { word: 'Poker', forbidden: ['Kaarten', 'Fiches', 'Bluffen', 'Casino'] },
+    { word: 'Dobbelsteen', forbidden: ['Gooien', 'Zes', 'Ogen', 'Kubus'] },
+    { word: 'Twister', forbidden: ['Mat', 'Stippen', 'Handen', 'Kleuren'] },
+    { word: 'Jenga', forbidden: ['Blokjes', 'Toren', 'Omvallen', 'Trekken'] },
+    {
+        word: 'Playstation',
+        forbidden: ['Console', 'Controller', 'Sony', 'Gamen'],
+    },
+    {
+        word: 'Netflix',
+        forbidden: ['Streamen', 'Serie', 'Abonnement', 'Kijken'],
+    },
+    { word: 'YouTube', forbidden: ['Filmpjes', 'Video', 'Internet', 'Kanaal'] },
+    { word: 'TikTok', forbidden: ['Filmpjes', 'Dansjes', 'App', 'Kort'] },
+    { word: 'Instagram', forbidden: ["Foto's", 'App', 'Volgers', 'Story'] },
+    {
+        word: 'Podcast',
+        forbidden: ['Luisteren', 'Aflevering', 'Microfoon', 'Praten'],
+    },
+    { word: 'Nieuws', forbidden: ['Journaal', 'Actueel', 'Krant', 'Acht uur'] },
+    {
+        word: 'Weerbericht',
+        forbidden: ['Voorspelling', 'Regen', 'Temperatuur', 'Kaartje'],
+    },
+    {
+        word: 'Reclame',
+        forbidden: ['Spotje', 'Product', 'Tussendoor', 'Verkopen'],
+    },
+    {
+        word: 'Talkshow',
+        forbidden: ['Gasten', 'Presentator', 'Tafel', 'Avond'],
+    },
+    {
+        word: 'Tekenfilm',
+        forbidden: ['Animatie', 'Kinderen', 'Disney', 'Getekend'],
+    },
+    { word: 'Superheld', forbidden: ['Cape', 'Krachten', 'Redden', 'Marvel'] },
+    { word: 'Spiderman', forbidden: ['Spin', 'Web', 'Klimmen', 'Rood'] },
+    { word: 'Batman', forbidden: ['Vleermuis', 'Gotham', 'Zwart', 'Robin'] },
+    {
+        word: 'Harry Potter',
+        forbidden: ['Tovenaar', 'Zweinstein', 'Bril', 'Toverstok'],
+    },
+    { word: 'Titanic', forbidden: ['Schip', 'IJsberg', 'Zinken', 'DiCaprio'] },
+    { word: 'James Bond', forbidden: ['Spion', 'Agent', 'Martini', 'Smoking'] },
+    {
+        word: 'Nijntje',
+        forbidden: ['Konijn', 'Dick Bruna', 'Kruisje', 'Kinderboek'],
+    },
+    { word: 'Kuifje', forbidden: ['Strip', 'Bobbie', 'Reporter', 'België'] },
+    {
+        word: 'Wie is de Mol',
+        forbidden: ['Saboteur', 'Opdrachten', 'Kandidaten', 'Programma'],
+    },
+    { word: 'Oscar', forbidden: ['Prijs', 'Film', 'Beeldje', 'Hollywood'] },
+    { word: 'Moederdag', forbidden: ['Mama', 'Bloemen', 'Mei', 'Ontbijt'] },
+    { word: 'Vaderdag', forbidden: ['Papa', 'Juni', 'Cadeau', 'Zondag'] },
+    {
+        word: 'Valentijnsdag',
+        forbidden: ['Liefde', 'Hart', 'Februari', 'Kaartje'],
+    },
+    {
+        word: 'Bevrijdingsdag',
+        forbidden: ['Vijf mei', 'Vrijheid', 'Oorlog', 'Festival'],
+    },
+    {
+        word: 'Dodenherdenking',
+        forbidden: ['Vier mei', 'Stilte', 'Oorlog', 'Dam'],
+    },
+    {
+        word: 'Prinsjesdag',
+        forbidden: ['Koning', 'Troonrede', 'Hoedjes', 'Den Haag'],
+    },
+    {
+        word: 'Nieuwjaar',
+        forbidden: ['Januari', 'Wensen', 'Champagne', 'Begin'],
+    },
+    {
+        word: 'Vrijgezellenfeest',
+        forbidden: ['Bruid', 'Laatste', 'Vrienden', 'Verkleden'],
+    },
+    {
+        word: 'Diploma-uitreiking',
+        forbidden: ['School', 'Geslaagd', 'Toga', 'Uitgereikt'],
+    },
+    { word: 'Begrafenis', forbidden: ['Kist', 'Dood', 'Kerkhof', 'Zwart'] },
+    {
+        word: 'Kraamvisite',
+        forbidden: ['Baby', 'Beschuit', 'Muisjes', 'Bezoek'],
+    },
+    { word: 'Eindexamen', forbidden: ['School', 'Toets', 'Slagen', 'Vlag'] },
+    { word: 'Schoolreisje', forbidden: ['Bus', 'Klas', 'Uitje', 'Meester'] },
+    {
+        word: 'Kerstdiner',
+        forbidden: ['Gourmet', 'Familie', 'December', 'Eten'],
+    },
+    {
+        word: 'Paasbrunch',
+        forbidden: ['Eieren', 'Ontbijt', 'Familie', 'Lente'],
+    },
+    {
+        word: 'Pinksteren',
+        forbidden: ['Kerk', 'Vrije dag', 'Mei', 'Twee dagen'],
+    },
+    {
+        word: 'Ramadan',
+        forbidden: ['Vasten', 'Moslim', 'Maand', 'Suikerfeest'],
+    },
+    {
+        word: 'Kermis',
+        forbidden: ['Attracties', 'Botsauto', 'Suikerspin', 'Draaimolen'],
+    },
+    { word: 'Optocht', forbidden: ['Wagens', 'Verkleed', 'Straat', 'Publiek'] },
+    {
+        word: 'Vrijmarkt',
+        forbidden: ['Koningsdag', 'Kleedje', 'Spullen', 'Verkopen'],
+    },
+    { word: 'Jaloezie', forbidden: ['Afgunst', 'Groen', 'Partner', 'Gevoel'] },
+    {
+        word: 'Verveling',
+        forbidden: ['Saai', 'Niks doen', 'Zuchten', 'Regenachtig'],
+    },
+    { word: 'Stress', forbidden: ['Druk', 'Werk', 'Spanning', 'Deadline'] },
+    {
+        word: 'Verrassing',
+        forbidden: ['Onverwacht', 'Cadeau', 'Feestje', 'Schrik'],
+    },
+    {
+        word: 'Vertrouwen',
+        forbidden: ['Geloven', 'Eerlijk', 'Vriend', 'Beschaamd'],
+    },
+    { word: 'Leugen', forbidden: ['Liegen', 'Waarheid', 'Jokken', 'Pinokkio'] },
+    { word: 'Belofte', forbidden: ['Beloven', 'Erewoord', 'Houden', 'Zweren'] },
+    {
+        word: 'Herinnering',
+        forbidden: ['Vroeger', 'Onthouden', 'Foto', 'Geheugen'],
+    },
+    {
+        word: 'Toekomst',
+        forbidden: ['Later', 'Verleden', 'Morgen', 'Voorspellen'],
+    },
+    {
+        word: 'Verleden',
+        forbidden: ['Vroeger', 'Toekomst', 'Geschiedenis', 'Terug'],
+    },
+    { word: 'Eeuwigheid', forbidden: ['Altijd', 'Oneindig', 'Lang', 'Nooit'] },
+    {
+        word: 'Toeval',
+        forbidden: ['Onverwacht', 'Samenloop', 'Bestaat niet', 'Puur'],
+    },
+    { word: 'Pech', forbidden: ['Ongeluk', 'Mazzel', 'Tegenslag', 'Auto'] },
+    {
+        word: 'Ruzie',
+        forbidden: ['Boos', 'Schreeuwen', 'Onenigheid', 'Vechten'],
+    },
+    { word: 'Vriendschap', forbidden: ['Vrienden', 'Band', 'Trouw', 'Samen'] },
+    {
+        word: 'Eenzaamheid',
+        forbidden: ['Alleen', 'Verdrietig', 'Niemand', 'Ouderen'],
+    },
+    { word: 'Trots', forbidden: ['Prestatie', 'Borst', 'Ouders', 'Vlag'] },
+    { word: 'Schaamte', forbidden: ['Blozen', 'Gênant', 'Rood', 'Verlegen'] },
+    { word: 'Moed', forbidden: ['Dapper', 'Angst', 'Durven', 'Held'] },
+    { word: 'Geduld', forbidden: ['Wachten', 'Rustig', 'Deugd', 'Rij'] },
+    {
+        word: 'WiFi',
+        forbidden: ['Internet', 'Wachtwoord', 'Draadloos', 'Router'],
+    },
+    {
+        word: 'Wachtwoord',
+        forbidden: ['Inloggen', 'Vergeten', 'Geheim', 'Account'],
+    },
+    { word: 'Selfie', forbidden: ['Foto', 'Zelf', 'Telefoon', 'Camera'] },
+    { word: 'Emoji', forbidden: ['Smiley', 'Appen', 'Symbool', 'Geel'] },
+    { word: 'Oplader', forbidden: ['Stekker', 'Batterij', 'Leeg', 'Kabel'] },
+    {
+        word: 'Laptop',
+        forbidden: ['Computer', 'Scherm', 'Toetsenbord', 'Dichtklappen'],
+    },
+    { word: 'Robot', forbidden: ['Machine', 'Metaal', 'Mens', 'Programmeren'] },
+    {
+        word: 'Drone',
+        forbidden: ['Vliegen', 'Camera', 'Propeller', 'Besturen'],
+    },
+    { word: 'Bitcoin', forbidden: ['Munt', 'Digitaal', 'Koers', 'Crypto'] },
+    { word: 'Videobellen', forbidden: ['Scherm', 'Camera', 'Zoom', 'Praten'] },
+    { word: 'Spam', forbidden: ['Mail', 'Ongewenst', 'Reclame', 'Map'] },
+    {
+        word: 'Streamen',
+        forbidden: ['Netflix', 'Kijken', 'Internet', 'Muziek'],
+    },
+    {
+        word: 'Influencer',
+        forbidden: ['Volgers', 'Instagram', 'Reclame', 'Bekend'],
+    },
+    {
+        word: 'Bluetooth',
+        forbidden: ['Draadloos', 'Koppelen', 'Speaker', 'Blauw'],
+    },
+    { word: 'GPS', forbidden: ['Navigatie', 'Satelliet', 'Route', 'Kaart'] },
+    { word: 'Pinpas', forbidden: ['Betalen', 'Bank', 'Automaat', 'Code'] },
+    { word: 'Hypotheek', forbidden: ['Huis', 'Lening', 'Bank', 'Rente'] },
+    {
+        word: 'Korting',
+        forbidden: ['Procent', 'Goedkoper', 'Uitverkoop', 'Prijs'],
+    },
+    { word: 'Buurman', forbidden: ['Naast', 'Huis', 'Straat', 'Buurvrouw'] },
+    { word: 'Baby', forbidden: ['Klein', 'Luier', 'Huilen', 'Wieg'] },
+    {
+        word: 'Tiener',
+        forbidden: ['Puber', 'Jong', 'Leeftijd', 'Middelbare school'],
+    },
+    { word: 'Bejaarde', forbidden: ['Oud', 'Rollator', 'Grijs', 'Tehuis'] },
+    {
+        word: 'Koning',
+        forbidden: ['Kroon', 'Troon', 'Willem-Alexander', 'Land'],
+    },
+    { word: 'Koningin', forbidden: ['Kroon', 'Maxima', 'Troon', 'Vrouw'] },
+    { word: 'Held', forbidden: ['Redden', 'Dapper', 'Cape', 'Moedig'] },
+    { word: 'Dief', forbidden: ['Stelen', 'Inbreken', 'Buit', 'Boef'] },
+    { word: 'Piraat', forbidden: ['Ooglapje', 'Schip', 'Schat', 'Papegaai'] },
+    { word: 'Heks', forbidden: ['Bezem', 'Toveren', 'Wrat', 'Ketel'] },
+    { word: 'Spook', forbidden: ['Wit laken', 'Griezelen', 'Zweven', 'Boe'] },
+    { word: 'Vampier', forbidden: ['Bloed', 'Tanden', 'Dracula', 'Knoflook'] },
+    {
+        word: 'Zombie',
+        forbidden: ['Dood', 'Hersenen', 'Strompelen', 'Griezelfilm'],
+    },
+    { word: 'Alien', forbidden: ['Ruimte', 'Ufo', 'Buitenaards', 'Groen'] },
+    { word: 'Tovenaar', forbidden: ['Toverstok', 'Magie', 'Spreuk', 'Hoed'] },
+    {
+        word: 'Kabouter',
+        forbidden: ['Klein', 'Rode muts', 'Baard', 'Paddenstoel'],
+    },
+    { word: 'Ridder', forbidden: ['Harnas', 'Zwaard', 'Paard', 'Kasteel'] },
+    { word: 'Cowboy', forbidden: ['Hoed', 'Paard', 'Lasso', 'Wilde Westen'] },
+    {
+        word: 'Zeemeermin',
+        forbidden: ['Vissenstaart', 'Ariel', 'Water', 'Sprookje'],
+    },
+    {
+        word: 'Elfstedentocht',
+        forbidden: ['Schaatsen', 'Friesland', 'IJs', 'Steden'],
+    },
+    { word: 'Ui', forbidden: ['Huilen', 'Snijden', 'Groente', 'Ringen'] },
+    { word: 'Tweeling', forbidden: ['Twee', 'Broers', 'Zussen', 'Identiek'] },
+    { word: 'Volleybal', forbidden: ['Net', 'Bal', 'Slaan', 'Team'] },
+    { word: 'Zonnepaneel', forbidden: ['Dak', 'Stroom', 'Energie', 'Zon'] },
+    { word: 'Thuiswerken', forbidden: ['Kantoor', 'Corona', 'Laptop', 'Huis'] },
 ];
-
-/** Picks a random card, optionally avoiding the previous one. */
-export function pickCard(avoid?: ForbiddenCard): ForbiddenCard {
-    if (CARDS.length <= 1) {
-        return CARDS[0];
-    }
-
-    let choice = CARDS[Math.floor(Math.random() * CARDS.length)];
-
-    while (choice.word === avoid?.word) {
-        choice = CARDS[Math.floor(Math.random() * CARDS.length)];
-    }
-
-    return choice;
-}

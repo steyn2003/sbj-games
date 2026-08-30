@@ -88,6 +88,29 @@ class GameFactory extends Factory
                 'round' => 1,
                 'currentPlayer' => 0,
                 'turnScore' => 0,
+                'usedWords' => [],
+            ],
+        ]);
+    }
+
+    /**
+     * Indicate that the game is a Charades (Hints) game.
+     */
+    public function charades(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => Game::TYPE_CHARADES,
+            'state' => [
+                'localId' => fake()->numberBetween(1, 999999),
+                'phase' => 'play',
+                'names' => ['Speler 1', 'Speler 2'],
+                'scores' => [0, 0],
+                'seconds' => 60,
+                'totalRounds' => 2,
+                'round' => 1,
+                'currentPlayer' => 0,
+                'turnScore' => 0,
+                'usedWords' => [],
             ],
         ]);
     }

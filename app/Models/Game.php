@@ -35,6 +35,8 @@ class Game extends Model
 
     public const TYPE_FORBIDDEN_WORD = 'forbidden-word';
 
+    public const TYPE_CHARADES = 'charades';
+
     /**
      * The game types that can be persisted.
      *
@@ -44,6 +46,7 @@ class Game extends Model
         self::TYPE_UNDERCOVER,
         self::TYPE_SPY_LOCATION,
         self::TYPE_FORBIDDEN_WORD,
+        self::TYPE_CHARADES,
     ];
 
     /**

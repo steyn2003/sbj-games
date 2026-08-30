@@ -14,7 +14,7 @@ class GameController extends Controller
     /**
      * Show the Undercover game, resuming any unfinished game and listing history.
      */
-    public function index(Request $request): Response
+    public function undercover(Request $request): Response
     {
         return $this->renderGame($request, Game::TYPE_UNDERCOVER, 'undercover');
     }
@@ -33,6 +33,14 @@ class GameController extends Controller
     public function forbiddenWord(Request $request): Response
     {
         return $this->renderGame($request, Game::TYPE_FORBIDDEN_WORD, 'forbidden-word');
+    }
+
+    /**
+     * Show the Charades (Hints) game.
+     */
+    public function charades(Request $request): Response
+    {
+        return $this->renderGame($request, Game::TYPE_CHARADES, 'charades');
     }
 
     /**

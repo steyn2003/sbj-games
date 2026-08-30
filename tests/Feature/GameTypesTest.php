@@ -6,7 +6,7 @@ use Inertia\Testing\AssertableInertia;
 
 test('guests are redirected to login', function (string $route) {
     $this->get(route($route))->assertRedirect(route('login'));
-})->with(['spy-location', 'forbidden-word']);
+})->with(['spy-location', 'forbidden-word', 'charades']);
 
 test('a user sees their game scoped to the right type', function (string $route, string $component, string $factory) {
     $user = User::factory()->create();
@@ -27,6 +27,7 @@ test('a user sees their game scoped to the right type', function (string $route,
 })->with([
     ['spy-location', 'spy-location', 'spyLocation'],
     ['forbidden-word', 'forbidden-word', 'forbiddenWord'],
+    ['charades', 'charades', 'charades'],
 ]);
 
 test('a user can start a game of each type', function (string $type) {
@@ -38,7 +39,7 @@ test('a user can start a game of each type', function (string $type) {
         ->assertJsonStructure(['id']);
 
     expect($user->games()->where('type', $type)->count())->toBe(1);
-})->with([Game::TYPE_SPY_LOCATION, Game::TYPE_FORBIDDEN_WORD]);
+})->with([Game::TYPE_SPY_LOCATION, Game::TYPE_FORBIDDEN_WORD, Game::TYPE_CHARADES]);
 
 test('starting a game only replaces unfinished games of the same type', function () {
     $user = User::factory()->create();

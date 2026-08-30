@@ -17,6 +17,7 @@ createInertiaApp({
             case name === 'undercover':
             case name === 'spy-location':
             case name === 'forbidden-word':
+            case name === 'charades':
             case name === 'pim-pam-pet':
             case name === 'wie-in-de-groep':
             case name === 'horse-race':

@@ -5,7 +5,7 @@ use App\Models\User;
 use Inertia\Testing\AssertableInertia;
 
 test('guests are redirected to login', function () {
-    $this->get(route('home'))->assertRedirect(route('login'));
+    $this->get(route('undercover'))->assertRedirect(route('login'));
 });
 
 test('an authenticated user sees the game with resume and history props', function () {
@@ -15,7 +15,7 @@ test('an authenticated user sees the game with resume and history props', functi
     Game::factory()->for($user)->finished()->create();
 
     $this->actingAs($user)
-        ->get(route('home'))
+        ->get(route('undercover'))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('undercover')

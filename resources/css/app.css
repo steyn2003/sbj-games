@@ -160,6 +160,12 @@
     --glow-deep: var(--color-emerald-500);
 }
 
+[data-accent='lime'] {
+    --glow: var(--color-lime-400);
+    --glow-strong: var(--color-lime-300);
+    --glow-deep: var(--color-lime-500);
+}
+
 @layer base {
     * {
         @apply border-border;

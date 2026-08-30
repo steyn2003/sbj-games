@@ -9,6 +9,7 @@ import {
     ArrowLeft,
     Ban,
     Dice5,
+    Drama,
     Eye,
     Minus,
     Plus,
@@ -26,13 +27,14 @@ import type { ReactNode } from 'react';
 import { feel, useSoundMuted } from '@/hooks/use-game-feel';
 import { cn } from '@/lib/utils';
 import {
+    charades,
     forbiddenWord,
-    dashboard,
     home,
     horseRace,
     mexen,
     pimPamPet,
     spyLocation,
+    undercover,
     wieInDeGroep,
 } from '@/routes';
 
@@ -52,7 +54,8 @@ export type GameAccent =
     | 'rose'
     | 'orange'
     | 'pink'
-    | 'emerald';
+    | 'emerald'
+    | 'lime';
 
 export interface GameInfo {
     title: string;
@@ -69,7 +72,7 @@ export const GAMES: GameInfo[] = [
         tagline: 'Wie speelt vals?',
         description:
             'Vind de geheime bedrieger. Iedereen krijgt een woord, behalve de Undercover.',
-        href: home().url,
+        href: undercover().url,
         icon: Eye,
         accent: 'violet',
     },
@@ -90,6 +93,15 @@ export const GAMES: GameInfo[] = [
         href: forbiddenWord().url,
         icon: Ban,
         accent: 'rose',
+    },
+    {
+        title: 'Hints',
+        tagline: 'Handen en voeten, geen woorden',
+        description:
+            'Beeld het woord uit zonder te praten. Wie laat de groep het meest raden binnen de tijd?',
+        href: charades().url,
+        icon: Drama,
+        accent: 'lime',
     },
     {
         title: 'Pim Pam Pet',
@@ -186,7 +198,7 @@ export function GameShell({
                     <div className="mb-3 flex min-h-9 items-center justify-between gap-2">
                         {back ? (
                             <Link
-                                href={dashboard()}
+                                href={home()}
                                 className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/5 pr-4 pl-3 text-sm font-medium text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--glow)"
                             >
                                 <ArrowLeft className="size-4" aria-hidden />
